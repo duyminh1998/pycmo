@@ -4,33 +4,27 @@ import os
 import subprocess
 
 class Server():
-    def __init__(self, side):
-        self.side = side
+    def __init__(self, scenario):
+        self.scenario = scenario
 
-    def start_game(self, scenario):
+    def start_game(self):
         try:
             prog_path = "C:\\Program Files (x86)\\Command Professional Edition"
-            scen_path = scenario
-            command = "CommandCLI.exe -mode I -scenfile \"{}\"".format(scen_path)
+            command = "CommandCLI.exe -mode I -scenfile \"{}\"".format(self.scenario)
             print(command)
             subprocess.call(command, shell=True, cwd = prog_path)
         except:
             pass
 
-    def get_observation(self):
-        pass
-
-    def send_action(self):
-        pass
-
-    def step(self):
-        pass
-
     def restart(self):
-        pass
+        try:
+            self.start_game()
+        except:
+            pass
 
     def end_game(self):
         pass
 
-blue = Server("United Nations")
-blue.start_game("C:\\Program Files (x86)\\Command Professional Edition\\Scenarios\\Standalone Scenarios\\Battle of Chumonchin Chan, 1950.scen")
+if __name__ == "__main__":
+    blue = Server("C:\\Program Files (x86)\\Command Professional Edition\\Scenarios\\Standalone Scenarios\\Battle of Chumonchin Chan, 1950.scen")
+    blue.start_game()
