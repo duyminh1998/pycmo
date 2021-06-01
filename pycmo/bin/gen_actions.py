@@ -1,1 +1,0 @@
-"""Generate the action definitions for actions.py."""
