@@ -1,4 +1,5 @@
 lua/
+ipynb_demo.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
