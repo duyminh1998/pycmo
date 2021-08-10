@@ -14,7 +14,7 @@ class Server():
     def start_game(self):
         try:
             prog_path = config['command_path']
-            command = "CommandCLI.exe -mode I -scenfile \"{}\"".format(self.scenario)
+            command = "CommandCLI.exe -mode I -scenfile \"{}\" -outputfolder \"C:\\ProgramData\\Command Professional Edition 2\\Analysis_Int\"".format(self.scenario)
             subprocess.call(command, shell=True, cwd = prog_path)
         except:
             pass
@@ -49,7 +49,13 @@ class Client():
         print(received)
 
     def step(self, h, m, s):
-        self.send_action("--script VP_RunForTimeAndHalt({Time='" + str(h) + ":" + str(m) + ":" + str(s) + "'})")
+        self.send_action("VP_RunForTimeAndHalt({Time='" + str(h) + ":" + str(m) + ":" + str(s) + "'})")
+
+    def step_and_get_obs(self, h, m, s, destination):
+        data = "--script \nVP_RunForTimeAndHalt({Time='" + str(h) + ":" + str(m) + ":" + str(s) + "'})"
+        data += "\nfile = io.open('{}', 'w') \n".format(destination)
+        data += "io.output(file) \ntheXML = ScenEdit_ExportScenarioToXML()\nio.write(theXML) \nio.close(file)"
+        self.send_action(data)        
 
     def restart(self):
         try:
@@ -64,5 +70,5 @@ class Client():
             pass
 
 if __name__ == "__main__":
-    blue = Server("C:\\Program Files (x86)\\Command Professional Edition\\Scenarios\\Standalone Scenarios\\Battle of Chumonchin Chan, 1950.scen")
+    blue = Server("C:\\Program Files (x86)\\Command Professional Edition 2\\Scenarios\\Standalone Scenarios\\Battle of Chumonchin Chan, 1950.scen")
     blue.start_game()
