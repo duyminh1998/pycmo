@@ -1,53 +1,40 @@
 """Export Command raw data into numpy arrays."""
 
 import xml.etree.ElementTree as ET
+import xmltodict
 import collections
 
 # Game info
-GameInfo = collections.namedtuple("GameInfo", ["Timeline ID", "Time", "Scenario Name", "Zero Hour", "Start Time", "Duration", "Sides", "Weather",
-                                                "Events", "Time Compression", "Game Resolution"])
-
+GameInfo = collections.namedtuple("GameInfo", ["TimelineID", "Time", "ScenarioName", "ZeroHour", "StartTime", "Duration", "Sides"])
 # Side/Player info
-SideInfo = collections.namedtuple("SideInfo", ["ID", "Name", "Postures", "Doctrine", "Total Score", "Contacts", "Missions", "Human", "Units"])
+# SideInfo = collections.namedtuple("SideInfo", ['ID', 'Name', 'Postures', 'ReferencePoints', 'Doctrine', 'TotalScore', 'Missions', 'Units'])
+SideInfo = collections.namedtuple("SideInfo", ['ID', 'Name', 'Postures', 'Doctrine', 'TotalScore', 'Units'])
+# Mission Info
+# MsnInfo = collections.namedtuple("MsnInfo", [])
 # Unit info
-UnitInfo = collections.namedtuple("UnitInfo", ["Name"])
+UnitInfo = collections.namedtuple("UnitInfo", ['ID', 'Name', 'CH', 'CS', 'Lon', 'Lat', 'LonLR', 'LatLR', 'Side', 'DBID', 'DH', 'DS', 'DT', 'DTN', 
+'ThrottleSetting', 'Sensors', 'Comms', 'Mounts', 'Magazines', 'Status', 'FuelState', 'WeaponState', 'SBR', 'SBED', 'SBEO', 'FSBR', 'SBR_Altitude', 
+'SBR_Altitude_TF', 'SBR_TF', 'SBR_ThrottleSetting', 'SBED_Altitude', 'SBED_Altitude_TF', 'SBED_TF', 'SBED_ThrottleSetting', 'SBEO_Altitude', 'SBEO_Altitude_TF', 
+'SBEO_TF', 'SBEO_ThrottleSetting', 'AMP_OC', 'AMP_OC_DAO', 'AMP_OC_Speed', 'DamagePts', 'OldDamagePercent', 'Doctrine', 'CIC', 'Navigator', 'AI', 'Kinematics', 
+'Sensory', 'Weaponry', 'CommStuff', 'Damage', 'ActiveUnit_AirOps', 'ActiveUnit_DockingOps'])
 # Contacts info
 ContactInfo = collections.namedtuple("ContactInfo", ["Name"])
 
-def features_from_game_info(xml):
+def features_from_game_info(xml, side):
     """Construct a Features object using data extracted from game info."""
-    tree = ET.parse(xml)
-    root = tree.getroot()
-    # Game info
-
-
-    print("Time:", root[12].text)
-    print("Duration:", root[15].text)
-    print(root[19][1][1].text)
-    for child in root[19]:
-        print(child[1].text)
+    features = Features(xml, side)
+    return features
 
 class Features(object):
-    """Render feature layers from SC2 Observation protos into numpy arrays.
-
-        This has the implementation details of how to render a starcraft environment.
-        It translates between agent action/observation formats and starcraft
-        action/observation formats, which should not be seen by agent authors. The
-        starcraft protos contain more information than they should have access to.
-
-        This is outside of the environment so that it can also be used in other
-        contexts, eg a supervised dataset pipeline."""
+    """Render feature layers from Command scenario XML into named tuples."""
     
-    def __init__(self, xml):
-        try:
-            self.tree = ET.parse(xml) # This variable contains the XML tree
-            self.root = self.tree.getroot() # This is the root of the XML tree
-            meta = self.get_meta()
-            self.meta = GameInfo(meta[0])
-        except:
-            # Raise error can't find XML
-            self.tree = ""
-            self.root = ""
+    def __init__(self, xml, player_side):
+            tree = ET.parse(xml) # This variable contains the XML tree
+            root = tree.getroot() # This is the root of the XML tree
+            xmlstr = ET.tostring(root)
+            self.scen_dic = xmltodict.parse(xmlstr) # our scenario xml is now in 'dic'
+            self.meta = self.get_meta() # Return the scenario-level information of the scenario
+            self.side_info = self.get_side_prop(self.meta.Sides.index(player_side))
 
     def transform_obs(self, obs):
         """Render some SC2 observations into something an agent can handle."""
@@ -56,56 +43,23 @@ class Features(object):
     # XML Data Extraction Methods
     def get_meta(self):
         """Get meta data (top-level scenario data)"""
-        meta_ar = {}
-        meta_ar[" "] = " "
-        for i in range(19):
-            try:
-                meta_ar[self.root[i].tag + ": " + self.root[i].text] = i
-            except TypeError:
-                meta_ar[self.root[i].tag + ": "] = i
-        return meta_ar
+        return GameInfo(self.scen_dic['Scenario']["TimelineID"],
+                        self.scen_dic['Scenario']["Time"],
+                        self.scen_dic['Scenario']["Title"],
+                        self.scen_dic['Scenario']["ZeroHour"],
+                        self.scen_dic['Scenario']["StartTime"],
+                        self.scen_dic['Scenario']["Duration"],
+                        self.get_sides())
 
     def get_sides(self):
         """Get the number and names of all sides in a scenario"""
-        sides_ar = {}
-        sides_ar[" "] = " "
-        for i in range(len(self.root[19])):
-            sides_ar[self.root[19][i][1].text] = i
-        return sides_ar
+        return [self.scen_dic['Scenario']['Sides']['Side'][i]['Name'] for i in range(len(self.scen_dic['Scenario']['Sides']['Side']))]
 
     def get_side_prop(self, side_id = 0):
         """Get the properties of a side"""
-        ar = {}
-        if side_id == " ":
-            return ar
-        for i in range(3):
-            try:
-                ar[self.root[19][side_id][i].tag + ": " + self.root[19][side_id][i].text] = i
-            except TypeError:
-                ar[self.root[19][side_id][i].tag + ": "] = i
-        return ar
-
-    def get_side_msn(self, side_id = 0):
-        """Get the missions of a side"""
-        ar = {}
-        ar[" "] = " "
-        if side_id == " ":
-            return ar
-        for i in range(len(self.root[19][side_id][12])):
-            ar[self.root[19][side_id][12][i][1].text] = i
-        return ar
-
-    def get_side_msn_prop(self, side_id = 0, msn_id = 0):
-        """Get the properties of a mission of a side"""
-        ar = {}
-        if msn_id == " ":
-            return ar
-        for i in range(len(self.root[19][side_id][12][msn_id])):
-            try:
-                ar[self.root[19][side_id][12][msn_id][i].tag + ": " + self.root[19][side_id][12][msn_id][i].text] = i
-            except TypeError:
-                ar[self.root[19][side_id][12][msn_id][i].tag + ": "] = i
-        return ar
+        side = self.scen_dic['Scenario']['Sides']['Side'][side_id]
+        return SideInfo(side['ID'], side['Name'], side['Postures'], "side['Doctrine']",
+                        side['TotalScore'], "side['Units']")
 
     def get_side_units(self, side_id_str):
         """Get all the units of a side"""
@@ -145,36 +99,13 @@ class Features(object):
     def get_side_doctrine(self, side_id = 0):
         """Get the doctrine of a side"""
         ar = {}
-        if side_id == " ":
-            return ar
         for i in range(len(self.root[19][side_id][5])):
             try:
                 ar[self.root[19][side_id][5][i].tag + ": " + self.root[19][side_id][5][i].text] = i
             except TypeError:
                 ar[self.root[19][side_id][5][i].tag + ": "] = i
-        return ar
-
-    def get_side_rp(self, side_id = 0):
-        """Get the reference points of a side"""
-        ar = {}
-        ar[" "] = " "
-        if side_id == " ":
-            return ar
-        for i in range(len(self.root[19][side_id][4])):
-            ar[self.root[19][side_id][4][i][4].text] = i
-        return ar        
-
-    def get_side_rp_prop(self, side_id = 0, rp_id = 0):
-        """Get the properties of a reference point of a side"""
-        ar = {}
-        if rp_id == " ":
-            return ar
-        for i in range(len(self.root[19][side_id][4][rp_id])):
-            try:
-                ar[self.root[19][side_id][4][rp_id][i].tag + ": " + self.root[19][side_id][4][rp_id][i].text] = i
-            except TypeError:
-                ar[self.root[19][side_id][4][rp_id][i].tag + ": "] = i
-        return ar    
+        return ar 
 
 if __name__ == '__main__':
-    features_from_game_info("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\scen.xml")
+    features = features_from_game_info("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\wooden_leg.xml", "Israel")
+    print(features.side_info)
