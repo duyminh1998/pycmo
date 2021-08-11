@@ -2,6 +2,7 @@
 
 from lib.features import Features
 from lib.protocol import Client, Server
+from env.environment import TimeStep, StepType
 import threading
 import time
 import json
@@ -33,6 +34,9 @@ while not scen_end:
 
     # get old state
     state_old = Features(xml_file, player_side)
+    r_old = state_old.side_info.TotalScore
+    d_old = 0
+    ts_old = TimeStep(StepType(1), r_old, d_old, state_old)
 
     # perform random actions or choose the action
     # final_move = 
