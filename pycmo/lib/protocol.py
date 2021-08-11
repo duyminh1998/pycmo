@@ -3,6 +3,8 @@
 import socket
 import subprocess
 import json
+import time
+import os
 
 f = open("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\pycmo\\configs\\config.json")
 config = json.load(f)
@@ -51,11 +53,17 @@ class Client():
     def step(self, h, m, s):
         self.send_action("VP_RunForTimeAndHalt({Time='" + str(h) + ":" + str(m) + ":" + str(s) + "'})")
 
-    def step_and_get_obs(self, h, m, s, destination):
-        data = "--script \nVP_RunForTimeAndHalt({Time='" + str(h) + ":" + str(m) + ":" + str(s) + "'})"
-        data += "\nfile = io.open('{}', 'w') \n".format(destination)
-        data += "io.output(file) \ntheXML = ScenEdit_ExportScenarioToXML()\nio.write(theXML) \nio.close(file)"
-        self.send_action(data)        
+    def step_and_get_obs(self, h, m, s, destination, cur_time, step_id):
+        self.send_action("\nVP_RunForTimeAndHalt({Time='" + str(h) + ":" + str(m) + ":" + str(s) + "'})")
+        paused = False
+        while not paused:
+            data = "--script \nlocal now = ScenEdit_CurrentTime() \nlocal elapsed = now - {} \nif elapsed > 59 then \nfile = io.open('{}' .. '\\\\' .. {} .. '.xml', 'w') \nio.output(file) \ntheXML = ScenEdit_ExportScenarioToXML()\nio.write(theXML) \nio.close(file) \nend".format(cur_time, destination, step_id)            
+            self.send_action(data)
+            path = str(step_id) + '.xml'
+            if path in os.listdir(destination):
+                paused = True
+                return
+            time.sleep(1)
 
     def restart(self):
         try:

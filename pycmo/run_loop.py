@@ -2,7 +2,7 @@
 
 from lib.features import Features
 from lib.protocol import Client, Server
-from env.environment import TimeStep, StepType
+#from env.environment import TimeStep, StepType
 import threading
 import time
 import json
@@ -14,11 +14,11 @@ scen_file = "C:\\ProgramData\\Command Professional Edition 2\\Scenarios\\Standal
 xml_file = "C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\wooden_leg.xml"
 player_side = "Israel"
 
-server = Server(scen_file)
+""" server = Server(scen_file)
 x = threading.Thread(target=server.start_game)
 x.start()
 
-time.sleep(15)
+time.sleep(15) """
 
 client = Client()
 client.connect()
@@ -27,16 +27,19 @@ client.connect()
     client.step_and_get_obs("01", "00", "00", config["observation_path"] + str(i) + ".xml") """
 
 scen_end = False
+step_id = 0
+cur_time = 496990800
 
 while not scen_end:
     # add randomness to agent's actions
     # agent.epsilon = 80 - counter_games
 
     # get old state
+    client.step_and_get_obs("01", "00", "00", config["observation_path"], cur_time, step_id)
     state_old = Features(xml_file, player_side)
-    r_old = state_old.side_info.TotalScore
-    d_old = 0
-    ts_old = TimeStep(StepType(1), r_old, d_old, state_old)
+    # r_old = state_old.side_info.TotalScore
+    # d_old = 0
+    # ts_old = TimeStep(StepType(1), r_old, d_old, state_old)
 
     # perform random actions or choose the action
     # final_move = 
@@ -50,4 +53,6 @@ while not scen_end:
     # store new data into a long-term memory
 
     # reset loop
-    scen_end = True
+    #scen_end = True
+    step_id += 1
+    cur_time += 60

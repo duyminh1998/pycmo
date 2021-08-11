@@ -83,5 +83,5 @@ class Features(object):
         return ar
 
 if __name__ == '__main__':
-    features = features_from_game_info("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\wooden_leg.xml", "Israel")
-    print(features.side_info)
+    features = features_from_game_info("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\0.xml", "Israel")
+    print(features.units['Aircraft'][0]['Lat'])
