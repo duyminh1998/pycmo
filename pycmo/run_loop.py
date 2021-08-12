@@ -6,6 +6,7 @@ from lib.protocol import Client, Server
 import threading
 import time
 import json
+from datetime import datetime, timedelta
 
 f = open("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\pycmo\\configs\\config.json")
 config = json.load(f)
@@ -22,20 +23,30 @@ time.sleep(15) """
 
 client = Client()
 client.connect()
-""" for i in range(5):
-    #client.get_raw_data(config["observation_path"] + str(i) + ".xml")
-    client.step_and_get_obs("01", "00", "00", config["observation_path"] + str(i) + ".xml") """
+
+def parse_datetime(time_int):
+    n_ticks = time_int & 0x3fffffffffffffff
+    secs = n_ticks / 1e7
+
+    d1 = datetime(1, 1, 1)
+    t1 = timedelta(seconds = secs)
+    return d1 + t1
+
+def ticks_to_unix(ticks):
+    return int((int(ticks)/10000000) - 621355968000000000/10000000)
 
 scen_end = False
 step_id = 0
-cur_time = 496990800
+state_old = Features(xml_file, player_side)
+cur_time = ticks_to_unix(state_old.meta.Time)
 
 while not scen_end:
     # add randomness to agent's actions
     # agent.epsilon = 80 - counter_games
 
     # get old state
-    client.step_and_get_obs("01", "00", "00", config["observation_path"], cur_time, step_id)
+    client.step_and_get_obs("00", "01", "00", config["observation_path"], cur_time, step_id)
+    xml_file = "C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\steps\\" + str(step_id) + ".xml"
     state_old = Features(xml_file, player_side)
     # r_old = state_old.side_info.TotalScore
     # d_old = 0
@@ -55,4 +66,5 @@ while not scen_end:
     # reset loop
     #scen_end = True
     step_id += 1
-    cur_time += 60
+    cur_time = ticks_to_unix(state_old.meta.Time)
+    print(parse_datetime(int(state_old.meta.Time)))

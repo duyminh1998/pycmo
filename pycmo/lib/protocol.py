@@ -57,10 +57,10 @@ class Client():
         self.send_action("\nVP_RunForTimeAndHalt({Time='" + str(h) + ":" + str(m) + ":" + str(s) + "'})")
         paused = False
         while not paused:
-            data = "--script \nlocal now = ScenEdit_CurrentTime() \nlocal elapsed = now - {} \nif elapsed > 59 then \nfile = io.open('{}' .. '\\\\' .. {} .. '.xml', 'w') \nio.output(file) \ntheXML = ScenEdit_ExportScenarioToXML()\nio.write(theXML) \nio.close(file) \nend".format(cur_time, destination, step_id)            
+            data = "--script \nlocal now = ScenEdit_CurrentTime() \nlocal elapsed = now - {} \nif elapsed > 59 then \nfile = io.open('{}' .. '\\\\steps\\\\' .. {} .. '.xml', 'w') \nio.output(file) \ntheXML = ScenEdit_ExportScenarioToXML()\nio.write(theXML) \nio.close(file) \nend".format(cur_time, destination, step_id)            
             self.send_action(data)
             path = str(step_id) + '.xml'
-            if path in os.listdir(destination):
+            if path in os.listdir(os.path.join(destination, "steps")):
                 paused = True
                 return
             time.sleep(1)
