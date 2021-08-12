@@ -6,6 +6,7 @@ from lib.protocol import Client, Server
 import threading
 import time
 import json
+import os
 from datetime import datetime, timedelta
 
 f = open("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\pycmo\\configs\\config.json")
@@ -14,6 +15,9 @@ config = json.load(f)
 scen_file = "C:\\ProgramData\\Command Professional Edition 2\\Scenarios\\Standalone Scenarios\\Wooden Leg, 1985.scen"
 xml_file = "C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\wooden_leg.xml"
 player_side = "Israel"
+
+for f in os.listdir("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\steps"):
+    os.remove(os.path.join("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\steps\\", f))
 
 """ server = Server(scen_file)
 x = threading.Thread(target=server.start_game)
@@ -40,12 +44,12 @@ step_id = 0
 state_old = Features(xml_file, player_side)
 cur_time = ticks_to_unix(state_old.meta.Time)
 
-while not scen_end:
+while not (step_id > 10):
     # add randomness to agent's actions
     # agent.epsilon = 80 - counter_games
 
     # get old state
-    client.step_and_get_obs("00", "01", "00", config["observation_path"], cur_time, step_id)
+    client.step_and_get_obs("00", "00", "10", config["observation_path"], cur_time, step_id)
     xml_file = "C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\steps\\" + str(step_id) + ".xml"
     state_old = Features(xml_file, player_side)
     # r_old = state_old.side_info.TotalScore
