@@ -1,2 +1,2 @@
 # pycmo
-Command Modern Operations Learning Environment
+Command Modern Operations Reinforcement Learning Environment
