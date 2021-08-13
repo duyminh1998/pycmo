@@ -35,10 +35,12 @@ class Features(object):
         self.scen_dic = xmltodict.parse(xmlstr) # our scenario xml is now in 'dic'
         self.meta = self.get_meta() # Return the scenario-level information of the scenario
         self.units = self.get_side_units(player_side)
-        self.side_info = self.get_side_properties(self.get_sides().index(player_side))
+        player_side_index = self.get_sides().index(player_side)
+        self.side_info = self.get_side_properties(player_side_index)
+        self.contacts = self.get_contacts(player_side_index)
 
     def transform_obs(self, obs):
-        """Render some SC2 observations into something an agent can handle."""
+        """Render some Command observations into something an agent can handle."""
         pass
 
     # XML Data Extraction Methods
@@ -81,6 +83,12 @@ class Features(object):
                     if self.scen_dic["Scenario"]["ActiveUnits"][key]["Side"] == side_id_str:
                         ar[key].append(self.scen_dic["Scenario"]["ActiveUnits"][key])
         return ar
+
+    def get_contacts(self, side_id = 0):
+        try:
+            return self.scen_dic["Scenario"]["Sides"]["Side"][side_id]["Contacts"]
+        except KeyError:
+            return
 
     # helper methods
 
