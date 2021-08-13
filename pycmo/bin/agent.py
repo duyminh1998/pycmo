@@ -1,4 +1,4 @@
-from pycmo.env import run_loop
+from pycmo import run_loop
 
 def run_thread():
     """Run one thread worth of the environment with agents."""

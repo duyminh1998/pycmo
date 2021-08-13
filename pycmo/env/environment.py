@@ -3,6 +3,7 @@
 import collections
 import enum
 import abc
+import six
 
 class TimeStep(collections.namedtuple(
     'TimeStep', ['step_type', 'reward', 'discount', 'observation'])):
@@ -88,7 +89,7 @@ class Base(object):  # pytype: disable=ignored-abstractmethod
     """
 
   @abc.abstractmethod
-  def observation_spec(self):
+  def get_obs(self):
     """Defines the observations provided by the environment.
 
     Returns:

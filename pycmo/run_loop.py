@@ -2,6 +2,7 @@
 
 from lib.features import Features
 from lib.protocol import Client, Server
+from cmo_env import CMOEnv
 import threading, time
 from lib.tools import *
 import json
@@ -18,12 +19,7 @@ def run_loop(scen_file, initial_xml, player_side, server=False, config=None):
         x.start()
         time.sleep(15)
     
-    try:
-        client = Client()
-        client.connect()
-    except:
-        print("No active instance of Command to connect to. Aborting.")
-        return
+    env = CMOEnv()
     
     scen_end = False
     step_id = 0
@@ -35,7 +31,7 @@ def run_loop(scen_file, initial_xml, player_side, server=False, config=None):
         # agent.epsilon = 80 - counter_games
 
         # get old state
-        client.step_and_get_obs("00", "00", "10", config["observation_path"], cur_time, step_id)
+        env.step_and_get_obs("00", "00", "10", config["observation_path"], cur_time, step_id)
         xml_file = "C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\steps\\" + str(step_id) + ".xml"
         state_old = Features(xml_file, player_side)
         # r_old = state_old.side_info.TotalScore
@@ -68,4 +64,4 @@ if __name__ == '__main__':
     xml_file = "C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\wooden_leg.xml"
     player_side = "Israel"
 
-    run_loop(scen_file, xml_file, player_side, config)
+    run_loop(scen_file, xml_file, player_side, config=config)
