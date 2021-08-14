@@ -1,27 +1,32 @@
 """A Command environment."""
 
 from lib import features, protocol
-from env import environment
+from env.environment import Base, TimeStep, StepType
 import time, os
 
-class CMOEnv(environment.Base):
+class CMOEnv(Base):
   """A Command environment."""
-  def __init__(self):
+  def __init__(self, step_dest, step_size):
     self.client = protocol.Client()
     self.client.connect()
-    # self.states = [init_ts]
+    self.step_dest = step_dest
+    self.h = step_size[0]
+    self.m = step_size[1]
+    self.s = step_size[2]
 
-  def get_ts(self, ts):
-    pass
-    #return self.states[ts]
+  def reset(self):
+      return TimeStep(StepType(0), 0, 0, self.get_obs(self.step_dest, 0))
 
-  def step(self, h, m, s):
-      self.client.send_action("VP_RunForTimeAndHalt({Time='" + str(h) + ":" + str(m) + ":" + str(s) + "'})")
+  def step(self, destination, cur_time, step_id, action=None):
+      # send the agent's action
+      # self.client.send_action()
 
-  def step_and_get_obs(self, h, m, s, destination, cur_time, step_id):
-      self.client.send_action("\nVP_RunForTimeAndHalt({Time='" + str(h) + ":" + str(m) + ":" + str(s) + "'})")
+      # step the environment forwards
+      self.client.send_action("\nVP_RunForTimeAndHalt({Time='" + str(self.h) + ":" + str(self.m) + ":" + str(self.s) + "'})")
+
+      # get the corresponding observation
       paused = False
-      dur_in_secs = (int(h) * 3600) + (int(m) * 60) + int(s)
+      dur_in_secs = (int(self.h) * 3600) + (int(self.m) * 60) + int(self.s)
       while not paused:
           data = "--script \nlocal now = ScenEdit_CurrentTime() \nlocal elapsed = now - {} \nif elapsed >= {} then \nfile = io.open('{}' .. '\\\\steps\\\\' .. {} .. '.xml', 'w') \nio.output(file) \ntheXML = ScenEdit_ExportScenarioToXML()\nio.write(theXML) \nio.close(file) \nend".format(cur_time, dur_in_secs, destination, step_id)            
           self.client.send_action(data)
@@ -36,7 +41,7 @@ class CMOEnv(environment.Base):
       data += "io.output(file) \ntheXML = ScenEdit_ExportScenarioToXML()\nio.write(theXML) \nio.close(file)"
       self.client.send_action(data)
 
-  def reset(self):
+  def reset_connection(self):
       try:
           self.client.restart()
       except:

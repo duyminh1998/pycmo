@@ -8,17 +8,20 @@ from lib.tools import *
 import json
 import os
 
-def run_loop(scen_file, initial_xml, player_side, server=False, config=None):
+def run_loop(scen_file, initial_xml, player_side, server=False, config=None, agent=None):
+    # config and set up
     steps_path = config["steps_path"]
     for f in os.listdir(steps_path):
         os.remove(os.path.join(steps_path, f))
     
+    # set up a Command TCP/IP socket if the game is not already running somewhere
     if server:
         server = Server(scen_file)
         x = threading.Thread(target=server.start_game)
         x.start()
         time.sleep(15)
     
+    # build CMO environment
     env = CMOEnv()
     
     scen_end = False
@@ -26,6 +29,7 @@ def run_loop(scen_file, initial_xml, player_side, server=False, config=None):
     state_old = Features(initial_xml, player_side)
     cur_time = ticks_to_unix(state_old.meta.Time)
 
+    # main loop
     while not (step_id > 10):
         # add randomness to agent's actions
         # agent.epsilon = 80 - counter_games
