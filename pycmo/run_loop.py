@@ -22,7 +22,7 @@ def run_loop(scen_file, initial_xml, player_side, server=False, config=None, age
         time.sleep(15)
     
     # build CMO environment
-    env = CMOEnv(config["observation_path"], ["00", "00", "10"], player_side)
+    env = CMOEnv(config["observation_path"], ["05", "00", "00"], player_side, config["scen_ended"])
     
     scen_end = False
     step_id = 0
@@ -31,7 +31,7 @@ def run_loop(scen_file, initial_xml, player_side, server=False, config=None, age
     print(parse_datetime(int(initial_state.observation.meta.Time)))
 
     # main loop
-    while not (step_id > 10):
+    while not (env.check_game_ended() or (step_id > 100)):
         # add randomness to agent's actions
         # agent.epsilon = 80 - counter_games
 
