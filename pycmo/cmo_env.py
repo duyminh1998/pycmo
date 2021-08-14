@@ -6,9 +6,10 @@ import time, os
 
 class CMOEnv(Base):
   """A Command environment."""
-  def __init__(self, step_dest, step_size):
+  def __init__(self, step_dest, step_size, player_side):
     self.client = protocol.Client()
     self.client.connect()
+    self.player_side = player_side
     self.step_dest = step_dest
     self.h = step_size[0]
     self.m = step_size[1]
@@ -33,7 +34,7 @@ class CMOEnv(Base):
         path = str(step_id) + '.xml'
         if path in os.listdir(os.path.join(self.step_dest, "steps")):
             paused = True
-            observation = features.Feature(os.path.join(self.step_dest, "steps", path))
+            observation = features.Features(os.path.join(self.step_dest, "steps", path), self.player_side)
             reward = 0
             discount = 0
             return TimeStep(step_id, StepType(1), reward, discount, observation)
@@ -43,7 +44,7 @@ class CMOEnv(Base):
       data = "--script \nfile = io.open('{}' .. '\\\\steps\\\\' .. {} .. '.xml', 'w') \n".format(destination, step_id)
       data += "io.output(file) \ntheXML = ScenEdit_ExportScenarioToXML()\nio.write(theXML) \nio.close(file)"
       self.client.send(data)
-      return features.Feature(os.path.join(self.step_dest, "steps", step_id, ".xml"))
+      return features.Features(os.path.join(self.step_dest, "steps", str(step_id) + ".xml"), self.player_side)
 
   def reset_connection(self):
       try:

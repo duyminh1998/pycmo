@@ -41,7 +41,8 @@ class Features(object):
 
     def transform_obs(self, obs):
         """Render some Command observations into something an agent can handle."""
-        pass
+        observation = [self.meta, self.units, self.side_info, self.contacts]
+        return observation
 
     # XML Data Extraction Methods
     def get_meta(self) -> GameInfo:

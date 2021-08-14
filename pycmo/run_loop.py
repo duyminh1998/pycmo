@@ -22,12 +22,13 @@ def run_loop(scen_file, initial_xml, player_side, server=False, config=None, age
         time.sleep(15)
     
     # build CMO environment
-    env = CMOEnv(config["observation_path"], ["00", "00", "10"])
+    env = CMOEnv(config["observation_path"], ["00", "00", "10"], player_side)
     
     scen_end = False
     step_id = 0
     initial_state = env.reset()
     cur_time = ticks_to_unix(initial_state.observation.meta.Time)
+    print(parse_datetime(int(initial_state.observation.meta.Time)))
 
     # main loop
     while not (step_id > 10):
@@ -35,6 +36,7 @@ def run_loop(scen_file, initial_xml, player_side, server=False, config=None, age
         # agent.epsilon = 80 - counter_games
 
         # get old state
+        step_id += 1
         state_old = env.step(cur_time, step_id)
         # r_old = state_old.side_info.TotalScore
         # d_old = 0
@@ -53,9 +55,8 @@ def run_loop(scen_file, initial_xml, player_side, server=False, config=None, age
 
         # reset loop
         #scen_end = True
-        step_id += 1
-        cur_time = ticks_to_unix(state_old.meta.Time)
-        print(parse_datetime(int(state_old.meta.Time)))
+        cur_time = ticks_to_unix(state_old.observation.meta.Time)
+        print(parse_datetime(int(state_old.observation.meta.Time)))
     
 
 if __name__ == '__main__':
