@@ -17,6 +17,8 @@ class CMOEnv(Base):
     self.s = step_size[2]
 
   def reset(self):
+      f = open(self.scen_ended, 'w')
+      f.write('False')
       return TimeStep(0, StepType(0), 0, 0, self.get_obs(self.step_dest, 0))
 
   def step(self, cur_time, step_id, action=None):
