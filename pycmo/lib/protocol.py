@@ -41,7 +41,7 @@ class Client():
             print("No active instance of Command to connect to. Aborting.")
             return
 
-    def send_action(self, data):
+    def send(self, data):
         self.s.sendall(data.encode(encoding='UTF-8'))
         data = self.s.recv(1024)
         received = str(data, "UTF-8")

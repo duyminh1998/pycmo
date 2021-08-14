@@ -22,12 +22,12 @@ def run_loop(scen_file, initial_xml, player_side, server=False, config=None, age
         time.sleep(15)
     
     # build CMO environment
-    env = CMOEnv()
+    env = CMOEnv(config["observation_path"], ["00", "00", "10"])
     
     scen_end = False
     step_id = 0
-    state_old = Features(initial_xml, player_side)
-    cur_time = ticks_to_unix(state_old.meta.Time)
+    initial_state = env.reset()
+    cur_time = ticks_to_unix(initial_state.observation.meta.Time)
 
     # main loop
     while not (step_id > 10):
@@ -35,9 +35,7 @@ def run_loop(scen_file, initial_xml, player_side, server=False, config=None, age
         # agent.epsilon = 80 - counter_games
 
         # get old state
-        env.step_and_get_obs("00", "00", "10", config["observation_path"], cur_time, step_id)
-        xml_file = "C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\steps\\" + str(step_id) + ".xml"
-        state_old = Features(xml_file, player_side)
+        state_old = env.step(cur_time, step_id)
         # r_old = state_old.side_info.TotalScore
         # d_old = 0
         # ts_old = TimeStep(StepType(1), r_old, d_old, state_old)

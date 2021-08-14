@@ -6,7 +6,7 @@ import abc
 import six
 
 class TimeStep(collections.namedtuple(
-    'TimeStep', ['step_type', 'reward', 'discount', 'observation'])):
+    'TimeStep', ['step_id', 'step_type', 'reward', 'discount', 'observation'])):
   """Returned with every call to `step` and `reset` on an environment.
 
   A `TimeStep` contains the data emitted by an environment at each step of
