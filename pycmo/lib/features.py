@@ -12,13 +12,9 @@ SideInfo = collections.namedtuple("SideInfo", ['ID', 'Name', 'TotalScore'])
 # Mission Info
 # MsnInfo = collections.namedtuple("MsnInfo", [])
 # Unit info
-""" UnitInfo = collections.namedtuple("UnitInfo", ['ID', 'Name', 'CH', 'CS', 'Lon', 'Lat', 'LonLR', 'LatLR', 'Side', 'DBID', 'DH', 'DS', 'DT', 'DTN', 
-'ThrottleSetting', 'Sensors', 'Comms', 'Mounts', 'Magazines', 'Status', 'FuelState', 'WeaponState', 'SBR', 'SBED', 'SBEO', 'FSBR', 'SBR_Altitude', 
-'SBR_Altitude_TF', 'SBR_TF', 'SBR_ThrottleSetting', 'SBED_Altitude', 'SBED_Altitude_TF', 'SBED_TF', 'SBED_ThrottleSetting', 'SBEO_Altitude', 'SBEO_Altitude_TF', 
-'SBEO_TF', 'SBEO_ThrottleSetting', 'AMP_OC', 'AMP_OC_DAO', 'AMP_OC_Speed', 'DamagePts', 'OldDamagePercent', 'Doctrine', 'CIC', 'Navigator', 'AI', 'Kinematics', 
-'Sensory', 'Weaponry', 'CommStuff', 'Damage', 'ActiveUnit_AirOps', 'ActiveUnit_DockingOps']) """
+UnitIdentifier = collections.namedtuple("UnitIdentifier", ['XML_ID', 'ID', 'Name', 'Side', 'DBID', 'Type'])
 # Contacts info
-# ContactInfo = collections.namedtuple("ContactInfo", ["Name"])
+ContactInfo = collections.namedtuple("ContactInfo", ["XML_ID", "ID"])
 
 def features_from_game_info(xml, side):
     """Construct a Features object using data extracted from game info."""
@@ -32,13 +28,16 @@ class Features(object):
         tree = ET.parse(xml) # This variable contains the XML tree
         root = tree.getroot() # This is the root of the XML tree
         xmlstr = ET.tostring(root)
+        self.player_side = player_side
         self.scen_dic = xmltodict.parse(xmlstr) # our scenario xml is now in 'dic'
         self.meta = self.get_meta() # Return the scenario-level information of the scenario
         self.units = self.get_side_units(player_side)
+        # self.unit_features = self.get_side_unit_features(player_side)
         player_side_index = self.get_sides().index(player_side)
         self.side_info = self.get_side_properties(player_side_index)
         self.contacts = self.get_contacts(player_side_index)
-
+        # self.contact_features = self.get_contact_features(player_side_index)
+        
     def transform_obs(self, obs):
         """Render some Command observations into something an agent can handle."""
         observation = [self.meta, self.units, self.side_info, self.contacts]
@@ -69,23 +68,49 @@ class Features(object):
         """Get all the units of a side"""
         if not side_id_str:
             return
-        ar = {}
-        ar['Aircraft'] = []
-        ar['Facility'] = []
-        ar['Ship'] = []
-        ar['Group'] = []
-        ar['Submarine'] = []
+        unit_ids = []
         for key in self.scen_dic["Scenario"]["ActiveUnits"].keys():
             for i in range(len(self.scen_dic["Scenario"]["ActiveUnits"][key])):
                 try:
                     if self.scen_dic["Scenario"]["ActiveUnits"][key][i]["Side"] == side_id_str:
-                        ar[key].append(self.scen_dic["Scenario"]["ActiveUnits"][key][i])
+                        id = self.scen_dic["Scenario"]["ActiveUnits"][key][i]['ID']
+                        name = self.scen_dic["Scenario"]["ActiveUnits"][key][i]['Name']
+                        dbid = self.scen_dic["Scenario"]["ActiveUnits"][key][i]['DBID']
+                        unit_ids.append(UnitIdentifier(i, id, name, self.player_side, dbid, key))
                 except KeyError:
                     if self.scen_dic["Scenario"]["ActiveUnits"][key]["Side"] == side_id_str:
-                        ar[key].append(self.scen_dic["Scenario"]["ActiveUnits"][key])
+                        id = self.scen_dic["Scenario"]["ActiveUnits"][key]['ID']
+                        name = self.scen_dic["Scenario"]["ActiveUnits"][key]['Name']
+                        dbid = self.scen_dic["Scenario"]["ActiveUnits"][key]['DBID']
+                        unit_ids.append(UnitIdentifier(i, id, name, self.player_side, dbid, key))
+        return unit_ids
+
+    def get_side_unit_features(self, side_id_str=None):
+        """Get all the units features of a side"""
+        if not side_id_str:
+            return
+        ar = []
+        for unit in self.units:
+            try:
+                ar.append(self.scen_dic["Scenario"]["ActiveUnits"][unit.Type][unit.XML_ID])
+            except KeyError:
+                ar.append(self.scen_dic["Scenario"]["ActiveUnits"][unit.Type])
         return ar
 
     def get_contacts(self, side_id = 0):
+        try:
+            contact_id = []
+            contacts = self.scen_dic["Scenario"]["Sides"]["Side"][side_id]["Contacts"]["Contact"]
+            for i in range(len(contacts)):
+                try:
+                    contact_id.append(ContactInfo(i, contacts[i]["ID"]))
+                except KeyError:
+                    contact_id.append(ContactInfo(0, contacts["ID"]))
+            return contact_id
+        except KeyError:
+            return
+
+    def get_contact_features(self, side_id = 0):
         try:
             return self.scen_dic["Scenario"]["Sides"]["Side"][side_id]["Contacts"]
         except KeyError:
@@ -94,5 +119,5 @@ class Features(object):
     # helper methods
 
 if __name__ == '__main__':
-    features = features_from_game_info("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\0.xml", "Israel")
-    print(features.units['Aircraft'][0]['Lat'])
+    features = features_from_game_info("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\wooden_leg_w_contacts.xml", "Israel")
+    print(features.units)
