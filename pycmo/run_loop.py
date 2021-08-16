@@ -2,6 +2,7 @@
 
 from lib.features import Features
 from lib.protocol import Client, Server
+from agents.random_agent import RandomAgent
 from cmo_env import CMOEnv
 import threading, time
 from lib.tools import *
@@ -22,13 +23,15 @@ def run_loop(scen_file, initial_xml, player_side, server=False, config=None, age
         time.sleep(15)
     
     # build CMO environment
-    env = CMOEnv(config["observation_path"], ["05", "00", "00"], player_side, config["scen_ended"])
+    env = CMOEnv(config["observation_path"], ["01", "00", "00"], player_side, config["scen_ended"])
     
     scen_end = False
     step_id = 0
     initial_state = env.reset()
     cur_time = ticks_to_unix(initial_state.observation.meta.Time)
     print(parse_datetime(int(initial_state.observation.meta.Time)))
+    available_actions = env.action_spec(initial_state.observation)
+    print(player_agent.get_action(available_actions.VALID_FUNCTIONS))
 
     # main loop
     while not (env.check_game_ended() or (step_id > 100)):
@@ -38,6 +41,8 @@ def run_loop(scen_file, initial_xml, player_side, server=False, config=None, age
         # get old state
         step_id += 1
         state_old = env.step(cur_time, step_id)
+        available_actions = env.action_spec(initial_state.observation)
+        print(player_agent.get_action(available_actions.VALID_FUNCTIONS))
         # r_old = state_old.side_info.TotalScore
         # d_old = 0
         # ts_old = TimeStep(StepType(1), r_old, d_old, state_old)
@@ -67,4 +72,5 @@ if __name__ == '__main__':
     xml_file = "C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\wooden_leg.xml"
     player_side = "Israel"
 
-    run_loop(scen_file, xml_file, player_side, config=config)
+    player_agent = RandomAgent()
+    run_loop(scen_file, xml_file, player_side, config=config, agent=player_agent)
