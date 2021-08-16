@@ -1,6 +1,6 @@
 """A Command environment."""
 
-from lib import features, protocol
+from lib import features, protocol, actions
 from env.environment import Base, TimeStep, StepType
 import time, os
 
@@ -70,5 +70,5 @@ class CMOEnv(Base):
       except:
           pass
 
-  def action_spec(self):
-      return super().action_spec()
+  def action_spec(self, observation):
+      return actions.AvailableFunctions(observation)
