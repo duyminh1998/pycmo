@@ -1,9 +1,8 @@
 """A run loop for agent/environment interaction."""
 
-from lib.features import Features
-from lib.protocol import Client, Server
+from lib.protocol import Server
 from agents.random_agent import RandomAgent
-from cmo_env import CMOEnv
+from env.cmo_env import CMOEnv
 import threading, time
 from lib.tools import *
 import json
@@ -72,4 +71,4 @@ if __name__ == '__main__':
     player_side = "Israel"
 
     player_agent = RandomAgent()
-    run_loop(scen_file, player_side, server=True, config=config, agent=player_agent)
+    run_loop(scen_file, player_side, server=False, config=config, agent=player_agent)
