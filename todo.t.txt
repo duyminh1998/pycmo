@@ -1,0 +1,4 @@
+Refactor features.py, cmo_env.pt, actions.py
+Continue development on run_loop.py
+Finish documenting environment.md and README.md
+Build out agents
