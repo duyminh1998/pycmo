@@ -17,13 +17,15 @@ class CMOEnv(Base):
     self.s = step_size[2]
 
   def reset(self):
+      """Resets the scenario and get the zero-th timestep"""
       f = open(self.scen_ended, 'w')
       f.write('False')
       return TimeStep(0, StepType(0), 0, 0, self.get_obs(self.step_dest, 0))
 
   def step(self, cur_time, step_id, action=None):
     # send the agent's action
-    # self.client.send()
+    if action != None:
+        self.client.send(action)
 
     # step the environment forwards
     self.client.send("\nVP_RunForTimeAndHalt({Time='" + str(self.h) + ":" + str(self.m) + ":" + str(self.s) + "'})")
