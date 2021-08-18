@@ -38,7 +38,10 @@ class Features(object):
         root = tree.getroot() # This is the root of the XML tree
         xmlstr = ET.tostring(root)
         self.player_side = player_side
-        self.scen_dic = xmltodict.parse(xmlstr) # our scenario xml is now in 'dic'
+        try:
+            self.scen_dic = xmltodict.parse(xmlstr) # our scenario xml is now in 'dic'
+        except:
+            print("ERROR: Unable to parse scenario xml.")
         self.player_side = player_side # the player's side
 
         self.meta = self.get_meta() # Return the scenario-level rmation of the scenario
@@ -65,7 +68,7 @@ class Features(object):
                             self.scen_dic['Scenario']["Duration"],
                             self.get_sides())
         except:
-            print("ERROR: failed to get scenario properties. s")
+            print("ERROR: failed to get scenario properties.")
 
     def get_sides(self):
         """Get the number and names of all sides in a scenario"""
@@ -80,7 +83,7 @@ class Features(object):
             return Side(self.scen_dic['Scenario']['Sides']['Side'][side_id]['ID'],
                             self.scen_dic['Scenario']['Sides']['Side'][side_id]['Name'],
                             self.scen_dic['Scenario']['Sides']['Side'][side_id]['TotalScore'])
-        except:
+        except KeyError:
             print("ERROR: failed to get side properties.")
 
     def get_side_units(self, side_id_str=None):
@@ -89,31 +92,21 @@ class Features(object):
             return
         unit_ids = []
         for key in self.scen_dic["Scenario"]["ActiveUnits"].keys():
-            if isinstance(self.scen_dic["Scenario"]["ActiveUnits"][key], list):
-                for i in range(len(self.scen_dic["Scenario"]["ActiveUnits"][key])):
-                    if "Side" in self.scen_dic["Scenario"]["ActiveUnits"][key][i].keys() and self.scen_dic["Scenario"]["ActiveUnits"][key][i]["Side"] == side_id_str:
-                        id = self.scen_dic["Scenario"]["ActiveUnits"][key][i]['ID']
-                        name = self.scen_dic["Scenario"]["ActiveUnits"][key][i]['Name']
-                        dbid = self.scen_dic["Scenario"]["ActiveUnits"][key][i]['DBID']
-                        loadout = None
-                        if 'Loadout' in self.scen_dic["Scenario"]["ActiveUnits"][key][i].keys() and self.scen_dic["Scenario"]["ActiveUnits"][key][i]['Loadout'] != None:
-                            loadout = self.get_loadout(key, i)
-                        mount = None
-                        if 'Mounts' in self.scen_dic["Scenario"]["ActiveUnits"][key][i].keys() and self.scen_dic["Scenario"]["ActiveUnits"][key][i]['Mounts'] != None:
-                            mount = self.get_mount(key, i)
-                        unit_ids.append(Unit(i, id, name, self.player_side, dbid, key, mount, loadout))
-            else:
-                if "Side" in self.scen_dic["Scenario"]["ActiveUnits"][key].keys() and self.scen_dic["Scenario"]["ActiveUnits"][key]["Side"] == side_id_str:
-                    id = self.scen_dic["Scenario"]["ActiveUnits"][key]['ID']
-                    name = self.scen_dic["Scenario"]["ActiveUnits"][key]['Name']
-                    dbid = self.scen_dic["Scenario"]["ActiveUnits"][key]['DBID']
+            active_units = self.scen_dic["Scenario"]["ActiveUnits"][key]
+            if not isinstance(self.scen_dic["Scenario"]["ActiveUnits"][key], list):
+                active_units = [self.scen_dic["Scenario"]["ActiveUnits"][key]]
+            for i in range(len(active_units)):
+                if active_units[i]["Side"] == side_id_str:
+                    unit_id = active_units[i]['ID']
+                    name = active_units[i]['Name']
+                    dbid = active_units[i]['DBID']
                     loadout = None
-                    if 'Loadout' in self.scen_dic["Scenario"]["ActiveUnits"][key].keys() and self.scen_dic["Scenario"]["ActiveUnits"][key]['Loadout'] != None:
-                        loadout = self.get_loadout(key)
                     mount = None
-                    if 'Mounts' in self.scen_dic["Scenario"]["ActiveUnits"][key].keys() and self.scen_dic["Scenario"]["ActiveUnits"][key]['Mounts'] != None:       
-                        mount = self.get_mount(key)
-                    unit_ids.append(Unit(i, id, name, self.player_side, dbid, key, mount, loadout))
+                    if 'Loadout' in active_units[i].keys() and active_units[i]['Loadout'] != None:
+                        loadout = self.get_loadout(key, i)
+                    if 'Mounts' in active_units[i].keys() and active_units[i]['Mounts'] != None:
+                        mount = self.get_mount(key, i)
+                    unit_ids.append(Unit(i, unit_id, name, self.player_side, dbid, key, mount, loadout))
         return unit_ids
 
     def get_mount(self, unit_type, unit_xml_id=None):
