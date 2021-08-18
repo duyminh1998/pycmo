@@ -1,6 +1,6 @@
 # Author: Minh Hua
 # Date: 08/16/2021
-# Purpose: Export Command raw data into numpy arrays.
+# Purpose: Export Command raw data into Features object and flatten into agent-consummable data.
 
 # imports
 import xml.etree.ElementTree as ET
@@ -19,8 +19,6 @@ Mount = collections.namedtuple("Mount", ["XML_ID", "ID", "Name", "Side", "DBID",
 Loadout = collections.namedtuple("Loadout", ["XML_ID", "ID", "Name", "Side", "DBID", "Weapons"])
 # Weapon
 Weapon = collections.namedtuple("Weapon", ["XML_ID", "ID", "Side", "WeaponID", "QuantRemaining"])
-# Mission 
-# Msn = collections.namedtuple("Msn", [])
 # Contacts 
 Contact = collections.namedtuple("ContactInfo", ["XML_ID", "ID"])
 
@@ -78,13 +76,16 @@ class Features(object):
 
     def get_side_properties(self, side_id = 0) -> Side:
         """Get the properties (score, name, etc.) of a side"""
-        return Side(self.scen_dic['Scenario']['Sides']['Side'][side_id]['ID'],
-                        self.scen_dic['Scenario']['Sides']['Side'][side_id]['Name'],
-                        self.scen_dic['Scenario']['Sides']['Side'][side_id]['TotalScore'])
+        try:
+            return Side(self.scen_dic['Scenario']['Sides']['Side'][side_id]['ID'],
+                            self.scen_dic['Scenario']['Sides']['Side'][side_id]['Name'],
+                            self.scen_dic['Scenario']['Sides']['Side'][side_id]['TotalScore'])
+        except:
+            print("ERROR: failed to get side properties.")
 
     def get_side_units(self, side_id_str=None):
         """Get all the units of a side"""
-        if not side_id_str:
+        if side_id_str == None:
             return
         unit_ids = []
         for key in self.scen_dic["Scenario"]["ActiveUnits"].keys():
@@ -190,14 +191,21 @@ class Features(object):
     def get_contacts(self, side_id = 0):
         try:
             contact_id = []
-            contacts = self.scen_dic["Scenario"]["Sides"]["Side"][side_id]["Contacts"]["Contact"]
-            for i in range(len(contacts)):
-                try:
-                    contact_id.append(Contact(i, contacts[i]["ID"]))
-                except KeyError:
+            if "Contacts" in self.scen_dic["Scenario"]["Sides"]["Side"][side_id].keys():
+                contacts = self.scen_dic["Scenario"]["Sides"]["Side"][side_id]["Contacts"]["Contact"]
+                if isinstance(contacts, list):
+                    for i in range(len(contacts)):
+                        contact_id.append(Contact(i, contacts[i]["ID"]))
+                else:
                     contact_id.append(Contact(0, contacts["ID"]))
-            return contact_id
+                return contact_id
+            else:
+                return
         except KeyError:
+            print("KeyError: failed to get side contacts.")
+            return
+        except:
+            print("ERROR: failed to get side contacts.")
             return
 
 # tests

@@ -1,3 +1,7 @@
+# Author: Minh Hua
+# Date: 08/16/2021
+# Purpose: Library of helper functions.
+
 from datetime import datetime, timedelta
 
 def parse_datetime(time_int):
