@@ -1,6 +1,10 @@
+# Author: Minh Hua
+# Date: 08/16/2021
+# Purpose: Encodes the action space of the game.
+
+# imports
 import collections
 
-# pylint: disable=line-too-long
 available_functions = ["no_op", "ScenEdit_AddMission", "ScenEdit_AddReferencePoint", "ScenEdit_AssignUnitAsTarget", 
 "ScenEdit_AssignUnitToMission", "ScenEdit_AttackContact", "ScenEdit_DeleteMission", "ScenEdit_DeleteReferencePoint",
 "ScenEdit_RefuelUnit", "ScenEdit_RemoveUnitAsTarget", "ScenEdit_SetEMCON", "ScenEdit_SetLoadout", "ScenEdit_SetMission",

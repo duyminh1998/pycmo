@@ -58,17 +58,23 @@ class Features(object):
     # XML Data Extraction Methods
     def get_meta(self) -> Game:
         """Get meta data (top-level scenario data)"""
-        return Game(self.scen_dic['Scenario']["TimelineID"],
-                        self.scen_dic['Scenario']["Time"],
-                        self.scen_dic['Scenario']["Title"],
-                        self.scen_dic['Scenario']["ZeroHour"],
-                        self.scen_dic['Scenario']["StartTime"],
-                        self.scen_dic['Scenario']["Duration"],
-                        self.get_sides())
+        try:
+            return Game(self.scen_dic['Scenario']["TimelineID"],
+                            self.scen_dic['Scenario']["Time"],
+                            self.scen_dic['Scenario']["Title"],
+                            self.scen_dic['Scenario']["ZeroHour"],
+                            self.scen_dic['Scenario']["StartTime"],
+                            self.scen_dic['Scenario']["Duration"],
+                            self.get_sides())
+        except:
+            print("ERROR: failed to get scenario properties.")
 
     def get_sides(self):
         """Get the number and names of all sides in a scenario"""
-        return [self.scen_dic['Scenario']['Sides']['Side'][i]['Name'] for i in range(len(self.scen_dic['Scenario']['Sides']['Side']))]
+        try:
+            return [self.scen_dic['Scenario']['Sides']['Side'][i]['Name'] for i in range(len(self.scen_dic['Scenario']['Sides']['Side']))]
+        except:
+            print("ERROR: failed to get list of side names in scenario.")
 
     def get_side_properties(self, side_id = 0) -> Side:
         """Get the properties (score, name, etc.) of a side"""
