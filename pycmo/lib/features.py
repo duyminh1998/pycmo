@@ -198,3 +198,4 @@ class Features(object):
 if __name__ == '__main__':
     #features = features_from_game_("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\wooden_leg.xml", "Israel")
     #print(features.units['Aircraft'][0]['Lat'])
+    pass
