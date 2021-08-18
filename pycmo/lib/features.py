@@ -1,5 +1,8 @@
-"""Export Command raw data into numpy arrays."""
+# Author: Minh Hua
+# Date: 08/16/2021
+# Purpose: Export Command raw data into numpy arrays.
 
+# imports
 import xml.etree.ElementTree as ET
 import xmltodict
 import collections
@@ -22,20 +25,23 @@ Weapon = collections.namedtuple("Weapon", ["XML_ID", "ID", "Side", "WeaponID", "
 Contact = collections.namedtuple("ContactInfo", ["XML_ID", "ID"])
 
 def features_from_game_(xml, side):
-    """Construct a Features object using data extracted from game ."""
+    """Construct a Features object using data extracted from game."""
     features = Features(xml, side)
     return features
 
-class Features(object):
-    """Render feature layers from Command scenario XML into named tuples."""
-    
-    def __init__(self, xml, player_side):
+class Features(object):    
+    def __init__(self, xml: str, player_side: str):
+        """Render feature layers from Command scenario XML into named tuples.
+        Args:
+            xml:
+            player_side:
+        """
         tree = ET.parse(xml) # This variable contains the XML tree
         root = tree.getroot() # This is the root of the XML tree
         xmlstr = ET.tostring(root)
         self.player_side = player_side
         self.scen_dic = xmltodict.parse(xmlstr) # our scenario xml is now in 'dic'
-        self.player_side = player_side
+        self.player_side = player_side # the player's side
 
         self.meta = self.get_meta() # Return the scenario-level rmation of the scenario
 
@@ -43,7 +49,6 @@ class Features(object):
         player_side_index = self.get_sides().index(player_side)
         self.side_ = self.get_side_properties(player_side_index)
         self.contacts = self.get_contacts(player_side_index)
-        # self.contact_features = self.get_contact_features(player_side_index)
         
     def transform_obs(self, obs):
         """Render some Command observations into something an agent can handle."""
@@ -189,6 +194,7 @@ class Features(object):
         except KeyError:
             return
 
+# tests
 if __name__ == '__main__':
-    features = features_from_game_("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\wooden_leg.xml", "Israel")
-    print(features.units['Aircraft'][0]['Lat'])
+    #features = features_from_game_("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\wooden_leg.xml", "Israel")
+    #print(features.units['Aircraft'][0]['Lat'])

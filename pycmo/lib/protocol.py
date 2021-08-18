@@ -1,4 +1,6 @@
-"""Protocol library to communicate with a Command server."""
+# Author: Minh Hua
+# Date: 08/16/2021
+# Purpose: Protocol library to communicate with a Command server.
 
 # imports
 import socket

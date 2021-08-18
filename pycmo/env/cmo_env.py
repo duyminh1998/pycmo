@@ -1,5 +1,8 @@
-"""A Command environment."""
+# Author: Minh Hua
+# Date: 08/16/2021
+# Purpose: A Command environment.
 
+# imports
 from pycmo.lib import features, protocol, actions
 import collections, enum
 import time, os
@@ -16,6 +19,8 @@ class TimeStep(collections.namedtuple(
   `TimeStep` will have `StepType.LAST`. All other `TimeStep`s in a sequence will
   have `StepType.MID.
 
+  Author: DeepMind
+
   Attributes:
     step_id: A scalar that represents the ID of a step
     step_type: A `StepType` enum value.
@@ -25,7 +30,6 @@ class TimeStep(collections.namedtuple(
       is `StepType.FIRST`, i.e. at the start of a sequence.
     observation: A NumPy array, or a dict, list or tuple of arrays.
   """
-
   def first(self):
     return self.step_type is StepType.FIRST
 
@@ -37,7 +41,9 @@ class TimeStep(collections.namedtuple(
 
 
 class StepType(enum.IntEnum):
-  """Defines the status of a `TimeStep` within a sequence."""
+  """Defines the status of a `TimeStep` within a sequence.
+  Author: DeepMind
+  """
   # Denotes the first `TimeStep` in a sequence.
   FIRST = 0
   # Denotes any `TimeStep` in a sequence that is not FIRST or LAST.
@@ -46,13 +52,21 @@ class StepType(enum.IntEnum):
   LAST = 2
 
 class CMOEnv():
-  """A Command environment."""
-  def __init__(self, step_dest, step_size, player_side, scen_ended_path):
-    self.client = protocol.Client()
-    self.client.connect()
-    self.player_side = player_side
-    self.step_dest = step_dest
-    self.scen_ended = scen_ended_path
+  def __init__(self, step_dest: str, step_size: list, player_side: str, scen_ended_path: str):
+    """A Command environment.
+
+    Args:
+      step_dest: the path of folder to hold the steps
+      step_size: a list containing the step size in the format ["h", "m", "s"]
+      player_side: the string identifying the player's side. Side should exist in the game
+      scen_ended_path: the path to the text file that records whether a scenario has ended or not
+    """
+    self.client = protocol.Client() # initialize a client to send data to the game
+    self.client.connect() # connect the client to the game
+    self.player_side = player_side # the player's side
+    self.step_dest = step_dest # the path to the folder containing the xml steps files
+    self.scen_ended = scen_ended_path # the path to the text file recording whether or not the scenario has ended
+    # the step size in h, m, s
     self.h = step_size[0]
     self.m = step_size[1]
     self.s = step_size[2]
@@ -84,8 +98,9 @@ class CMOEnv():
     `action` will be ignored.
 
     Args:
-      action: A NumPy array, or a dict, list or tuple of arrays corresponding to
-        `action_spec()`.
+      cur_time: the current time
+      step_id: the current step ID
+      action: a string containing the Lua script to send to the environment
 
     Returns:
       A `TimeStep` namedtuple containing:
@@ -126,10 +141,8 @@ class CMOEnv():
       return features.Features(os.path.join(self.step_dest, "steps", str(step_id) + ".xml"), self.player_side)
 
   def reset_connection(self):
-      try:
-          self.client.restart()
-      except:
-          pass
+    """Reset the client connection"""
+    self.client.restart()
   
   def check_game_ended(self):
       """Check whether the scenario has ended"""
@@ -141,10 +154,8 @@ class CMOEnv():
       return False
 
   def close(self):
-      try:
-          self.client.end_game()
-      except:
-          pass
+    """Close the client connection and the environment"""
+    self.client.end_connection()
 
   def action_spec(self, observation):
       """Returns the available actions given an observation"""
