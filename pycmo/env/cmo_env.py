@@ -127,7 +127,7 @@ class CMOEnv():
         if path in os.listdir(os.path.join(self.step_dest, "steps")):
             paused = True
             observation = features.Features(os.path.join(self.step_dest, "steps", path), self.player_side)
-            reward = 0
+            reward = observation.side_.TotalScore
             discount = 0
             return TimeStep(step_id, StepType(1), reward, discount, observation)
         time.sleep(0.1)
