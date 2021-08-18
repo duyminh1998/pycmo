@@ -1,4 +1,6 @@
-"""A run loop for agent/environment interaction."""
+# Author: Minh Hua
+# Date: 08/16/2021
+# Purpose: A run loop for agent/environment interaction.
 
 from lib.protocol import Server
 from agents.random_agent import RandomAgent
@@ -8,13 +10,17 @@ from lib.tools import *
 import json
 import os
 
-def clean_up_steps(path):
-    for step in os.listdir(path):
-        if step.endswith(".xml"):
-            os.remove(os.path.join(path, step))
+def clean_up_steps(path: str):
+    """Delete all the steps file (.xml) in the steps folder"""
+    try:
+        for step in os.listdir(path):
+            if step.endswith(".xml"):
+                os.remove(os.path.join(path, step))
+    except:
+        print("ERROR: failed to clean up steps folder.")
 
-def run_loop(scen_file, player_side, server=False, config=None, agent=None):
-    # config and set up
+def run_loop(scen_file: str, player_side: str, server=False, config=None, agent=None):
+    # config and set up, clean up steps folder
     steps_path = config["steps_path"]
     clean_up_steps(steps_path)
     
@@ -23,7 +29,7 @@ def run_loop(scen_file, player_side, server=False, config=None, agent=None):
         server = Server(scen_file)
         x = threading.Thread(target=server.start_game)
         x.start()
-        time.sleep(15)
+        time.sleep(10)
     
     # build CMO environment
     env = CMOEnv(config["observation_path"], ["01", "00", "00"], player_side, config["scen_ended"])
@@ -64,11 +70,14 @@ def run_loop(scen_file, player_side, server=False, config=None, agent=None):
     
 
 if __name__ == '__main__':
+    # open config
     f = open("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\pycmo\\configs\\config.json")
     config = json.load(f)
 
+    # scenario file and player side
     scen_file = "C:\\ProgramData\\Command Professional Edition 2\\Scenarios\\Standalone Scenarios\\Wooden Leg, 1985.scen"
     player_side = "Israel"
 
+    # initalize agent
     player_agent = RandomAgent()
-    run_loop(scen_file, player_side, server=False, config=config, agent=player_agent)
+    run_loop(scen_file, player_side, config=config, agent=player_agent)

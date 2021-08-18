@@ -1,60 +1,63 @@
 """Protocol library to communicate with a Command server."""
 
+# imports
 import socket
 import subprocess
 import json
 
+# open config
 f = open("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\pycmo\\configs\\config.json")
 config = json.load(f)
 
 class Server():
-    def __init__(self, scenario):
-        self.scenario = scenario
+    def __init__(self, scenario: str):
+        """Wrapper for an instance of CommandCLI running the specified scenario"""
+        self.scenario = scenario # the path to the scenario (.scen) file to start the game with
 
     def start_game(self):
         try:
             prog_path = config['command_path']
-            command = "CommandCLI.exe -mode I -scenfile \"{}\" -outputfolder \"C:\\ProgramData\\Command Professional Edition 2\\Analysis_Int\"".format(self.scenario)
+            command = "CommandCLI.exe -mode I -scenfile \"{}\" -outputfolder \"{}\"".format(self.scenario, config['command_cli_output_path'])
             subprocess.call(command, shell=True, cwd = prog_path)
         except:
-            pass
+            print("ERROR: Failed to start game server.")
 
     def restart(self):
-        try:
-            self.start_game()
-        except:
-            pass
+        self.start_game()
 
     def end_game(self):
         pass
 
 class Client():
-    def __init__(self, side=None):
+    def __init__(self):
+        """Wrapper for a client that can send commands to Command Modern Operations via a TCP/IP port."""
         self.host = "localhost"
         self.port = 7777
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
     def connect(self):
+        """Connect to the game."""
         try:
             self.s.connect((self.host, self.port))
         except:
-            print("No active instance of Command to connect to. Aborting.")
-            return
+            print("ERROR: No active instance of Command to connect to. Aborting.")
 
-    def send(self, data):
-        self.s.sendall(data.encode(encoding='UTF-8'))
-        data = self.s.recv(1024)
-        received = str(data, "UTF-8")
-        print(received)
+    def send(self, data: str):
+        """Send a Lua command to the game."""
+        try:
+            self.s.sendall(data.encode(encoding='UTF-8'))
+            data = self.s.recv(1024)
+            received = str(data, "UTF-8")
+        except:
+            print("ERROR: failed to send data to CMO server.")
 
     def restart(self):
-        try:
-            self.s.connect((self.host, self.port))
-        except:
-            pass
+        """Restart client connection to the game."""
+        self.s.connect((self.host, self.port))
 
-    def end_game(self):
+    def end_connection(self):
+        """End client connection to the game."""
         try:
             self.s.close()
         except:
-            pass
+            print("ERROR: failed to close client connection.")
