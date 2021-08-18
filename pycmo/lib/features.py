@@ -65,7 +65,7 @@ class Features(object):
                             self.scen_dic['Scenario']["Duration"],
                             self.get_sides())
         except:
-            print("ERROR: failed to get scenario properties.")
+            print("ERROR: failed to get scenario properties. s")
 
     def get_sides(self):
         """Get the number and names of all sides in a scenario"""
