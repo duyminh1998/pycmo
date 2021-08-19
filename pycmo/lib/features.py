@@ -51,7 +51,7 @@ class Features(object):
         self.side_ = self.get_side_properties(player_side_index)
         self.contacts = self.get_contacts(player_side_index)
         
-    def transform_obs(self, obs):
+    def transform_obs_into_arrays(self):
         """Render some Command observations into something an agent can handle."""
         observation = [self.meta, self.units, self.side_, self.contacts]
         return observation
