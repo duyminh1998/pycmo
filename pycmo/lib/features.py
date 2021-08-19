@@ -22,7 +22,7 @@ Loadout = collections.namedtuple("Loadout", ["XML_ID", "ID", "Name", "Side", "DB
 # Weapon
 Weapon = collections.namedtuple("Weapon", ["XML_ID", "ID", "Side", "WeaponID", "QuantRemaining"])
 # Contacts 
-Contact = collections.namedtuple("ContactInfo", ["XML_ID", "ID"])
+Contact = collections.namedtuple("ContactInfo", ["XML_ID", "ID", 'CS', 'CA', 'Lon', 'Lat'])
 
 def features_from_game_(xml, side):
     """Construct a Features object using data extracted from game."""
@@ -195,25 +195,37 @@ class Features(object):
                         pass
             return weapons
 
-    def get_contacts(self, side_id = 0):
+    def get_contacts(self, side_id = 0) -> list:
+        """Return the contacts of a side"""
         try:
             contact_id = []
             if "Contacts" in self.scen_dic["Scenario"]["Sides"]["Side"][side_id].keys():
                 contacts = self.scen_dic["Scenario"]["Sides"]["Side"][side_id]["Contacts"]["Contact"]
-                if isinstance(contacts, list):
-                    for i in range(len(contacts)):
-                        contact_id.append(Contact(i, contacts[i]["ID"]))
-                else:
-                    contact_id.append(Contact(0, contacts["ID"]))
+                if not isinstance(contacts, list):
+                    contacts = [self.scen_dic["Scenario"]["Sides"]["Side"][side_id]["Contacts"]["Contact"]]
+                for i in range(len(contacts)):
+                    cs = None
+                    ca = None
+                    lon = None
+                    lat = None
+                    if 'CS' in contacts[i].keys() and contacts[i]['CS'] != None:
+                        cs = contacts[i]['CS']
+                    if 'CA' in contacts[i].keys() and contacts[i]['CA'] != None:
+                        ca = contacts[i]['CA']
+                    if 'Lon' in contacts[i].keys() and contacts[i]['Lon'] != None:
+                        lon = contacts[i]['Lon']
+                    if 'Lat' in contacts[i].keys() and contacts[i]['Lat'] != None:
+                        lat = contacts[i]['Lat']                        
+                    contact_id.append(Contact(i, contacts[i]["ID"], cs, ca, lon, lat))
                 return contact_id
             else:
-                return
+                return contact_id
         except KeyError:
             print("KeyError: failed to get side contacts.")
-            return
+            return contact_id
         except:
             print("ERROR: failed to get side contacts.")
-            return
+            return contact_id
 
 # tests
 if __name__ == '__main__':
