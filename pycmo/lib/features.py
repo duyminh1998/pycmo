@@ -12,7 +12,9 @@ Game = collections.namedtuple("Game", ["TimelineID", "Time", "ScenarioName", "Ze
 # Side 
 Side = collections.namedtuple("Side", ['ID', 'Name', 'TotalScore'])
 # Unit 
-Unit = collections.namedtuple("Unit", ['XML_ID', 'ID', 'Name', 'Side', 'DBID', 'Type', 'Mounts', 'Loadout'])
+Unit = collections.namedtuple("Unit", ['XML_ID', 'ID', 'Name', 'Side', 'DBID', 'Type',
+                                        'CH', 'CS', 'CA', 'Lon', 'Lat', 'Mounts', 'Loadout'])
+# add fuel
 # Mount 
 Mount = collections.namedtuple("Mount", ["XML_ID", "ID", "Name", "Side", "DBID", "Weapons"])
 # Loadout
@@ -34,18 +36,16 @@ class Features(object):
             xml:
             player_side:
         """
-        tree = ET.parse(xml) # This variable contains the XML tree
-        root = tree.getroot() # This is the root of the XML tree
-        xmlstr = ET.tostring(root)
-        self.player_side = player_side
         try:
+            tree = ET.parse(xml) # This variable contains the XML tree
+            root = tree.getroot() # This is the root of the XML tree
+            xmlstr = ET.tostring(root)            
             self.scen_dic = xmltodict.parse(xmlstr) # our scenario xml is now in 'dic'
-        except:
+        except FileNotFoundError as error:
             print("ERROR: Unable to parse scenario xml.")
-        self.player_side = player_side # the player's side
-
+            raise
+        self.player_side = player_side
         self.meta = self.get_meta() # Return the scenario-level rmation of the scenario
-
         self.units = self.get_side_units(player_side)
         player_side_index = self.get_sides().index(player_side)
         self.side_ = self.get_side_properties(player_side_index)
@@ -67,15 +67,17 @@ class Features(object):
                             self.scen_dic['Scenario']["StartTime"],
                             self.scen_dic['Scenario']["Duration"],
                             self.get_sides())
-        except:
+        except KeyError:
             print("ERROR: failed to get scenario properties.")
+            raise
 
-    def get_sides(self):
+    def get_sides(self) -> list:
         """Get the number and names of all sides in a scenario"""
         try:
             return [self.scen_dic['Scenario']['Sides']['Side'][i]['Name'] for i in range(len(self.scen_dic['Scenario']['Sides']['Side']))]
-        except:
+        except KeyError:
             print("ERROR: failed to get list of side names in scenario.")
+            raise
 
     def get_side_properties(self, side_id = 0) -> Side:
         """Get the properties (score, name, etc.) of a side"""
@@ -85,12 +87,13 @@ class Features(object):
                             self.scen_dic['Scenario']['Sides']['Side'][side_id]['TotalScore'])
         except KeyError:
             print("ERROR: failed to get side properties.")
+            raise
 
-    def get_side_units(self, side_id_str=None):
+    def get_side_units(self, side_id_str=None) -> list:
         """Get all the units of a side"""
-        if side_id_str == None:
-            return
         unit_ids = []
+        if side_id_str == None or 'ActiveUnits' not in self.scen_dic["Scenario"].keys():
+            return unit_ids
         for key in self.scen_dic["Scenario"]["ActiveUnits"].keys():
             active_units = self.scen_dic["Scenario"]["ActiveUnits"][key]
             if not isinstance(self.scen_dic["Scenario"]["ActiveUnits"][key], list):
@@ -100,13 +103,24 @@ class Features(object):
                     unit_id = active_units[i]['ID']
                     name = active_units[i]['Name']
                     dbid = active_units[i]['DBID']
+                    lon = active_units[i]['LonLR']
+                    lat = active_units[i]['LatLR']
+                    ch = None
+                    cs = None
+                    ca = None
                     loadout = None
                     mount = None
                     if 'Loadout' in active_units[i].keys() and active_units[i]['Loadout'] != None:
                         loadout = self.get_loadout(key, i)
                     if 'Mounts' in active_units[i].keys() and active_units[i]['Mounts'] != None:
                         mount = self.get_mount(key, i)
-                    unit_ids.append(Unit(i, unit_id, name, self.player_side, dbid, key, mount, loadout))
+                    if 'CH' in active_units[i].keys() and active_units[i]['CH'] != None:
+                        ch = active_units[i]['CH']
+                    if 'CS' in active_units[i].keys() and active_units[i]['CS'] != None:
+                        cs = active_units[i]['CS']
+                    if 'CA' in active_units[i].keys() and active_units[i]['CA'] != None:
+                        ca = active_units[i]['CA']
+                    unit_ids.append(Unit(i, unit_id, name, self.player_side, dbid, key, ch, cs, ca, lon, lat, mount, loadout))
         return unit_ids
 
     def get_mount(self, unit_type, unit_xml_id=None):
@@ -203,6 +217,6 @@ class Features(object):
 
 # tests
 if __name__ == '__main__':
-    #features = features_from_game_("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\raw\\wooden_leg.xml", "Israel")
-    #print(features.units['Aircraft'][0]['Lat'])
+    features = features_from_game_("C:\\Users\\minhh\\Documents\\MyProjects\\pycmo\\raw\\wooden_leg_w_contacts.xml", "Israel")
+    print(features.units['Aircraft'][0]['Lat'])
     pass
