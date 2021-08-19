@@ -84,7 +84,7 @@ class CMOEnv():
     """
     f = open(self.scen_ended, 'w')
     f.write('False')
-    return TimeStep(0, StepType(0), 0, 0, self.get_obs(self.step_dest, 0))
+    return TimeStep(0, StepType(0), 0, 0, self.get_obs(0))
 
   def step(self, cur_time, step_id, action=None):
     """Updates the environment according to the action and returns a `TimeStep`.
@@ -120,25 +120,34 @@ class CMOEnv():
     # get the corresponding observation, reward and discount
     paused = False
     dur_in_secs = (int(self.h) * 3600) + (int(self.m) * 60) + int(self.s)
-    path = str(step_id) + '.xml'
+    step_file_name = str(step_id) + '.xml'
     while not (paused or self.check_game_ended()):
-        data = "--script \nlocal now = ScenEdit_CurrentTime() \nlocal elapsed = now - {} \nif elapsed >= {} then \nfile = io.open('{}' .. '\\\\steps\\\\' .. {} .. '.xml', 'w') \nio.output(file) \ntheXML = ScenEdit_ExportScenarioToXML()\nio.write(theXML) \nio.close(file) \nend".format(cur_time, dur_in_secs, self.step_dest, step_id)            
+        data = "--script \nlocal now = ScenEdit_CurrentTime() \nlocal elapsed = now - {} \nif elapsed >= {} then \nfile = io.open('{}', 'w') \nio.output(file) \ntheXML = ScenEdit_ExportScenarioToXML()\nio.write(theXML) \nio.close(file) \nend".format(cur_time, dur_in_secs, self.step_dest + str(step_id) + '.xml')            
         self.client.send(data)
-        if path in os.listdir(os.path.join(self.step_dest, "steps")):
+        if step_file_name in os.listdir(self.step_dest):
             paused = True
-            observation = features.Features(os.path.join(self.step_dest, "steps", path), self.player_side)
+            observation = features.Features(os.path.join(self.step_dest, step_file_name), self.player_side)
             reward = observation.side_.TotalScore
             discount = 0
             return TimeStep(step_id, StepType(1), reward, discount, observation)
         time.sleep(0.1)
-    return TimeStep(step_id, StepType(2), 0, 0, self.get_obs(self.step_dest, step_id))
+    observation = self.get_obs(step_id)
+    reward = observation.side_.TotalScore
+    discount = 0    
+    return TimeStep(step_id, StepType(2), 0, 0, observation)
 
-  def get_obs(self, destination, step_id):
+  def get_obs(self, step_id):
       """Returns the observation at a particular timestep"""
-      data = "--script \nfile = io.open('{}' .. '\\\\steps\\\\' .. {} .. '.xml', 'w') \n".format(destination, step_id)
+      data = "--script \nfile = io.open('{}', 'w') \n".format(self.step_dest + str(step_id) + '.xml')
       data += "io.output(file) \ntheXML = ScenEdit_ExportScenarioToXML()\nio.write(theXML) \nio.close(file)"
       self.client.send(data)
-      return features.Features(os.path.join(self.step_dest, "steps", str(step_id) + ".xml"), self.player_side)
+      return features.Features(os.path.join(self.step_dest, str(step_id) + ".xml"), self.player_side)
+    
+  def get_timestep(self, step_id):
+    observation = self.get_obs(step_id)
+    reward = observation.side_.TotalScore
+    discount = 0
+    return TimeStep(step_id, StepType(1), reward, discount, observation)
 
   def reset_connection(self):
     """Reset the client connection"""

@@ -41,6 +41,7 @@ class Features(object):
             raise
         self.player_side = player_side
         self.meta = self.get_meta() # Return the scenario-level rmation of the scenario
+        self.avai_weapons = []
         self.units = self.get_side_units(player_side)
         try:
             player_side_index = self.get_sides().index(player_side)
@@ -157,6 +158,7 @@ class Features(object):
                 if "CL" in wrec[i].keys():
                     cl = wrec[i]["CL"]                
                 weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl))
+                self.avai_weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl))
             return weapons
         elif mount_or_loadout == "Mount":
             if 'MW' not in xml_str.keys() or xml_str['MW'] == None:
@@ -169,6 +171,7 @@ class Features(object):
                 if "CL" in wrec[i].keys():
                     cl = wrec[i]["CL"]
                 weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl))
+                self.avai_weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl))
             return weapons
         else:
             return weapons

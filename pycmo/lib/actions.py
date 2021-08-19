@@ -14,25 +14,25 @@ def no_op():
   return ""
 
 def launch_aircraft(side, aircraft_name, launch_yn):
-  return "ScenEdit_SetUnit({{side = '{}', name = '{}', Launch = '{}'}})".format(side, aircraft_name, launch_yn)
+  return "--script ScenEdit_SetUnit({{side = '{}', name = '{}', Launch = '{}'}})".format(side, aircraft_name, launch_yn)
 
 def set_unit_course(side, aircraft_name, latitude, longitude):
-  data = "ScenEdit_SetUnit({{side = '{}', name = '{}', course = {{".format(side, aircraft_name)
+  data = "--script ScenEdit_SetUnit({{side = '{}', name = '{}', course = {{".format(side, aircraft_name)
   data += "{{longitude = '{}', latitude = '{}', TypeOf = 'ManualPlottedCourseWaypoint'}}".format(latitude, longitude)
   data += "}})"
   return data
 
 def manual_attack_contact(attacker_id, contact_id, weapon_id, qty, mount_id=None):
   if mount_id == None:
-    return "ScenEdit_AttackContact('{}', '{}' ,{{mode='1', weapon='{}', qty='{}'}})".format(attacker_id, contact_id, weapon_id, qty)
+    return "--script ScenEdit_AttackContact('{}', '{}' ,{{mode='1', weapon='{}', qty='{}'}})".format(attacker_id, contact_id, weapon_id, qty)
   else:
-    return "ScenEdit_AttackContact('{}', '{}' ,{{mode='1', mount='{}', weapon='{}', qty='{}'}})".format(attacker_id, contact_id, mount_id, weapon_id, qty)
+    return "--script ScenEdit_AttackContact('{}', '{}' ,{{mode='1', mount='{}', weapon='{}', qty='{}'}})".format(attacker_id, contact_id, mount_id, weapon_id, qty)
 
 def auto_attack_contact(attacker_id, contact_id):
-  return "ScenEdit_AttackContact('{}', '{}',{{mode='1'}})".format(attacker_id, contact_id)
+  return "--script ScenEdit_AttackContact('{}', '{}',{{mode='1'}})".format(attacker_id, contact_id)
 
 def refuel_unit(side, unit_name, tanker_name):
-  return "ScenEdit_RefuelUnit({{side='{}', unitname='{}', tanker='{}'}})".format(side, unit_name, tanker_name)
+  return "--script ScenEdit_RefuelUnit({{side='{}', unitname='{}', tanker='{}'}})".format(side, unit_name, tanker_name)
 
 Function = collections.namedtuple("Function", ['id', 'name', 'corresponding_def', 'args'])
 

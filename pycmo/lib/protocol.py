@@ -41,8 +41,9 @@ class Client():
         """Connect to the game."""
         try:
             self.s.connect((self.host, self.port))
-        except:
+        except OSError:
             print("ERROR: No active instance of Command to connect to. Aborting.")
+            raise
 
     def send(self, data: str):
         """Send a Lua command to the game."""
@@ -50,8 +51,9 @@ class Client():
             self.s.sendall(data.encode(encoding='UTF-8'))
             data = self.s.recv(1024)
             received = str(data, "UTF-8")
-        except:
+        except OSError:
             print("ERROR: failed to send data to CMO server.")
+            raise
 
     def restart(self):
         """Restart client connection to the game."""
