@@ -16,18 +16,13 @@ Unit = collections.namedtuple("Unit", ['XML_ID', 'ID', 'Name', 'Side', 'DBID', '
                                         'CH', 'CS', 'CA', 'Lon', 'Lat', 'Mounts', 'Loadout'])
 # add fuel
 # Mount 
-Mount = collections.namedtuple("Mount", ["XML_ID", "ID", "Name", "Side", "DBID", "Weapons"])
+Mount = collections.namedtuple("Mount", ["XML_ID", "ID", "Name", "DBID", "Weapons"])
 # Loadout
-Loadout = collections.namedtuple("Loadout", ["XML_ID", "ID", "Name", "Side", "DBID", "Weapons"])
+Loadout = collections.namedtuple("Loadout", ["XML_ID", "ID", "Name", "DBID", "Weapons"])
 # Weapon
-Weapon = collections.namedtuple("Weapon", ["XML_ID", "ID", "Side", "WeaponID", "QuantRemaining"])
+Weapon = collections.namedtuple("Weapon", ["XML_ID", "ID", "WeaponID", "QuantRemaining"])
 # Contacts 
 Contact = collections.namedtuple("ContactInfo", ["XML_ID", "ID", 'CS', 'CA', 'Lon', 'Lat'])
-
-def features_from_game_(xml, side):
-    """Construct a Features object using data extracted from game."""
-    features = Features(xml, side)
-    return features
 
 class Features(object):    
     def __init__(self, xml: str, player_side: str):
@@ -47,7 +42,11 @@ class Features(object):
         self.player_side = player_side
         self.meta = self.get_meta() # Return the scenario-level rmation of the scenario
         self.units = self.get_side_units(player_side)
-        player_side_index = self.get_sides().index(player_side)
+        try:
+            player_side_index = self.get_sides().index(player_side)
+        except:
+            print('ERROR: Cannot find player side')
+            raise
         self.side_ = self.get_side_properties(player_side_index)
         self.contacts = self.get_contacts(player_side_index)
         
@@ -99,100 +98,79 @@ class Features(object):
             if not isinstance(self.scen_dic["Scenario"]["ActiveUnits"][key], list):
                 active_units = [self.scen_dic["Scenario"]["ActiveUnits"][key]]
             for i in range(len(active_units)):
-                if active_units[i]["Side"] == side_id_str:
-                    unit_id = active_units[i]['ID']
-                    name = active_units[i]['Name']
-                    dbid = active_units[i]['DBID']
-                    lon = active_units[i]['LonLR']
-                    lat = active_units[i]['LatLR']
-                    ch = None
-                    cs = None
-                    ca = None
-                    loadout = None
-                    mount = None
-                    if 'Loadout' in active_units[i].keys() and active_units[i]['Loadout'] != None:
-                        loadout = self.get_loadout(key, i)
-                    if 'Mounts' in active_units[i].keys() and active_units[i]['Mounts'] != None:
-                        mount = self.get_mount(key, i)
-                    if 'CH' in active_units[i].keys() and active_units[i]['CH'] != None:
-                        ch = active_units[i]['CH']
-                    if 'CS' in active_units[i].keys() and active_units[i]['CS'] != None:
-                        cs = active_units[i]['CS']
-                    if 'CA' in active_units[i].keys() and active_units[i]['CA'] != None:
-                        ca = active_units[i]['CA']
-                    unit_ids.append(Unit(i, unit_id, name, self.player_side, dbid, key, ch, cs, ca, lon, lat, mount, loadout))
+                try:
+                    if active_units[i]["Side"] == side_id_str:
+                        unit_id = active_units[i]['ID']
+                        name = active_units[i]['Name']
+                        dbid = active_units[i]['DBID']
+                        lon = active_units[i]['LonLR']
+                        lat = active_units[i]['LatLR']
+                        ch = None
+                        cs = None
+                        ca = None
+                        loadout = None
+                        mount = None
+                        if 'Loadout' in active_units[i].keys() and active_units[i]['Loadout'] != None:
+                            loadout = self.get_loadout(active_units[i])
+                        if 'Mounts' in active_units[i].keys() and active_units[i]['Mounts'] != None:
+                            mount = self.get_mount(active_units[i])
+                        if 'CH' in active_units[i].keys() and active_units[i]['CH'] != None:
+                            ch = active_units[i]['CH']
+                        if 'CS' in active_units[i].keys() and active_units[i]['CS'] != None:
+                            cs = active_units[i]['CS']
+                        if 'CA' in active_units[i].keys() and active_units[i]['CA'] != None:
+                            ca = active_units[i]['CA']
+                        unit_ids.append(Unit(i, unit_id, name, self.player_side, dbid, key, ch, cs, ca, lon, lat, mount, loadout))
+                except KeyError:
+                    pass                        
         return unit_ids
 
-    def get_mount(self, unit_type, unit_xml_id=None):
+    def get_mount(self, unit_xml):
         mounts = []
-        if unit_xml_id != None:
-            mount = self.scen_dic["Scenario"]["ActiveUnits"][unit_type][unit_xml_id]["Mounts"]["Mount"]
-        else:
-            mount = self.scen_dic["Scenario"]["ActiveUnits"][unit_type]["Mounts"]["Mount"]
-        if isinstance(mount, list): 
-            for i in range(len(mount)):
-                id = mount[i]["ID"]
-                name = mount[i]["Name"]
-                dbid = mount[i]["DBID"]
-                mounts.append(Mount(i, id, name, self.player_side, dbid, self.get_weapon('Mount', unit_type, unit_xml_id, i)))
-        else:
-            id = mount["ID"]
-            name = mount["Name"]
-            dbid = mount["DBID"]
-            mounts.append(Mount(0, id, name, self.player_side, dbid, self.get_weapon('Mount', unit_type, unit_xml_id)))
+        mount_xml = unit_xml["Mounts"]["Mount"]
+        if not isinstance(mount_xml, list):
+            mount_xml = [unit_xml["Mounts"]["Mount"]]
+        for i in range(len(mount_xml)):
+            mount_id = mount_xml[i]["ID"]
+            name = mount_xml[i]["Name"]
+            dbid = mount_xml[i]["DBID"]
+            mounts.append(Mount(i, mount_id, name, dbid, self.get_weapon('Mount', mount_xml[i])))
         return mounts      
 
-    def get_loadout(self, unit_type, unit_xml_id=None):
-        if unit_xml_id != None:
-            loadout = self.scen_dic["Scenario"]["ActiveUnits"][unit_type][unit_xml_id]["Loadout"]["Loadout"]
-        else:
-            loadout = self.scen_dic["Scenario"]["ActiveUnits"][unit_type]["Loadout"]["Loadout"]
-        id = loadout["ID"]
-        name = loadout["Name"]
-        dbid = loadout["DBID"]
-        return Loadout(0, id, name, self.player_side, dbid, self.get_weapon('Loadout', unit_type, unit_xml_id))
+    def get_loadout(self, unit_xml):
+        loadout_xml = unit_xml["Loadout"]["Loadout"]
+        loadout_id = loadout_xml["ID"]
+        name = loadout_xml["Name"]
+        dbid = loadout_xml["DBID"]
+        return Loadout(0, loadout_id, name, dbid, self.get_weapon('Loadout', loadout_xml))
     
-    def get_weapon(self, mount_or_loadout, unit_type, unit_xml_id=None, mount_id=None):
+    def get_weapon(self, mount_or_loadout: str, xml_str: str):
         weapons = []
         if mount_or_loadout == "Loadout":
-            if unit_xml_id != None:
-                loadout = self.scen_dic["Scenario"]["ActiveUnits"][unit_type][unit_xml_id]["Loadout"]["Loadout"]
-            else:
-                loadout = self.scen_dic["Scenario"]["ActiveUnits"][unit_type]["Loadout"]["Loadout"]
-            if loadout['Weaps'] == None:
+            if 'Weaps' not in xml_str.keys() or xml_str['Weaps'] == None:
                 return weapons
-            wrec = loadout['Weaps']['WRec']
+            wrec = xml_str['Weaps']['WRec']
+            if not isinstance(wrec, list):
+                wrec = [xml_str['Weaps']['WRec']]
             for i in range(len(wrec)):
-                try:
-                    weapons.append(Weapon(i, wrec[i]["ID"], self.player_side, wrec[i]['WeapID'], wrec[i]["CL"]))
-                except KeyError:
-                    weapons.append(Weapon(0, wrec["ID"], self.player_side, wrec['WeapID'], wrec["CL"]))
+                cl = None
+                if "CL" in wrec[i].keys():
+                    cl = wrec[i]["CL"]                
+                weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl))
             return weapons
         elif mount_or_loadout == "Mount":
-            if mount_id == None:
-                if unit_xml_id != None:
-                    mount = self.scen_dic["Scenario"]["ActiveUnits"][unit_type][unit_xml_id]["Mounts"]["Mount"]
-                else:
-                    mount = self.scen_dic["Scenario"]["ActiveUnits"][unit_type]["Mounts"]["Mount"]
-            else:
-                if unit_xml_id != None:
-                    mount = self.scen_dic["Scenario"]["ActiveUnits"][unit_type][unit_xml_id]["Mounts"]["Mount"][mount_id]
-                else:
-                    mount = self.scen_dic["Scenario"]["ActiveUnits"][unit_type]["Mounts"]["Mount"][mount_id]
-            if mount['MW'] == None:
+            if 'MW' not in xml_str.keys() or xml_str['MW'] == None:
                 return weapons
-            wrec = mount['MW']['WRec']
+            wrec = xml_str['MW']['WRec']
+            if not isinstance(wrec, list):
+                wrec = [xml_str['MW']['WRec']]
             for i in range(len(wrec)):
-                if isinstance(wrec, list):
-                    try:
-                        weapons.append(Weapon(i, wrec[i]["ID"], self.player_side, wrec[i]['WeapID'], wrec[i]["CL"]))
-                    except:
-                        pass
-                else:
-                    try:
-                        weapons.append(Weapon(0, wrec["ID"], self.player_side, wrec['WeapID'], wrec["CL"]))
-                    except:
-                        pass
+                cl = None
+                if "CL" in wrec[i].keys():
+                    cl = wrec[i]["CL"]
+                weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl))
+            return weapons
+        else:
             return weapons
 
     def get_contacts(self, side_id = 0) -> list:
@@ -229,6 +207,5 @@ class Features(object):
 
 # tests
 if __name__ == '__main__':
-    features = features_from_game_("C:\\Users\\minhh\\Documents\\MyProjects\\pycmo\\raw\\wooden_leg_w_contacts.xml", "Israel")
-    print(features.units['Aircraft'][0]['Lat'])
+    features = Features("E:\\MyProjects\\pycmo\\raw\\iron_hand.xml", "Russia")
     pass
