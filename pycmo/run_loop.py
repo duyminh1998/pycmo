@@ -14,12 +14,12 @@ def clean_up_steps(path: str):
     """Delete all the steps file (.xml) in the steps folder"""
     try:
         for step in os.listdir(path):
-            if step.endswith(".xml"):
+            if step.endswith('.xml'):
                 os.remove(os.path.join(path, step))
     except:
         print("ERROR: failed to clean up steps folder.")
 
-def run_loop(scen_file: str, player_side: str, server=False, config=None, agent=None):
+def run_loop(scen_file: str, player_side: str, step_size: list, server=False, config=None, agent=None):
     # config and set up, clean up steps folder
     steps_path = config["steps_path"]
     clean_up_steps(steps_path)
@@ -32,7 +32,7 @@ def run_loop(scen_file: str, player_side: str, server=False, config=None, agent=
         time.sleep(10)
     
     # build CMO environment
-    env = CMOEnv(config["observation_path"], ["01", "00", "00"], player_side, config["scen_ended"])
+    env = CMOEnv(config["observation_path"], step_size, player_side, config["scen_ended"])
     
     # initial variables and state
     scen_end = False
@@ -67,6 +67,8 @@ def run_loop(scen_file: str, player_side: str, server=False, config=None, agent=
 
         # reset loop
         #scen_end = True
+        if step_id % 10 == 0:
+            clean_up_steps(steps_path)
     
 
 if __name__ == '__main__':
@@ -80,4 +82,4 @@ if __name__ == '__main__':
 
     # initalize agent
     player_agent = RandomAgent()
-    run_loop(scen_file, player_side, config=config, agent=player_agent)
+    run_loop(scen_file, player_side, ["00", "00", "01"], config=config, agent=player_agent)
