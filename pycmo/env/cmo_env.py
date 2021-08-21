@@ -71,7 +71,7 @@ class CMOEnv():
     self.m = step_size[1]
     self.s = step_size[2]
 
-  def reset(self):
+  def reset(self) -> TimeStep:
     """Starts a new sequence and returns the first `TimeStep` of this sequence.
 
     Returns:
@@ -136,14 +136,14 @@ class CMOEnv():
     discount = 0    
     return TimeStep(step_id, StepType(2), 0, 0, observation)
 
-  def get_obs(self, step_id):
+  def get_obs(self, step_id) -> features.Features:
       """Returns the observation at a particular timestep"""
       data = "--script \nfile = io.open('{}', 'w') \n".format(self.step_dest + str(step_id) + '.xml')
       data += "io.output(file) \ntheXML = ScenEdit_ExportScenarioToXML()\nio.write(theXML) \nio.close(file)"
       self.client.send(data)
       return features.Features(os.path.join(self.step_dest, str(step_id) + ".xml"), self.player_side)
     
-  def get_timestep(self, step_id):
+  def get_timestep(self, step_id) -> TimeStep:
     observation = self.get_obs(step_id)
     reward = observation.side_.TotalScore
     discount = 0
@@ -166,9 +166,9 @@ class CMOEnv():
     """Close the client connection and the environment"""
     self.client.end_connection()
 
-  def action_spec(self, observation):
-      """Returns the available actions given an observation"""
-      return actions.AvailableFunctions(observation)
+  def action_spec(self, observation) -> actions.AvailableFunctions:
+    """Returns the available actions given an observation"""
+    return actions.AvailableFunctions(observation)
 
   def __enter__(self):
     """Allows the environment to be used in a with-statement context."""
