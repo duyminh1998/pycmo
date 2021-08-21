@@ -55,6 +55,13 @@ A named tuple containing information about a particular side.
 ##### Weapon
 
 ##### Contact
+A named tuple containing information about a contact from the perspective of the player's side.
+`XML_ID`: the index of the contact within the scenario XML file  
+`ID`: the in-game ID of the contact  
+`CS`: the contact's current speed, if known  
+`CA`: the contact's current altitude, if known  
+`Lon`: the contact's current longitude, if known  
+`Lat`: the contact's current latitude, if known
 
 ### Actions
 
