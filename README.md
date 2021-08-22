@@ -21,6 +21,15 @@ EncodingMode = 8
 2. Click on "Clone or download", and then "Download Zip". 
 3. Unzip the repo anywhere.
 4. Navigate to "pycmo". Then, install the repository using `pip install .`
+5. Configure the project's `config.json` file to fit your system's paths. Do not change the amount of parentheses that are present in each entry!
+```json
+{
+    "command_path": "C:\\Program Files (x86)\\Command Professional Edition 2\\",
+    "observation_path": "C:\\\\Users\\\\AFSOC A8XW ORSA\\\\Documents\\\\Python Proj\\\\AI\\\\pycmo\\\\raw\\\\steps\\\\",
+    "scen_ended": "C:\\\\Users\\\\AFSOC A8XW ORSA\\\\Documents\\\\Python Proj\\\\AI\\\\pycmo\\\\pycmo\\\\configs\\\\scen_has_ended.txt",
+    "command_cli_output_path": "C:\\ProgramData\\Command Professional Edition 2\\Analysis_Int"
+}
+```
 
 ## Run an agent
 1. Open a terminal within the game's directory and load a scenario in Interactive mode. For example, 
