@@ -21,6 +21,6 @@ if __name__ == "__main__":
     step_size = ["00", "01", "00"]
 
     # initalize agent
-    # player_agent = RuleBasedAgent('wooden_leg', player_side)
-    player_agent = RandomAgent('wooden_leg', player_side)
-    main(player_side, step_size, config=config, agent=RandomAgent('wooden_leg', player_side))
+    player_agent = RuleBasedAgent('wooden_leg', player_side)
+    # player_agent = RandomAgent('wooden_leg', player_side)
+    main(player_side, step_size, config=config, agent=player_agent)
