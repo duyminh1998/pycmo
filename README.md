@@ -36,7 +36,7 @@ EncodingMode = 8
 ```
 ./CommandCLI.exe -mode I -scenfile "C:\ProgramData\Command Professional Edition 2\Scenarios\Standalone Scenarios\Wooden Leg, 1985.scen" -outputfolder "C:\ProgramData\Command Professional Edition 2\Analysis_Int"
 ```
-2. Call `pycmo.run_loop.py` to run the main loop.
+2. Call `python pycmo/bin/agent.py` to run the main loop. Change the file's settings to try out different agents.
 
 # Environment Details
 For a full description of the specifics of how the environment is configured, the observations and action spaces work read the [environment documentation](https://github.com/duyminh1998/pycmo/blob/main/docs/environment.md).
