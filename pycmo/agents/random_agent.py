@@ -5,10 +5,11 @@
 import random
 
 class RandomAgent():
-    def __init__(self):
-        pass
+    def __init__(self, scenario, player_side):
+        self.scenario = scenario
+        self.player_side = player_side
 
-    def get_action(self, VALID_FUNCTIONS):
+    def get_action(self, observation, VALID_FUNCTIONS):
         function = random.choice(VALID_FUNCTIONS)
         if function.id == 0: # no-op
             return '--script \nTool_EmulateNoConsole(true)'

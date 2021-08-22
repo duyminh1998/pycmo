@@ -1,8 +1,3 @@
-Refactor features.py, cmo_env.pt, actions.py
-    change features.py so that we don't automatically get meta, units everytime
-    code transform_obs to flatten observation into something agents can consume
-    merge Features.get_meta and Features.get_side_properties
-    rewrite actions.py
 Continue development on run_loop.py
 Finish documenting environment.md and README.md
-Build out agents
+Build out agents (AlphaStar)

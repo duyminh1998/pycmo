@@ -1,5 +1,5 @@
 # Author: Minh Hua
-# Date: 08/16/2021
+# Date: 08/21/2021
 # Purpose: A rule-based agent for playing the game Command Modern Operations.
 
 import random

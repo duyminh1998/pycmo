@@ -27,7 +27,7 @@ def print_env_information(step_id, current_time, final_move, current_score, curr
     print("Action: {}".format(final_move))
     print("Current scenario score: {} \nCurrent reward: {}\n".format(current_score, current_reward))
 
-def run_loop(player_side: str, step_size: list, server=False, scen_file=None, config=None, agent=None):
+def run_loop(player_side: str, step_size: list, max_steps=None, server=False, scen_file=None, config=None, agent=None):
     # config and set up, clean up steps folder
     steps_path = config["observation_path"]
     clean_up_steps(steps_path)
@@ -50,8 +50,11 @@ def run_loop(player_side: str, step_size: list, server=False, scen_file=None, co
     cur_time = ticks_to_unix(initial_state.observation.meta.Time)
     print(parse_datetime(int(initial_state.observation.meta.Time)))
 
+    if max_steps == None:
+        max_steps = 1000
+
     # main loop
-    while not (env.check_game_ended() or (step_id > 100)):
+    while not (env.check_game_ended() or (step_id > max_steps)):
         # get old state
         state_old = env.get_timestep(step_id)
         cur_time = ticks_to_unix(state_old.observation.meta.Time)
