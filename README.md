@@ -21,8 +21,8 @@ EncodingMode = 8
 2. Click on "Clone or download", and then "Download Zip". 
 3. Unzip the repo anywhere.
 4. Navigate to "pycmo". Then, install the repository using `pip install .`
-5. Configure the project's `config.json` file to fit your system's paths. Do not change the amount of parentheses that are present in each entry!
-```json
+5. Configure the project's `config.py` file to fit your system's paths. Do not change the amount of parentheses that are present in each entry!
+```python
 {
     "command_path": "C:\\Program Files (x86)\\Command Professional Edition 2\\",
     "observation_path": "C:\\\\Users\\\\AFSOC A8XW ORSA\\\\Documents\\\\Python Proj\\\\AI\\\\pycmo\\\\raw\\\\steps\\\\",
