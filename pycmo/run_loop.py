@@ -4,6 +4,7 @@
 
 from lib.protocol import Server
 from agents.random_agent import RandomAgent
+from agents.rule_based_agent import RuleBasedAgent
 from env.cmo_env import CMOEnv
 import threading, time
 from lib.tools import *
@@ -57,7 +58,7 @@ def run_loop(player_side: str, step_size: list, server=False, scen_file=None, co
 
         # perform random actions or choose the action
         available_actions = env.action_spec(state_old.observation)
-        final_move = player_agent.get_action(available_actions.VALID_FUNCTIONS)
+        final_move = player_agent.get_action(state_old.observation, available_actions.VALID_FUNCTIONS)
 
         # get new state and observation, rewards, discount
         step_id += 1
@@ -81,8 +82,8 @@ if __name__ == '__main__':
     # scenario file and player side
     scen_file = "C:\\ProgramData\\Command Professional Edition 2\\Scenarios\\Standalone Scenarios\\Wooden Leg, 1985.scen"
     player_side = "Israel"
-    step_size = ["00", "10", "00"]
+    step_size = ["00", "01", "00"]
 
     # initalize agent
-    player_agent = RandomAgent()
+    player_agent = RuleBasedAgent('wooden_leg', player_side)
     run_loop(player_side, step_size, config=config, agent=player_agent)

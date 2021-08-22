@@ -13,7 +13,7 @@ Game = collections.namedtuple("Game", ["TimelineID", "Time", "ScenarioName", "Ze
 Side = collections.namedtuple("Side", ['ID', 'Name', 'TotalScore'])
 # Unit 
 Unit = collections.namedtuple("Unit", ['XML_ID', 'ID', 'Name', 'Side', 'DBID', 'Type',
-                                        'CH', 'CS', 'CA', 'Lon', 'Lat', 'Mounts', 'Loadout'])
+                                        'CH', 'CS', 'CA', 'Lon', 'Lat', 'CurrentFuel', 'MaxFuel', 'Mounts', 'Loadout'])
 # add fuel
 # Mount 
 Mount = collections.namedtuple("Mount", ["XML_ID", "ID", "Name", "DBID", "Weapons"])
@@ -111,6 +111,8 @@ class Features(object):
                         ca = None
                         loadout = None
                         mount = None
+                        cf = None
+                        mf = None
                         if 'Loadout' in active_units[i].keys() and active_units[i]['Loadout'] != None:
                             loadout = self.get_loadout(active_units[i])
                         if 'Mounts' in active_units[i].keys() and active_units[i]['Mounts'] != None:
@@ -121,7 +123,10 @@ class Features(object):
                             cs = active_units[i]['CS']
                         if 'CA' in active_units[i].keys() and active_units[i]['CA'] != None:
                             ca = active_units[i]['CA']
-                        unit_ids.append(Unit(i, unit_id, name, self.player_side, dbid, key, ch, cs, ca, lon, lat, mount, loadout))
+                        if 'Fuel' in active_units[i].keys():
+                            cf = active_units[i]['Fuel']['FuelRec']['CQ']
+                            mf = active_units[i]['Fuel']['FuelRec']['MQ']
+                        unit_ids.append(Unit(i, unit_id, name, self.player_side, dbid, key, ch, cs, ca, lon, lat, cf, mf, mount, loadout))
                 except KeyError:
                     pass                        
         return unit_ids
