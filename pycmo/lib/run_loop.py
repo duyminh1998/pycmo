@@ -2,14 +2,14 @@
 # Date: 08/16/2021
 # Purpose: A run loop for agent/environment interaction.
 
-from lib.protocol import Server
-from agents.random_agent import RandomAgent
-from agents.rule_based_agent import RuleBasedAgent
-from env.cmo_env import CMOEnv
+from pycmo.lib.protocol import Server
+from pycmo.agents.random_agent import RandomAgent
+from pycmo.agents.rule_based_agent import RuleBasedAgent
+from pycmo.env.cmo_env import CMOEnv
 import threading, time
-from lib.tools import *
-import json
+from pycmo.lib.tools import *
 import os
+from pycmo.configs import config
 
 def clean_up_steps(path: str):
     """Delete all the steps file (.xml) in the steps folder"""
@@ -27,7 +27,7 @@ def print_env_information(step_id, current_time, final_move, current_score, curr
     print("Action: {}".format(final_move))
     print("Current scenario score: {} \nCurrent reward: {}\n".format(current_score, current_reward))
 
-def run_loop(player_side: str, step_size: list, max_steps=None, server=False, scen_file=None, config=None, agent=None):
+def run_loop(player_side: str, step_size: list, config, agent=None, max_steps=None, server=False, scen_file=None):
     # config and set up, clean up steps folder
     steps_path = config["observation_path"]
     clean_up_steps(steps_path)
@@ -50,6 +50,7 @@ def run_loop(player_side: str, step_size: list, max_steps=None, server=False, sc
     cur_time = ticks_to_unix(initial_state.observation.meta.Time)
     print(parse_datetime(int(initial_state.observation.meta.Time)))
 
+    # Configure a limit for the maximum number of steps
     if max_steps == None:
         max_steps = 1000
 
@@ -61,7 +62,10 @@ def run_loop(player_side: str, step_size: list, max_steps=None, server=False, sc
 
         # perform random actions or choose the action
         available_actions = env.action_spec(state_old.observation)
-        final_move = player_agent.get_action(state_old.observation, available_actions.VALID_FUNCTIONS)
+        if agent != None:
+            final_move = agent.get_action(state_old.observation, available_actions.VALID_FUNCTIONS)
+        else:
+            final_move = '--script \nTool_EmulateNoConsole(true)' # No action if no agent is loaded
 
         # get new state and observation, rewards, discount
         step_id += 1
@@ -79,8 +83,7 @@ def run_loop(player_side: str, step_size: list, max_steps=None, server=False, sc
 
 if __name__ == '__main__':
     # open config
-    f = open("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\pycmo\\configs\\config.json")
-    config = json.load(f)
+    config = config.get_config()
 
     # scenario file and player side
     scen_file = "C:\\ProgramData\\Command Professional Edition 2\\Scenarios\\Standalone Scenarios\\Wooden Leg, 1985.scen"
@@ -88,5 +91,6 @@ if __name__ == '__main__':
     step_size = ["00", "01", "00"]
 
     # initalize agent
-    player_agent = RuleBasedAgent('wooden_leg', player_side)
+    # player_agent = RuleBasedAgent('wooden_leg', player_side)
+    player_agent = RandomAgent('wooden_leg', player_side)
     run_loop(player_side, step_size, config=config, agent=player_agent)

@@ -5,11 +5,10 @@
 # imports
 import socket
 import subprocess
-import json
+from pycmo.configs import config
 
 # open config
-f = open("C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\pycmo\\configs\\config.json")
-config = json.load(f)
+config = config.get_config()
 
 class Server():
     def __init__(self, scenario: str):

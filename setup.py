@@ -17,7 +17,8 @@ setup(
         'pycmo.agents',
         'pycmo.bin',
         'pycmo.env',
-        'pycmo.lib'
+        'pycmo.lib',
+        'pycmo.configs'
     ],
     install_requires=[
         'numpy>=1.10',

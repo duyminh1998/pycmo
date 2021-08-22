@@ -84,7 +84,7 @@ class Features(object):
         try:
             return Side(self.scen_dic['Scenario']['Sides']['Side'][side_id]['ID'],
                             self.scen_dic['Scenario']['Sides']['Side'][side_id]['Name'],
-                            self.scen_dic['Scenario']['Sides']['Side'][side_id]['TotalScore'])
+                            int(self.scen_dic['Scenario']['Sides']['Side'][side_id]['TotalScore']))
         except KeyError:
             print("ERROR: failed to get side properties.")
             raise
@@ -104,8 +104,8 @@ class Features(object):
                         unit_id = active_units[i]['ID']
                         name = active_units[i]['Name']
                         dbid = active_units[i]['DBID']
-                        lon = active_units[i]['LonLR']
-                        lat = active_units[i]['LatLR']
+                        lon = float(active_units[i]['LonLR'])
+                        lat = float(active_units[i]['LatLR'])
                         ch = None
                         cs = None
                         ca = None
@@ -120,12 +120,12 @@ class Features(object):
                         if 'CH' in active_units[i].keys() and active_units[i]['CH'] != None:
                             ch = active_units[i]['CH']
                         if 'CS' in active_units[i].keys() and active_units[i]['CS'] != None:
-                            cs = active_units[i]['CS']
+                            cs = float(active_units[i]['CS'])
                         if 'CA' in active_units[i].keys() and active_units[i]['CA'] != None:
-                            ca = active_units[i]['CA']
+                            ca = float(active_units[i]['CA'])
                         if 'Fuel' in active_units[i].keys():
-                            cf = active_units[i]['Fuel']['FuelRec']['CQ']
-                            mf = active_units[i]['Fuel']['FuelRec']['MQ']
+                            cf = float(active_units[i]['Fuel']['FuelRec']['CQ'])
+                            mf = float(active_units[i]['Fuel']['FuelRec']['MQ'])
                         unit_ids.append(Unit(i, unit_id, name, self.player_side, dbid, key, ch, cs, ca, lon, lat, cf, mf, mount, loadout))
                 except KeyError:
                     pass                        
@@ -161,7 +161,7 @@ class Features(object):
             for i in range(len(wrec)):
                 cl = None
                 if "CL" in wrec[i].keys():
-                    cl = wrec[i]["CL"]                
+                    cl = int(wrec[i]["CL"])               
                 weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl))
                 self.avai_weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl))
             return weapons
@@ -174,7 +174,7 @@ class Features(object):
             for i in range(len(wrec)):
                 cl = None
                 if "CL" in wrec[i].keys():
-                    cl = wrec[i]["CL"]
+                    cl = int(wrec[i]["CL"])
                 weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl))
                 self.avai_weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl))
             return weapons
@@ -195,13 +195,13 @@ class Features(object):
                     lon = None
                     lat = None
                     if 'CS' in contacts[i].keys() and contacts[i]['CS'] != None:
-                        cs = contacts[i]['CS']
+                        cs = float(contacts[i]['CS'])
                     if 'CA' in contacts[i].keys() and contacts[i]['CA'] != None:
-                        ca = contacts[i]['CA']
+                        ca = float(contacts[i]['CA'])
                     if 'Lon' in contacts[i].keys() and contacts[i]['Lon'] != None:
-                        lon = contacts[i]['Lon']
+                        lon = float(contacts[i]['Lon'])
                     if 'Lat' in contacts[i].keys() and contacts[i]['Lat'] != None:
-                        lat = contacts[i]['Lat']                        
+                        lat = float(contacts[i]['Lat'])
                     contact_id.append(Contact(i, contacts[i]["ID"], cs, ca, lon, lat))
                 return contact_id
             else:
@@ -212,8 +212,3 @@ class Features(object):
         except:
             print("ERROR: failed to get side contacts.")
             return contact_id
-
-# tests
-if __name__ == '__main__':
-    features = Features("E:\\MyProjects\\pycmo\\raw\\iron_hand.xml", "Russia")
-    pass

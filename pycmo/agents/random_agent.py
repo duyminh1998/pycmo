@@ -14,12 +14,15 @@ class RandomAgent():
         if function.id == 0: # no-op
             return '--script \nTool_EmulateNoConsole(true)'
         args = []
-        for arg, arg_type in zip(function.args, function.arg_types):
-            if arg_type == "EnumChoice":
-                args.append(random.choice(arg))
-            elif arg_type == "Range":
-                args.append(random.uniform(arg[0], arg[-1]))
         try:
+            for arg, arg_type in zip(function.args, function.arg_types):
+                if arg_type == "EnumChoice":
+                    args.append(random.choice(arg))
+                elif arg_type == "Range":
+                    args.append(random.uniform(arg[0], arg[-1]))
             return function.corresponding_def(*args)
+        except IndexError:
+            print("IndexError: unable to construct function action. Defaulting to no action.")
+            return "--script \nTool_EmulateNoConsole(true)" # no-op
         except: # no-op
             return "--script \nTool_EmulateNoConsole(true)"

@@ -80,7 +80,7 @@ class CMOEnv():
         step_type: A `StepType` of `FIRST`.
         reward: Zero.
         discount: Zero.
-        observation: 
+        observation: A Features object containing information about the scenario.
     """
     f = open(self.scen_ended, 'w')
     f.write('False')
@@ -108,7 +108,7 @@ class CMOEnv():
         step_type: A `StepType` value.
         reward: Reward at this timestep.
         discount: A discount in the range [0, 1].
-        observation:
+        observation: A Features object containing information about the scenario.
     """      
     # send the agent's action
     if action != None:
@@ -144,6 +144,7 @@ class CMOEnv():
       return features.Features(os.path.join(self.step_dest, str(step_id) + ".xml"), self.player_side)
     
   def get_timestep(self, step_id) -> TimeStep:
+    """Return the TimeStep at a particular step id"""
     observation = self.get_obs(step_id)
     reward = observation.side_.TotalScore
     discount = 0
