@@ -30,10 +30,13 @@ class Server():
         pass
 
 class Client():
-    def __init__(self):
+    def __init__(self, port=None):
         """Wrapper for a client that can send commands to Command Modern Operations via a TCP/IP port."""
         self.host = "localhost"
-        self.port = 7777
+        if port == None:
+            self.port = 7777
+        else:
+            self.port = port
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
     def connect(self):

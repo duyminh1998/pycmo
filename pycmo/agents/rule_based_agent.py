@@ -2,8 +2,6 @@
 # Date: 08/21/2021
 # Purpose: A rule-based agent for playing the game Command Modern Operations.
 
-import random
-
 scenario_id = {
     'brass_drum': 0,
     'english_jets_over_uganda': 1,
