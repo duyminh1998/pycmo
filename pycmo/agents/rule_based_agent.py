@@ -38,7 +38,7 @@ class RuleBasedAgent():
             self.current_f15 = 0
             self.f15_status = {}
             for fighter in self.f15s:
-                self.f15_status[fighter] = [False, False, False, False, False]
+                self.f15_status[fighter] = [False, False]
 
     def get_action(self, observation, VALID_FUNCTIONS):
         if scenario_id[self.scenario] == 10: # wooden leg
@@ -49,23 +49,17 @@ class RuleBasedAgent():
                         action = VALID_FUNCTIONS[1].corresponding_def(self.player_side, unit.Name, 'true')
                         self.f15_status[unit.ID][0] = True
                         return action
-            # refuel
-            for unit in observation.units:
-                if unit.ID == self.f15s[self.current_f15]:
-                    if self.f15_status[unit.ID][0] and not self.f15_status[unit.ID][1]:
-                        action = VALID_FUNCTIONS[7].corresponding_def(self.player_side, unit.Name)
-                        self.f15_status[unit.ID][1] = True
-                        return action
+            
             # strike targets
             for unit in observation.units:
                 if unit.ID == self.f15s[self.current_f15]:
-                    if self.f15_status[unit.ID][1] and (float(unit.MaxFuel) - float(unit.CurrentFuel)) < 100 and len(observation.contacts) > 1 and observation.contacts[0].ID in self.targets:
-                        action = VALID_FUNCTIONS[4].corresponding_def(unit.ID, observation.contacts[0].ID)
-                        self.f15_status[unit.ID][2] = True
-                        return action
-            # refuel
-
-            # rtb
+                    if self.f15_status[unit.ID][0] and not self.f15_status[unit.ID][1]:
+                        for contact in observation.contacts:
+                            if contact.Name.split(" ")[0] == "[Target]":
+                                action = VALID_FUNCTIONS[4].corresponding_def(unit.ID, contact.ID)
+                                self.f15_status[unit.ID][1] = True
+                                self.current_f15 += 1
+                                return action            
             return VALID_FUNCTIONS[0].corresponding_def()
         else:
             return VALID_FUNCTIONS[0].corresponding_def()

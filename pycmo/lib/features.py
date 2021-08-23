@@ -22,7 +22,7 @@ Loadout = collections.namedtuple("Loadout", ["XML_ID", "ID", "Name", "DBID", "We
 # Weapon
 Weapon = collections.namedtuple("Weapon", ["XML_ID", "ID", "WeaponID", "QuantRemaining"])
 # Contacts 
-Contact = collections.namedtuple("ContactInfo", ["XML_ID", "ID", 'CS', 'CA', 'Lon', 'Lat'])
+Contact = collections.namedtuple("ContactInfo", ["XML_ID", "ID", 'Name', 'CS', 'CA', 'Lon', 'Lat'])
 
 class Features(object):    
     def __init__(self, xml: str, player_side: str):
@@ -194,6 +194,7 @@ class Features(object):
                     ca = None
                     lon = None
                     lat = None
+                    cont_name = None
                     if 'CS' in contacts[i].keys() and contacts[i]['CS'] != None:
                         cs = float(contacts[i]['CS'])
                     if 'CA' in contacts[i].keys() and contacts[i]['CA'] != None:
@@ -202,7 +203,9 @@ class Features(object):
                         lon = float(contacts[i]['Lon'])
                     if 'Lat' in contacts[i].keys() and contacts[i]['Lat'] != None:
                         lat = float(contacts[i]['Lat'])
-                    contact_id.append(Contact(i, contacts[i]["ID"], cs, ca, lon, lat))
+                    if 'Name' in contacts[i].keys() and contacts[i]['Name'] != None:
+                        cont_name = contacts[i]['Name']
+                    contact_id.append(Contact(i, contacts[i]["ID"], cont_name, cs, ca, lon, lat))
                 return contact_id
             else:
                 return contact_id

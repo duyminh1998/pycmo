@@ -4,6 +4,7 @@
 
 from pycmo.lib.protocol import Server
 from pycmo.env.cmo_env import CMOEnv
+from pycmo.agents.rule_based_agent import RuleBasedAgent
 import threading, time
 from pycmo.lib.tools import *
 import os
@@ -77,3 +78,18 @@ def run_loop(player_side: str, step_size: list, config, agent=None, max_steps=No
         if step_id % 10 == 0:
             clean_up_steps(steps_path)
     clean_up_steps(steps_path)
+
+# for debugging
+if __name__ == "__main__":
+    # open config
+    config = config.get_config()
+
+    # scenario file and player side
+    scen_file = "C:\\ProgramData\\Command Professional Edition 2\\Scenarios\\Standalone Scenarios\\Wooden Leg, 1985.scen"
+    player_side = "Israel"
+    step_size = ["00", "05", "00"]
+
+    # initalize agent
+    player_agent = RuleBasedAgent('wooden_leg', player_side)
+    # player_agent = RandomAgent('wooden_leg', player_side)
+    run_loop(player_side, step_size, config=config, agent=player_agent)

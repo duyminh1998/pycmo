@@ -18,7 +18,7 @@ if __name__ == "__main__":
     # scenario file and player side
     scen_file = "C:\\ProgramData\\Command Professional Edition 2\\Scenarios\\Standalone Scenarios\\Wooden Leg, 1985.scen"
     player_side = "Israel"
-    step_size = ["00", "01", "00"]
+    step_size = ["00", "05", "00"]
 
     # initalize agent
     player_agent = RuleBasedAgent('wooden_leg', player_side)
