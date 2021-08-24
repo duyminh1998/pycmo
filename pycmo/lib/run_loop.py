@@ -77,7 +77,7 @@ def run_loop(player_side: str, step_size: list, config, agent=None, max_steps=No
 
         if step_id % 10 == 0:
             clean_up_steps(steps_path)
-    clean_up_steps(steps_path)
+    #clean_up_steps(steps_path)
 
 # for debugging
 if __name__ == "__main__":

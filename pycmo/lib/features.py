@@ -20,7 +20,7 @@ Mount = collections.namedtuple("Mount", ["XML_ID", "ID", "Name", "DBID", "Weapon
 # Loadout
 Loadout = collections.namedtuple("Loadout", ["XML_ID", "ID", "Name", "DBID", "Weapons"])
 # Weapon
-Weapon = collections.namedtuple("Weapon", ["XML_ID", "ID", "WeaponID", "QuantRemaining"])
+Weapon = collections.namedtuple("Weapon", ["XML_ID", "ID", "WeaponID", "QuantRemaining", "MaxQuant"])
 # Contacts 
 Contact = collections.namedtuple("ContactInfo", ["XML_ID", "ID", 'Name', 'CS', 'CA', 'Lon', 'Lat'])
 
@@ -160,10 +160,13 @@ class Features(object):
                 wrec = [xml_str['Weaps']['WRec']]
             for i in range(len(wrec)):
                 cl = None
+                ml = None
                 if "CL" in wrec[i].keys():
-                    cl = int(wrec[i]["CL"])               
-                weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl))
-                self.avai_weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl))
+                    cl = int(wrec[i]["CL"])
+                if "ML" in wrec[i].keys():
+                    ml = int(wrec[i]["ML"])            
+                weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl, ml))
+                self.avai_weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl, ml))
             return weapons
         elif mount_or_loadout == "Mount":
             if 'MW' not in xml_str.keys() or xml_str['MW'] == None:
@@ -173,10 +176,13 @@ class Features(object):
                 wrec = [xml_str['MW']['WRec']]
             for i in range(len(wrec)):
                 cl = None
+                ml = None
                 if "CL" in wrec[i].keys():
                     cl = int(wrec[i]["CL"])
-                weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl))
-                self.avai_weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl))
+                if "ML" in wrec[i].keys():
+                    ml = int(wrec[i]["ML"])                    
+                weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl, ml))
+                self.avai_weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl, ml))
             return weapons
         else:
             return weapons

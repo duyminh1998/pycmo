@@ -33,8 +33,7 @@ class RuleBasedAgent():
                     'dbbf1f2f-cdf7-4379-83ae-a8f1e3311621',
                     'f4e92c78-b6ab-4634-a034-2445b8e830af',
                     '421f05aa-d3f8-4cd2-bac7-adac542a5cf6']
-            self.targets = ['TDDJRS-0HMB0T156BC3O', 'TDDJRS-0HMB0T156BC10', 'TDDJRS-0HMB0T156BC15', 'TDDJRS-0HMB0T156BC16', 'TDDJRS-0HMB0T156BC3Q',
-                            'TDDJRS-0HMB0T156BC3P']
+            self.targets_assigned_f15 = {}
             self.current_f15 = 0
             self.f15_status = {}
             for fighter in self.f15s:
@@ -42,24 +41,48 @@ class RuleBasedAgent():
 
     def get_action(self, observation, VALID_FUNCTIONS):
         if scenario_id[self.scenario] == 10: # wooden leg
-            # launch F-15s
-            for unit in observation.units:
-                if unit.ID == self.f15s[self.current_f15]:
-                    if not self.f15_status[unit.ID][0] and int(unit.CA) <= 60:
-                        action = VALID_FUNCTIONS[1].corresponding_def(self.player_side, unit.Name, 'true')
-                        self.f15_status[unit.ID][0] = True
-                        return action
-            
-            # strike targets
-            for unit in observation.units:
-                if unit.ID == self.f15s[self.current_f15]:
-                    if self.f15_status[unit.ID][0] and not self.f15_status[unit.ID][1]:
-                        for contact in observation.contacts:
-                            if contact.Name.split(" ")[0] == "[Target]":
-                                action = VALID_FUNCTIONS[4].corresponding_def(unit.ID, contact.ID)
-                                self.f15_status[unit.ID][1] = True
+            try:
+                # launch F-15s
+                for unit in observation.units:
+                    if unit.ID == self.f15s[self.current_f15]:
+                        if not self.f15_status[unit.ID][0]:
+                            action = VALID_FUNCTIONS[1].corresponding_def(self.player_side, unit.Name, 'true')
+                            self.f15_status[unit.ID][0] = True
+                            return action
+
+                # strike targets
+                for unit in observation.units:
+                    if unit.ID == self.f15s[self.current_f15]:
+                        if self.f15_status[unit.ID][0] and not self.f15_status[unit.ID][1]:
+                            for contact in observation.contacts:
+                                if contact.Name.split(" ")[0] == "[Target]" and contact.Name not in self.targets_assigned_f15.keys():
+                                    action = VALID_FUNCTIONS[4].corresponding_def(unit.ID, contact.ID)
+                                    self.f15_status[unit.ID][1] = True
+                                    self.targets_assigned_f15[contact.Name] = unit.ID
+                                    return action
+                
+                # check if striked
+                for unit in observation.units:
+                    if unit.ID == self.f15s[self.current_f15] and self.f15_status[unit.ID][1]:
+                        for mount in unit.Mounts:
+                            for unit_weapon in mount.Weapons:
+                                if unit_weapon.QuantRemaining < unit_weapon.MaxQuant:
+                                    for target, striker in zip(self.targets_assigned_f15.keys(), self.targets_assigned_f15.values()):
+                                        if striker == unit.ID:
+                                            del self.targets_assigned_f15[target]
+                                            break
+                                    self.current_f15 += 1
+                                    return VALID_FUNCTIONS[0].corresponding_def()
+                        for unit_weapon in unit.Loadout.Weapons:
+                            if unit_weapon.QuantRemaining < unit_weapon.MaxQuant:
+                                for target, striker in zip(self.targets_assigned_f15.keys(), self.targets_assigned_f15.values()):
+                                    if striker == unit.ID:
+                                        del self.targets_assigned_f15[target]
+                                        break
                                 self.current_f15 += 1
-                                return action            
-            return VALID_FUNCTIONS[0].corresponding_def()
+                                return VALID_FUNCTIONS[0].corresponding_def()               
+                return VALID_FUNCTIONS[0].corresponding_def()
+            except:
+                return VALID_FUNCTIONS[0].corresponding_def()
         else:
             return VALID_FUNCTIONS[0].corresponding_def()
