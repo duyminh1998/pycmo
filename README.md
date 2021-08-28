@@ -21,7 +21,7 @@ EncodingMode = 8
 2. Click on "Clone or download", and then "Download Zip". 
 3. Unzip the repo anywhere.
 4. Navigate to "pycmo". Then, install the repository using `pip install .`
-5. Configure the project's `config.py` file to fit your system's paths. Do not change the amount of parentheses that are present in each entry!
+5. Configure the project's `config.py` file to fit your system's paths. Do not change the amount of parentheses that are present in each entry as that could mess up its usage!
 ```python
 {
     "command_path": "C:\\Program Files (x86)\\Command Professional Edition 2\\",
@@ -32,9 +32,13 @@ EncodingMode = 8
 ```
 
 ## Run an agent
-1. Open a terminal within the game's directory and load a scenario in Interactive mode. For example, 
+1a. Open a terminal within the game's directory and load a scenario in Interactive mode. For example, 
 ```
 ./CommandCLI.exe -mode I -scenfile "C:\ProgramData\Command Professional Edition 2\Scenarios\Standalone Scenarios\Wooden Leg, 1985.scen" -outputfolder "C:\ProgramData\Command Professional Edition 2\Analysis_Int"
+```
+1b. Alternatively, open a terminal anywhere and call `start_server.py` to start a scenario in Interactive mode. The path to the scenario must be supplied, e.g.
+```
+python pycmo/lib/start_server.py "C:\ProgramData\Command Professional Edition 2\Scenarios\Standalone Scenarios\Wooden Leg, 1985.scen"
 ```
 2. Call `python pycmo/bin/agent.py` to run the main loop. Change the file's settings to try out different agents.
 
