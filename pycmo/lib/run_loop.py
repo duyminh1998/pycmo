@@ -5,6 +5,7 @@
 from pycmo.lib.protocol import Server
 from pycmo.env.cmo_env import CMOEnv
 from pycmo.agents.rule_based_agent import RuleBasedAgent
+from pycmo.agents.scripted_agent import ScriptedAgent
 import threading, time
 from pycmo.lib.tools import *
 import os
@@ -87,9 +88,9 @@ if __name__ == "__main__":
     # scenario file and player side
     scen_file = "C:\\ProgramData\\Command Professional Edition 2\\Scenarios\\Standalone Scenarios\\Wooden Leg, 1985.scen"
     player_side = "Israel"
-    step_size = ["00", "05", "00"]
+    step_size = ["00", "01", "00"]
 
     # initalize agent
-    player_agent = RuleBasedAgent('wooden_leg', player_side)
+    player_agent = ScriptedAgent('wooden_leg', player_side)
     # player_agent = RandomAgent('wooden_leg', player_side)
     run_loop(player_side, step_size, config=config, agent=player_agent)

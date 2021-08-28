@@ -14,7 +14,6 @@ Side = collections.namedtuple("Side", ['ID', 'Name', 'TotalScore'])
 # Unit 
 Unit = collections.namedtuple("Unit", ['XML_ID', 'ID', 'Name', 'Side', 'DBID', 'Type',
                                         'CH', 'CS', 'CA', 'Lon', 'Lat', 'CurrentFuel', 'MaxFuel', 'Mounts', 'Loadout'])
-# add fuel
 # Mount 
 Mount = collections.namedtuple("Mount", ["XML_ID", "ID", "Name", "DBID", "Weapons"])
 # Loadout
@@ -132,6 +131,7 @@ class Features(object):
         return unit_ids
 
     def get_mount(self, unit_xml):
+        """Returns the Mounts of a unit"""
         mounts = []
         mount_xml = unit_xml["Mounts"]["Mount"]
         if not isinstance(mount_xml, list):
@@ -144,6 +144,7 @@ class Features(object):
         return mounts      
 
     def get_loadout(self, unit_xml):
+        """Returns the Loadout of a unit"""
         loadout_xml = unit_xml["Loadout"]["Loadout"]
         loadout_id = loadout_xml["ID"]
         name = loadout_xml["Name"]
@@ -151,6 +152,7 @@ class Features(object):
         return Loadout(0, loadout_id, name, dbid, self.get_weapon('Loadout', loadout_xml))
     
     def get_weapon(self, mount_or_loadout: str, xml_str: str):
+        """Returns the weapons on a mount or loadout"""
         weapons = []
         if mount_or_loadout == "Loadout":
             if 'Weaps' not in xml_str.keys() or xml_str['Weaps'] == None:
