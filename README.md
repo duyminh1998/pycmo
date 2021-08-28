@@ -40,7 +40,14 @@ EncodingMode = 8
 ```
 python pycmo/lib/start_server.py "C:\ProgramData\Command Professional Edition 2\Scenarios\Standalone Scenarios\Wooden Leg, 1985.scen"
 ```
-2. Call `python pycmo/bin/agent.py` to run the main loop. Change the file's settings to try out different agents.
+2. Call `python pycmo/bin/agent.py` to run the main loop with the following arguments.
+ ```
+-agent AGENT        Select an agent. 0 for RandomAgent, 1 for ScriptedAgent, 2 for RuleBasedAgent.
+-size SIZE          Size of a timestep, must be in "hh:mm:ss" format.
+-scenario SCENARIO  The name of the scenario, used for ScriptedAgent and RuleBasedAgent. Usually the literal name of the .scen file.
+-player PLAYER      The name of player's side.
+```
+The default is to run a RandomAgent on Wooden Leg with a timestep of 1 minute.
 
 # Environment Details
 For a full description of the specifics of how the environment is configured, the observations and action spaces work read the [environment documentation](https://github.com/duyminh1998/pycmo/blob/main/docs/environment.md).
