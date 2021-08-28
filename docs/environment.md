@@ -23,6 +23,7 @@
 ## Command Modern Operations
 
 ### What is Command Modern Operations
+Command: Modern Operations is a modern wargaming game that enables you to simulate every military engagement from post World War II to the present day and beyond. The scale is primarily tactical/operational, although strategic scale operations are also possible. Players control units on a side to achieve scenario objectives and score points. Units can be controlled directly or assigned to missions such as Patrol, Strike, Ferry, etc.
 
 ## Actions and Observations
 
@@ -86,19 +87,21 @@ A named tuple containing information about a specific weapon.
 `XML_ID`: the index of the weapon within the scenario XML file  
 `ID`: the in-game ID of the weapon  
 `WeaponID`: the WeaponID of the weapon. This is used in Lua function actions  
-`QuantRemaining`: the remaining quantity of the weapon
+`QuantRemaining`: the remaining quantity of the weapon  
+`MaxQuant`: the weapon's maximum quantity
 
 ##### Contact
 A named tuple containing information about a contact from the perspective of the player's side.  
 `XML_ID`: the index of the contact within the scenario XML file  
 `ID`: the in-game ID of the contact  
+`Name`: the contact's name, if known  
 `CS`: the contact's current speed, if known  
 `CA`: the contact's current altitude, if known  
 `Lon`: the contact's current longitude, if known  
 `Lat`: the contact's current latitude, if known
 
 ### Actions
-`actions.py` defines the action space as a collection of Lua functions that gets sent to the game. It also defines `AvailableActions`, a class which contains actions that are available only at a particular timestep.
+`actions.py` defines the action space as a collection of Lua functions that gets sent to the game. It also defines `AvailableActions`, a class which contains actions that are available only at a particular timestep. Thus, `AvailableActions` must be initialized with a `Features` object.
 
 `Function` is a named tuple that defines an action within PyCMO. Every action has an `id`, a `name`, a Lua expression-equivalent (`corresponding_def`), arguments (`args`), and the argument types (`arg_types`).
 
@@ -113,12 +116,30 @@ A named tuple containing information about a contact from the perspective of the
 `auto_refuel`: directs a unit to automatically refuel with any tanker
 
 #### Example usage
+The function `set_unit_course` has the arguments `[sides, units, [-90, 90], [-180, 180]]` with corresponding argument types `['EnumChoice', 'EnumChoice', 'Range', 'Range']`. This means that for the arguments `sides` and `units`, an agent is expected to pick a value from a list of possible values. For the `Range` argument type, an agent is expected to pick a value within a numerical range. For a random agent, these values are sampled randomly and then fed back into `corresponding_def`, which is the Lua function that corresponds to that particular `Function`. Thus, if we had
+```
+sides = ["Israel", "Iran"]
+untis = ["Unit #1", "Unit #2"]
+lat = [-90, 90]
+lon = [-180, 180]
+```
+our constructed `set_unit_course` function might be 
+```
+--script 
+Tool_EmulateNoConsole(true) 
+ScenEdit_SetUnit({side = 'Israel', name = 'Unit #1', course = {{longitude = '-12', latitude = '10', TypeOf = 'ManualPlottedCourseWaypoint'}}})
+```
 
 #### AvailableActions
+As mentioned above, `AvailableActions` holds all the possible actions valid to a certain timestep. After initialization, the `VALID_FUNCTIONS` variable should be accessed to determine the corresponding valid functions. At each timestep, every action is valid but for only a certain subset of arguments, e.g. if a unit is dead then it will not show up as an argument.
 
 ## RL Environment
+The reinforcement learning environment is broken into two parts. The first part is the `Server` that starts the game in Interactive mode in order for agents to be able to connect and send commands to. The `Server` should always be started first before the second part of the environment. To do this, either call `start_server.py` with a corresponding path to the scenario you want to load, or just start the game in Interactive mode using a terminal. After the scenario has been loaded, players need to call `agent.py`, which will call `run_loop.py`, the main loop that consists of observation gathering and agent sending actions.
+
+`run_loop.py` first locates the `raw/steps` folder in order to save the scenario XML file at each timestep; it cleans up the folder for any leftover step files from the previous run. Then, if the `server` parameter is specified, then it will also start a `Server` and load a scenario. We do not recommend using this feature as it can lead to timing issues, e.g. the `Server` takes a few seconds to load before the agent can connect to it. Next, a `CMOEnv` object is created which will represent our environment. The `CMOEnv` is used to step through the game, get observations, and return the available actions to the agent. In the last loop of `run_loop.py`, we get observations and available actions, let our agent choose an action, step the environment forward with the chosen action, and get the observation of the resulting new state.
 
 ## Agents
+Each agent needs to have a `get_action` function that takes in a `Features` observation and a list of available actions (`VALID_FUNCTIONS`).
 * `RandomAgent`: Just plays randomly, shows how to make valid moves.
 * `RuleBasedAgent`: Scripted for specific scenarios.
 * `NeuralNetworkAgent`: WIP
