@@ -20,8 +20,7 @@ EncodingMode = 8
 ```
 2. Click on "Clone or download", and then "Download Zip". 
 3. Unzip the repo anywhere.
-4. Navigate to "pycmo". Then, install the repository using `pip install .`
-5. Configure the project's `config.py` file to fit your system's paths. Do not change the amount of parentheses that are present in each entry as that could mess up its usage!
+4. Configure the project's `config.py` file to fit your system's paths. Do not change the amount of backslashes that are present in each entry as that could mess up its usage! If the `steps` directory is not present in `raw` then create it.
 ```python
 {
     "command_path": "C:\\Program Files (x86)\\Command Professional Edition 2\\",
@@ -30,6 +29,7 @@ EncodingMode = 8
     "command_cli_output_path": "C:\\ProgramData\\Command Professional Edition 2\\Analysis_Int"
 }
 ```
+5. Navigate to "pycmo". Then, navigate to the folder than contains `setup.py` and install the repository using `pip install .` Anytime you make changes to the files in the project folder, you need to reinstall the package using `pip install .`.
 
 ## Run an agent
 1a. Open a terminal within the game's directory and load a scenario in Interactive mode. For example, 
