@@ -29,7 +29,7 @@ EncodingMode = 8
     "command_cli_output_path": "C:\\ProgramData\\Command Professional Edition 2\\Analysis_Int"
 }
 ```
-5. Navigate to "pycmo". Then, navigate to the folder than contains `setup.py` and install the repository using `pip install .` Anytime you make changes to the files in the project folder, you need to reinstall the package using `pip install .`.
+5. Navigate to the folder than contains `setup.py` and install the repository using `pip install .` Anytime you make changes to the files in the project folder, you need to reinstall the package using `pip install .`.
 
 ## Run an agent
 1a. Open a terminal within the game's directory and load a scenario in Interactive mode. For example, 
