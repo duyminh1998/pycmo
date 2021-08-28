@@ -1,7 +1,7 @@
 lua/
 ipynb_demo.ipynb
 bax/
-raw/steps/*
+raw/steps/*.xml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
