@@ -3,18 +3,18 @@
 # Purpose: A scripted agent for playing the game Command Modern Operations.
 
 scenario_id = {
-    'brass_drum': 0,
-    'english_jets_over_uganda': 1,
-    'fighter_weapons_school': 2,
-    'iron_hand': 3,
-    'khark': 4,
-    'north_pacific_shootout': 5,
-    'pyrpolitis': 6,
-    'sea_of_fire': 7,
-    'shamal': 8,
-    'task_force_normandy': 9,
-    'wooden_leg': 10,
-    'none': 11
+    'Operation Brass Drum, 2017': 0,
+    '2 - English Jets over Uganda, 1973': 1,
+    'Fighter Weapons School - GAT 5 and 6, 1977': 2,
+    'Iron Hand, 2014': 3,
+    'Khark Island Raid, 1985': 4,
+    'North Pacific Shootout, 1989': 5,
+    'Pyrpolitis 1-14, 2014': 6,
+    'Sea of Fire, 1982': 7,
+    'Shamal, 1991': 8,
+    'Task Force Normandy, 1991': 9,
+    'Wooden Leg, 1985': 10,
+    'None': 11
 }
 
 class ScriptedAgent():
