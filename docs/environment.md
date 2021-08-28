@@ -141,5 +141,16 @@ The reinforcement learning environment is broken into two parts. The first part 
 ## Agents
 Each agent needs to have a `get_action` function that takes in a `Features` observation and a list of available actions (`VALID_FUNCTIONS`).
 * `RandomAgent`: Just plays randomly, shows how to make valid moves.
-* `RuleBasedAgent`: Scripted for specific scenarios.
+* `ScriptedAgent`: Scripted for specific scenarios.  
+* `RuleBasedAgent`: Decides actions according to rules.
 * `NeuralNetworkAgent`: WIP
+
+### Usage
+Call `python pycmo/bin/agent.py` with the following arguments to run specific agents.
+```
+-agent AGENT        Select an agent. 0 for RandomAgent, 1 for ScriptedAgent, 2 for RuleBasedAgent.
+-size SIZE          Size of a timestep, must be in "hh:mm:ss" format.
+-scenario SCENARIO  The name of the scenario, used for ScriptedAgent and RuleBasedAgent. Usually the literal name of the .scen file.
+-player PLAYER      The name of player's side.
+```
+The default is to run a RandomAgent on Wooden Leg with a timestep of 1 minute.
