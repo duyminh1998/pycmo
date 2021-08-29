@@ -2,6 +2,7 @@
 
 - [Command Modern Operations](#command-modern-operations)
     - [What is Command Modern Operations](#what-is-cmo)
+- [RL Environment](#rl-environment)
 - [Actions and Observations](#actions-and-observations)
     - [Observation](#observations)
         - [Features](#features)
@@ -15,7 +16,6 @@
     - [Actions](#actions)
         - [List of actions](#list-of-actions)
         - [Example usage](#example-usage)
-- [RL Environment](#rl-environment)
 - [Agents](#agents)
 
 <!-- /TOC -->
@@ -24,6 +24,11 @@
 
 ### What is Command Modern Operations
 Command: Modern Operations is a modern wargaming game that enables you to simulate every military engagement from post World War II to the present day and beyond. The scale is primarily tactical/operational, although strategic scale operations are also possible. Players control units on a side to achieve scenario objectives and score points. Units can be controlled directly or assigned to missions such as Patrol, Strike, Ferry, etc.
+
+## RL Environment
+The reinforcement learning environment is broken into two parts. The first part is the `Server` that starts the game in Interactive mode in order for agents to be able to connect and send commands to. The `Server` should always be started first before the second part of the environment. To do this, either call `pycmo/lib/start_server.py` with a corresponding path to the scenario you want to load, or just start the game in Interactive mode using a terminal (this is simply what `start_server.py` does). After the scenario has been loaded, players need to call `pycmo/bin/agent.py`, which will call `pycmo/lib/run_loop.py`, the main loop that consists of observation gathering and agent sending actions.
+
+`run_loop.py` first locates the `raw/steps` folder in order to save the scenario XML file at each timestep; it cleans up the folder for any leftover step files from the previous run. Then, if the `server` parameter is specified, then it will also start a `Server` and load a scenario. We do not recommend using this feature as it can lead to timing issues, e.g. the `Server` takes a few seconds to load before the agent can connect to it. Next, a `CMOEnv` object is created which will represent our environment. The `CMOEnv` is used to step through the game, get observations, and return the available actions to the agent. We gather observations at each timestep by calling `ScenEdit_ExportScenarioToXML()` at each timestep in the game, and processing the output XML file using `features.py` (more in detail below). In the last loop of `run_loop.py`, we get observations and available actions, let our agent choose an action, step the environment forward with the chosen action, and get the observation of the resulting new state. We have defined 8 actions that are available to the agent at each timestep, to include launching, refueling, and striking targets, but have made the parameter space large enough to encompass the whole scenario.
 
 ## Actions and Observations
 
@@ -133,17 +138,12 @@ ScenEdit_SetUnit({side = 'Israel', name = 'Unit #1', course = {{longitude = '-12
 #### AvailableActions
 As mentioned above, `AvailableActions` holds all the possible actions valid to a certain timestep. After initialization, the `VALID_FUNCTIONS` variable should be accessed to determine the corresponding valid functions. At each timestep, every action is valid but for only a certain subset of arguments, e.g. if a unit is dead then it will not show up as an argument.
 
-## RL Environment
-The reinforcement learning environment is broken into two parts. The first part is the `Server` that starts the game in Interactive mode in order for agents to be able to connect and send commands to. The `Server` should always be started first before the second part of the environment. To do this, either call `start_server.py` with a corresponding path to the scenario you want to load, or just start the game in Interactive mode using a terminal. After the scenario has been loaded, players need to call `agent.py`, which will call `run_loop.py`, the main loop that consists of observation gathering and agent sending actions.
-
-`run_loop.py` first locates the `raw/steps` folder in order to save the scenario XML file at each timestep; it cleans up the folder for any leftover step files from the previous run. Then, if the `server` parameter is specified, then it will also start a `Server` and load a scenario. We do not recommend using this feature as it can lead to timing issues, e.g. the `Server` takes a few seconds to load before the agent can connect to it. Next, a `CMOEnv` object is created which will represent our environment. The `CMOEnv` is used to step through the game, get observations, and return the available actions to the agent. In the last loop of `run_loop.py`, we get observations and available actions, let our agent choose an action, step the environment forward with the chosen action, and get the observation of the resulting new state.
-
 ## Agents
 Each agent needs to have a `get_action` function that takes in a `Features` observation and a list of available actions (`VALID_FUNCTIONS`).
 * `RandomAgent`: Just plays randomly, shows how to make valid moves.
 * `ScriptedAgent`: Scripted for specific scenarios.  
 * `RuleBasedAgent`: Decides actions according to rules.
-* `NeuralNetworkAgent`: WIP
+* `NeuralNetworkAgent`: WIP. Ideally modelled after DeepMind's [AlphaStar](https://deepmind.com/blog/article/alphastar-mastering-real-time-strategy-game-starcraft-ii).
 
 ### Usage
 Call `python pycmo/bin/agent.py` with the following arguments to run specific agents.
