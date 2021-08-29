@@ -20,7 +20,7 @@ EncodingMode = 8
 ```
 2. Click on "Clone or download", and then "Download Zip". 
 3. Unzip the repo anywhere.
-4. Configure the project's `config.py` file to fit your system's paths. Do not change the amount of backslashes that are present in each entry as that could mess up its usage! If the `steps` directory is not present in `raw` then create it.
+4. Configure the project's `pycmo/configs/config.py` file to fit your system's paths. Do not change the amount of backslashes that are present in each entry as that could mess up its usage! If the `steps` directory is not present in `raw` then create it.
 ```python
 {
     "command_path": "C:\\Program Files (x86)\\Command Professional Edition 2\\",
@@ -36,7 +36,7 @@ EncodingMode = 8
 ```
 ./CommandCLI.exe -mode I -scenfile "C:\ProgramData\Command Professional Edition 2\Scenarios\Standalone Scenarios\Wooden Leg, 1985.scen" -outputfolder "C:\ProgramData\Command Professional Edition 2\Analysis_Int"
 ```
-1b. Alternatively, open a terminal anywhere and call `start_server.py` to start a scenario in Interactive mode. The path to the scenario must be supplied, e.g.
+1b. Alternatively, open a terminal anywhere and call `pycmo/lib/start_server.py` to start a scenario in Interactive mode. The path to the scenario must be supplied, e.g.
 ```
 python pycmo/lib/start_server.py "C:\ProgramData\Command Professional Edition 2\Scenarios\Standalone Scenarios\Wooden Leg, 1985.scen"
 ```
@@ -47,7 +47,23 @@ python pycmo/lib/start_server.py "C:\ProgramData\Command Professional Edition 2\
 -scenario SCENARIO  The name of the scenario, used for ScriptedAgent and RuleBasedAgent. Usually the literal name of the .scen file.
 -player PLAYER      The name of player's side.
 ```
-The default is to run a RandomAgent on Wooden Leg with a timestep of 1 minute.
+The default is to run a RandomAgent on Wooden Leg with a timestep of 1 minute. Accepted scenario file names for the `-scenario` parameter above are
+```
+scenario_id = {
+    'Operation Brass Drum, 2017',
+    '2 - English Jets over Uganda, 1973',
+    'Fighter Weapons School - GAT 5 and 6, 1977',
+    'Iron Hand, 2014',
+    'Khark Island Raid, 1985',
+    'North Pacific Shootout, 1989',
+    'Pyrpolitis 1-14, 2014',
+    'Sea of Fire, 1982',
+    'Shamal, 1991',
+    'Task Force Normandy, 1991',
+    'Wooden Leg, 1985',
+    'None'
+}
+```
 
 # Environment Details
 For a full description of the specifics of how the environment is configured, the observations and action spaces work read the [environment documentation](https://github.com/duyminh1998/pycmo/blob/main/docs/environment.md).
