@@ -1,6 +1,6 @@
 ![img](https://hb.imgix.net/05f49fdf2ca2abd4544cdb22345a4a9d29f11051.jpeg?auto=compress,format&fit=crop&h=353&w=616&s=9954ab723bba102a78aaaf27c930329c)
 # PyCMO - Command Modern Operations Reinforcement Learning Environment
-PyCMO is a reinforcement learning environment for Command Modern Operations written in Python. It exposes the game as slices of observation, reward, and available actions that get returned at each timestep. 
+PyCMO is a reinforcement learning environment for Command Modern Operations written in Python. Using the premium edition's ability to output the current scenario to an XML file, PyCMO exposes the game as slices of observation, reward, and available actions at each timestep. 
 
 This project was submitted to the [NSIN AI for Command Challenge 2021](https://www.nsin.us/events/2021-07-05-ai-command/).
 
@@ -24,8 +24,8 @@ EncodingMode = 8
 ```python
 {
     "command_path": "C:\\Program Files (x86)\\Command Professional Edition 2\\",
-    "observation_path": "C:\\\\Users\\\\AFSOC A8XW ORSA\\\\Documents\\\\Python Proj\\\\AI\\\\pycmo\\\\raw\\\\steps\\\\",
-    "scen_ended": "C:\\\\Users\\\\AFSOC A8XW ORSA\\\\Documents\\\\Python Proj\\\\AI\\\\pycmo\\\\pycmo\\\\configs\\\\scen_has_ended.txt",
+    "observation_path": "C:\\\\Users\\\\yourusername\\\\Documents\\\\pycmo\\\\raw\\\\steps\\\\",
+    "scen_ended": "C:\\\\Users\\\\yourusername\\\\Documents\\\\pycmo\\\\pycmo\\\\configs\\\\scen_has_ended.txt",
     "command_cli_output_path": "C:\\ProgramData\\Command Professional Edition 2\\Analysis_Int"
 }
 ```
