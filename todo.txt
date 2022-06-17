@@ -1,3 +1,0 @@
-Continue development on run_loop.py
-Finish documenting environment.md and README.md
-Build out agents (AlphaStar)
