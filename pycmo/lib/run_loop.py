@@ -1,33 +1,36 @@
 # Author: Minh Hua
 # Date: 08/16/2021
+# Last Update: 06/16/2022
 # Purpose: A run loop for agent/environment interaction.
 
-from pycmo.lib.protocol import Server
-from pycmo.env.cmo_env import CMOEnv
+# imports
+from pycmo.lib.protocol import Server # Server to handle connection
+from pycmo.env.cmo_env import CMOEnv # CMO environment, functions as the client that sends actions and receives observations
+# agents
 from pycmo.agents.rule_based_agent import RuleBasedAgent
 from pycmo.agents.scripted_agent import ScriptedAgent
+# auxiliary functions
 import threading, time
 from pycmo.lib.tools import *
-import os
 from pycmo.configs import config
 
-def clean_up_steps(path: str):
-    """Delete all the steps file (.xml) in the steps folder"""
-    try:
-        for step in os.listdir(path):
-            if step.endswith('.xml'):
-                os.remove(os.path.join(path, step))
-    except:
-        print("ERROR: failed to clean up steps folder.")
+def run_loop(player_side:str, config:dict, step_size:list=['0', '0', '1'], agent=None, max_steps=None, server=False, scen_file=None) -> None:
+    """
+    Description:
+        Generic function to run an observe-act loop.
 
-def print_env_information(step_id, current_time, final_move, current_score, current_reward):
-    """Prints information about the current time step"""
-    print("Step: {}".format(step_id))
-    print("Current Time: {}".format(current_time))
-    print("Action: {}".format(final_move))
-    print("Current scenario score: {} \nCurrent reward: {}\n".format(current_score, current_reward))
+    Keyword Arguments:
+        player_side: the name of the player's side.
+        config: a dictionary of configuration paths to important folders and files.
+        step_size: a list containing the step size in the format ["h", "m", "s"]. Default is step size of 1 seconds.
+        agent: an agent to control the game.
+        max_steps: the maximum number of allowable steps.
+        server: whether or not to initialize a server.
+        scen_file: whether or not to use a custom scenario file.
 
-def run_loop(player_side: str, step_size: list, config, agent=None, max_steps=None, server=False, scen_file=None):
+    Returns:
+        None
+    """        
     # config and set up, clean up steps folder
     steps_path = config["observation_path"]
     clean_up_steps(steps_path)
@@ -44,9 +47,8 @@ def run_loop(player_side: str, step_size: list, config, agent=None, max_steps=No
     
     # initial variables and state
     step_id = 0
-    current_score = 0
-    current_reward = 0
     initial_state = env.reset()
+    state_old = initial_state
     cur_time = ticks_to_unix(initial_state.observation.meta.Time)
     print(parse_datetime(int(initial_state.observation.meta.Time)))
 
@@ -56,8 +58,7 @@ def run_loop(player_side: str, step_size: list, config, agent=None, max_steps=No
 
     # main loop
     while not (env.check_game_ended() or (step_id > max_steps)):
-        # get old state
-        state_old = env.get_timestep(step_id)
+        # get current time
         cur_time = ticks_to_unix(state_old.observation.meta.Time)
 
         # perform random actions or choose the action
@@ -76,9 +77,11 @@ def run_loop(player_side: str, step_size: list, config, agent=None, max_steps=No
 
         # store new data into a long-term memory
 
+        # set old state as the previous new state
+        old_state = new_state
+
         if step_id % 10 == 0:
             clean_up_steps(steps_path)
-    #clean_up_steps(steps_path)
 
 # for debugging
 if __name__ == "__main__":
@@ -86,11 +89,14 @@ if __name__ == "__main__":
     config = config.get_config()
 
     # scenario file and player side
-    scen_file = "C:\\ProgramData\\Command Professional Edition 2\\Scenarios\\Standalone Scenarios\\Wooden Leg, 1985.scen"
-    player_side = "Israel"
-    step_size = ["00", "01", "00"]
+    # scen_file = "C:\\ProgramData\\Command Professional Edition 2\\Scenarios\\Standalone Scenarios\\Wooden Leg, 1985.scen"
+    # scen_file = "C:\\ProgramData\\Command Professional Edition 2\\Scenarios\\Custom RCS Detection\\Lua Hook Sensor Detection Test.scen"
+    scen_file = ""
+    player_side = "US"
+    step_size = ["00", "00", "01"]
 
     # initalize agent
-    player_agent = ScriptedAgent('wooden_leg', player_side)
+    # player_agent = ScriptedAgent('wooden_leg', player_side)
     # player_agent = RandomAgent('wooden_leg', player_side)
-    run_loop(player_side, step_size, config=config, agent=player_agent)
+    player_agent = None
+    run_loop(player_side, config=config, step_size=step_size, agent=player_agent)

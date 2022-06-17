@@ -1,10 +1,12 @@
 # Author: Minh Hua
 # Date: 08/16/2021
+# Last Update: 06/16/2022
 # Purpose: Encodes the action space of the game.
 
 # imports
 import collections
 
+# canned actions that can be called by an agent to send an action
 def no_op():
   return "--script \nTool_EmulateNoConsole(true)"
 

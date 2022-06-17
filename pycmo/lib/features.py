@@ -1,5 +1,6 @@
 # Author: Minh Hua
 # Date: 08/16/2021
+# Last Update: 06/16/2022
 # Purpose: Export Command raw data into Features object and flatten into agent-consummable data.
 
 # imports
@@ -7,6 +8,7 @@ import xml.etree.ElementTree as ET
 import xmltodict
 import collections
 
+# This section can be modified to dictate the type of observations that are returned from the game at each time step
 # Game 
 Game = collections.namedtuple("Game", ["TimelineID", "Time", "ScenarioName", "ZeroHour", "StartTime", "Duration", "Sides"])
 # Side 
@@ -23,12 +25,21 @@ Weapon = collections.namedtuple("Weapon", ["XML_ID", "ID", "WeaponID", "QuantRem
 # Contacts 
 Contact = collections.namedtuple("ContactInfo", ["XML_ID", "ID", 'Name', 'CS', 'CA', 'Lon', 'Lat'])
 
-class Features(object):    
-    def __init__(self, xml: str, player_side: str):
-        """Render feature layers from Command scenario XML into named tuples.
-        Args:
-            xml:
-            player_side:
+class Features(object):
+    """
+    Render feature layers from Command scenario XML into named tuples.
+    """
+    def __init__(self, xml:str, player_side:str) -> None:
+        """
+        Description:
+            Initialize a Features object to hold observations.
+
+        Keyword Arguments:
+            xml: the path to the xml file containing the game observations.
+            player_side: the side of the player. Dictates the units that they can actually control.
+        
+        Returns:
+            None
         """
         try:
             tree = ET.parse(xml) # This variable contains the XML tree
@@ -36,8 +47,9 @@ class Features(object):
             xmlstr = ET.tostring(root)            
             self.scen_dic = xmltodict.parse(xmlstr) # our scenario xml is now in 'dic'
         except FileNotFoundError as error:
-            print("ERROR: Unable to parse scenario xml.")
-            raise
+            raise ValueError("Unable to parse scenario xml.")
+        
+        # get features
         self.player_side = player_side
         self.meta = self.get_meta() # Return the scenario-level rmation of the scenario
         self.avai_weapons = []
@@ -45,19 +57,36 @@ class Features(object):
         try:
             player_side_index = self.get_sides().index(player_side)
         except:
-            print('ERROR: Cannot find player side')
-            raise
+            raise ValueError('Cannot find player side.')
         self.side_ = self.get_side_properties(player_side_index)
         self.contacts = self.get_contacts(player_side_index)
         
-    def transform_obs_into_arrays(self):
-        """Render some Command observations into something an agent can handle."""
+    def transform_obs_into_arrays(self) -> list:
+        """
+        Description:
+            Render some Command observations into something an agent can handle.
+
+        Keyword Arguments:
+            None
+        
+        Returns:
+            (list) a list of the game's meta data, units, side info, and contact info
+        """
         observation = [self.meta, self.units, self.side_, self.contacts]
         return observation
 
-    # XML Data Extraction Methods
+    # ============== XML Data Extraction Methods ================================
     def get_meta(self) -> Game:
-        """Get meta data (top-level scenario data)"""
+        """
+        Description:
+            Get meta data (top-level scenario data).
+
+        Keyword Arguments:
+            None
+        
+        Returns:
+            (Game) a named tuple containing the meta data of the game.
+        """
         try:
             return Game(self.scen_dic['Scenario']["TimelineID"],
                             self.scen_dic['Scenario']["Time"],
@@ -67,29 +96,53 @@ class Features(object):
                             self.scen_dic['Scenario']["Duration"],
                             self.get_sides())
         except KeyError:
-            print("ERROR: failed to get scenario properties.")
-            raise
+            raise KeyError("Failed to get scenario properties.")
 
     def get_sides(self) -> list:
-        """Get the number and names of all sides in a scenario"""
+        """
+        Description:
+            Get the number and names of all sides in a scenario.
+
+        Keyword Arguments:
+            None
+        
+        Returns:
+            (list) a list of side names
+        """        
         try:
             return [self.scen_dic['Scenario']['Sides']['Side'][i]['Name'] for i in range(len(self.scen_dic['Scenario']['Sides']['Side']))]
         except KeyError:
-            print("ERROR: failed to get list of side names in scenario.")
-            raise
+            raise KeyError("Failed to get list of side names in scenario.")
 
-    def get_side_properties(self, side_id = 0) -> Side:
-        """Get the properties (score, name, etc.) of a side"""
+    def get_side_properties(self, side_id:int=0) -> Side:
+        """
+        Description:
+            Get the properties (score, name, etc.) of a side.
+
+        Keyword Arguments:
+            side_id: index to choose the side for information.
+        
+        Returns:
+            (Side) a named tuple containing Side information.
+        """
         try:
             return Side(self.scen_dic['Scenario']['Sides']['Side'][side_id]['ID'],
-                            self.scen_dic['Scenario']['Sides']['Side'][side_id]['Name'],
-                            int(self.scen_dic['Scenario']['Sides']['Side'][side_id]['TotalScore']))
+                        self.scen_dic['Scenario']['Sides']['Side'][side_id]['Name'],
+                        int(self.scen_dic['Scenario']['Sides']['Side'][side_id]['TotalScore']))
         except KeyError:
-            print("ERROR: failed to get side properties.")
-            raise
+            raise KeyError("Failed to get side properties.")
 
     def get_side_units(self, side_id_str=None) -> list:
-        """Get all the units of a side"""
+        """
+        Description:
+            Get all the units of a side.
+
+        Keyword Arguments:
+            side_id_str: the name of the side to get units for.
+        
+        Returns:
+            (list) a list of the units of the side.
+        """
         unit_ids = []
         if side_id_str == None or 'ActiveUnits' not in self.scen_dic["Scenario"].keys():
             return unit_ids
@@ -130,8 +183,17 @@ class Features(object):
                     pass                        
         return unit_ids
 
-    def get_mount(self, unit_xml):
-        """Returns the Mounts of a unit"""
+    def get_mount(self, unit_xml:dict) -> list:
+        """
+        Description:
+            Returns the Mounts of a unit. Required to control the weapons on the unit.
+
+        Keyword Arguments:
+            unit_xml: the xml string of the unit. Preferably in dictionary format.
+        
+        Returns:
+            (list) a list of the unit's mounts.
+        """        
         mounts = []
         mount_xml = unit_xml["Mounts"]["Mount"]
         if not isinstance(mount_xml, list):
@@ -143,16 +205,35 @@ class Features(object):
             mounts.append(Mount(i, mount_id, name, dbid, self.get_weapon('Mount', mount_xml[i])))
         return mounts      
 
-    def get_loadout(self, unit_xml):
-        """Returns the Loadout of a unit"""
+    def get_loadout(self, unit_xml:dict) -> Loadout:
+        """
+        Description:
+            Returns the Loadout of a unit.
+
+        Keyword Arguments:
+            unit_xml: the xml string of the unit. Preferably in dictionary format.
+        
+        Returns:
+            (Loadout) the unit's current loadout.
+        """                
         loadout_xml = unit_xml["Loadout"]["Loadout"]
         loadout_id = loadout_xml["ID"]
         name = loadout_xml["Name"]
         dbid = loadout_xml["DBID"]
         return Loadout(0, loadout_id, name, dbid, self.get_weapon('Loadout', loadout_xml))
     
-    def get_weapon(self, mount_or_loadout: str, xml_str: str):
-        """Returns the weapons on a mount or loadout"""
+    def get_weapon(self, mount_or_loadout:str, xml_str:str):
+        """
+        Description:
+            Returns the weapons on a mount or loadout. Also sets the unit's list of available weapons.
+
+        Keyword Arguments:
+            mount_or_loadout: str to determine whether we are getting weapons from a mount or a loadout.
+            xml_str: the xml str of the unit.
+        
+        Returns:
+            (list) the unit's weapons.
+        """
         weapons = []
         if mount_or_loadout == "Loadout":
             if 'Weaps' not in xml_str.keys() or xml_str['Weaps'] == None:
@@ -189,8 +270,17 @@ class Features(object):
         else:
             return weapons
 
-    def get_contacts(self, side_id = 0) -> list:
-        """Return the contacts of a side"""
+    def get_contacts(self, side_id:int=0) -> list:
+        """
+        Description:
+            Return the contacts of a side.
+
+        Keyword Arguments:
+            side_id: index to choose the side for information.
+        
+        Returns:
+            (list) a list of contacts.
+        """
         try:
             contact_id = []
             if "Contacts" in self.scen_dic["Scenario"]["Sides"]["Side"][side_id].keys():
