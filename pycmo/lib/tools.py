@@ -6,6 +6,7 @@
 # imports
 from datetime import datetime, timedelta
 import os
+import numpy as np
 
 def parse_datetime(time_int:int) -> datetime:
     """
@@ -75,3 +76,69 @@ def print_env_information(step_id:int, current_time:datetime, final_move:str, cu
     print("Current Time: {}".format(current_time))
     print("Action: {}".format(final_move))
     print("Current scenario score: {} \nCurrent reward: {}\n".format(current_score, current_reward))
+
+def euclidean_distance(p1:np.array, p2:np.array) -> float:
+    """
+    Description:
+        Returns the Euclidean distance between two points p1 and p2.
+
+    Keyword Arguments:
+        p1: array of coordinates of first point.
+        p2: array of coordinates of second point.
+
+    Returns:
+        (float) Euclidean distance between p1 and p2
+    """
+    # convert arrays to np if not in np array format
+    if type(p1) != np.array:
+        p1 = np.array(p1)
+    if type(p2) != np.array:
+        p2 = np.array(p2)
+    return np.linalg.norm(p1 - p2)
+
+def discretize_2d_space(min_lat:float, max_lat:float, min_long:float, max_long:float, num_lat:int, num_long:int) -> list:
+    """
+    Description:
+        Discretize a continuous 2D space by generating a fixed mesh of points.
+
+    Keyword Arguments:
+        min_lat: the minimum latitude value of the space.
+        max_lat: the maximum latitude value of the space.
+        min_long: the minimum longitude value of the space.
+        max_long: the maximum longitude value of the space.
+        num_lat: the number of points in the vertical direction to generate.
+        num_long: the number of points in the horizontal direction to generate.
+    """
+    x = np.linspace(min_lat, max_lat, num_lat)
+    y = np.linspace(min_long, max_long, num_long)
+    xx, yy = np.meshgrid(x, y)
+    discrete_points = []
+    for i in range(len(xx)):
+        for j in range(len(xx[i])):
+            discrete_points.append([xx[i][j], yy[i][j]])
+    # return
+    return discrete_points
+
+def get_nearest_point_from_location(raw_lat:float, raw_long:float, coords:list) -> list:
+    """
+    Description:
+        Get the nearest discrete point from the unit's current position as a strategy to discretize the unit's position.
+
+    Keyword Arguments:
+        raw_lat: the current latitude of the unit.
+        raw_long: the current longitude of the unit.
+        coords: a list of discretized coordinates, e.g. coords = [[1, 0], [0, 1], [2, 0], ...]
+
+    Returns:
+        (list) the lat and long of the closest coordinate in coords to the unit's position.
+    """
+    min_dist = float('inf')
+    closest_pt = None
+    check_coord = [raw_lat, raw_long] # coordinate of the main point to check other points against
+    for coord in coords:
+        cur_dist = euclidean_distance(check_coord, coord)
+        if cur_dist < min_dist:
+            min_dist = cur_dist
+            closest_pt = coord
+    # return closest point
+    return closest_pt
