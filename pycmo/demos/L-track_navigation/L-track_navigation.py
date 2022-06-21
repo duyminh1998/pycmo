@@ -4,12 +4,14 @@
 # Purpose: Demonstration of an agent navigating an aircraft through an L-shaped track.
 
 # imports
+from pycmo.lib.protocol import Server # Server to handle connection
 from pycmo.env import cmo_env
 from pycmo.lib import tools
 from pycmo.lib import actions
 from QLearning import QLearning
 from pycmo.configs import config
 import pickle
+import threading, time
 
 def run_Q_Learning_loop(
     player_side:str,
@@ -25,7 +27,9 @@ def run_Q_Learning_loop(
     training_dest:str,
     step_size:list=['0', '0', '1'],
     update_agent:bool=True,
-    print_debug:bool=False
+    print_debug:bool=False,
+    server:bool=False,
+    scen_file:str=None
     ) -> None:
     """
     Description:
@@ -46,10 +50,19 @@ def run_Q_Learning_loop(
         step_size: a list containing the step size in the format ["h", "m", "s"]. Default is step size of 1 seconds.
         update_agent: whether or not to update the Q values for the agent.
         print_debug: whether or not to print the state of the map at each time step for debug.
+        server: whether or not to initialize a server.
+        scen_file: whether or not to use a custom scenario file.
 
     Return:
         None
     """
+    # set up a Command TCP/IP socket if the game is not already running somewhere
+    if server:
+        server = Server(scen_file)
+        x = threading.Thread(target=server.start_game)
+        x.start()
+        time.sleep(10)
+
     # open config
     config_file = config.get_config()
     # config and set up, clean up steps folder
@@ -72,6 +85,9 @@ def run_Q_Learning_loop(
     cur_time = tools.ticks_to_unix(initial_state.observation.meta.Time)
     print(tools.parse_datetime(int(initial_state.observation.meta.Time)))
 
+    # pickle information
+    model_pickle_dest = pickle_dest + 'L-track-model.pickle'
+
     # variable to see if we crossed the finish line
     has_game_ended = env.check_game_ended()
 
@@ -89,8 +105,7 @@ def run_Q_Learning_loop(
                 desired_waypoint = agent.get_action(old_state)
                 action = actions.set_unit_course(player_side, 'MC-130J', desired_waypoint[1], desired_waypoint[0])
                 old_state_coord = tools.get_nearest_point_from_location(old_state.observation.units[0].Lat, old_state.observation.units[0].Lon, agent.possible_actions)
-                desired_waypoint = tools.get_nearest_point_from_location(desired_waypoint[0], desired_waypoint[1], agent.possible_actions)
-
+                
                 # send action to the environment
                 step_id += 1
                 new_state = env.step(cur_time, step_id, action)
@@ -111,7 +126,8 @@ def run_Q_Learning_loop(
                 old_state = new_state
 
     except KeyboardInterrupt:
-        pass
+        with open(model_pickle_dest, 'wb') as f:
+            pickle.dump(agent, f)
 
 if __name__ == "__main__":
     # define an array of discrete latitude and longitude coordinates
@@ -126,9 +142,11 @@ if __name__ == "__main__":
     epsilon_anneal_rate = 0.00001
     eta_anneal_rate = 0.000001
     save_every = epochs / 10
-    pickle_dest = 'pickle/QLearning/L-track/'
-    training_dest = 'training/QLearning/L-track/'
+    # open config
+    config_file = config.get_config()
+    pickle_dest = config_file["pickle_path"]
     update_agent = True
     print_debug = True
+    scen_file = "C:\\Users\\AFSOC A8XW ORSA\\Documents\\Python Proj\\AI\\pycmo\\scen\\L-track.scen"
 
-    run_Q_Learning_loop('A', None, discount, epsilon, epsilon_anneal_rate, eta, eta_anneal_rate, epochs, save_every, pickle_dest, training_dest, ['0', '15', '0'], update_agent, print_debug)
+    run_Q_Learning_loop('A', None, discount, epsilon, epsilon_anneal_rate, eta, eta_anneal_rate, epochs, save_every, pickle_dest, None, ['0', '15', '0'], update_agent, print_debug, True, scen_file)
