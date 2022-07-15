@@ -1,5 +1,9 @@
 <a name="1.0.0"></a>
 # 1.0.0 (2022-06-21)
+- This project is on hold for the time being as I lost access to the Premium license for Command Modern Operations.
+
+<a name="1.0.0"></a>
+# 1.0.0 (2022-06-21)
 - Implementing a Q-learning agent to navigate an aircraft through a "track".
     - Discretized the space into a grid of discrete coordinates. A related problem is to figure out the appropriate time step size.
     - Discretization strategy involves replacing the aircraft's actual coordinates with the closest coordinate on the grid. This way, the Q-table is still discrete.
