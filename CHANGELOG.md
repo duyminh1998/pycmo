@@ -1,5 +1,5 @@
 <a name="1.0.0"></a>
-# 1.0.0 (2022-06-21)
+# 1.0.0 (2022-07-15)
 - This project is on hold for the time being as I lost access to the Premium license for Command Modern Operations.
 
 <a name="1.0.0"></a>
