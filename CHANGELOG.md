@@ -1,6 +1,6 @@
 <a name="1.0.0"></a>
 # 1.0.0 (2022-07-15)
-- This project is on hold for the time being as I lost access to the Premium license for Command Modern Operations.
+- This project is on hold for the time being as I lost access to the Premium license for Command Modern Operations. The project depends on the Premium edition's TCP/IP and Lua I/O features to send commands to the game.
 
 <a name="1.0.0"></a>
 # 1.0.0 (2022-06-21)
