@@ -4,6 +4,8 @@ PyCMO is a reinforcement learning environment for Command Modern Operations writ
 
 This project was submitted to the [NSIN AI for Command Challenge 2021](https://www.nsin.us/events/2021-07-05-ai-command/).
 
+Read about the project in detail [here](https://minhhua.com/pycmo/).
+
 # Prerequisites
 1. Python 3.9.2
 2. pip
