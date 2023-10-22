@@ -25,7 +25,6 @@ function contacts_table_to_string(tbl)
 end
 
 function move_unit_to(side, unit_name, latitude, longitude)
-    print(latitude)
     if latitude >= -90 and latitude <= 90 and longitude >= -180 and longitude <= 180 then
         ScenEdit_SetUnit({side = side, unitname = unit_name, course = {{longitude = longitude, latitude = latitude, TypeOf = 'ManualPlottedCourseWaypoint'}}})
     end

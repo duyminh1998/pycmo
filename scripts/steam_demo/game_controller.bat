@@ -12,40 +12,30 @@ var ARGS = WScript.Arguments;
 var scriptName=ARGS.Item(0); 
 
 var title="";
-var keys="";
-var timestep = 17;
+var timestep="";
 
 function printHelp(){ 
-        WScript.Echo(scriptName + " - sends keys to a applicaion with given title"); 
+        WScript.Echo(scriptName + " - resumes Command after each time it is paused"); 
         WScript.Echo("Usage:"); 
-        WScript.Echo("call " + scriptName + " title string"); 
-        WScript.Echo("title  - the title of the application"); 
+        WScript.Echo("call " + scriptName + " title timestep"); 
+        WScript.Echo("title  - the title of the application");
+        WScript.Echo("timestep  - the number of seconds to sleep before resuming the simulation");  
 } 
 
 function parseArgs(){ 
-                
-        if (ARGS.Length < 2) { 
+        if (ARGS.Length < 3) { 
                 WScript.Echo("insufficient arguments"); 
                 printHelp(); 
                 WScript.Quit(43); 
         }
 		
 		title=ARGS.Item(1);
-}
-
-
-function escapeRegExp(str) {
-    return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
-}
-
-function replaceAll(str, find, replace) {
-  return str.replace(new RegExp(escapeRegExp(find), 'g'), replace);
+                timestep=ARGS.Item(2);
 }
 
 parseArgs();
 
 if (title === "") {
-	sh.SendKeys(keys); 
 	WScript.Quit(0);
 }
 
