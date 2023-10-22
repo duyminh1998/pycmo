@@ -22,13 +22,14 @@ EncodingMode = 8
 ```
 2. Click on "Clone or download", and then "Download Zip". 
 3. Unzip the repo anywhere.
-4. Configure the project's `pycmo/configs/config.py` file to fit your system's paths. Do not change the amount of backslashes that are present in each entry as that could mess up its usage! If the `steps` directory is not present in `raw` then create it.
+4. Configure the project's `pycmo/configs/config.py` file to fit your system's paths. Do not change the amount of backslashes that are present in each entry as that could mess up its usage! If the `steps` directory is not present in `raw` then create it. For example,
 ```python
 {
     "command_path": "C:\\Program Files (x86)\\Command Professional Edition 2\\",
     "observation_path": "C:\\\\Users\\\\yourusername\\\\Documents\\\\pycmo\\\\raw\\\\steps\\\\",
     "scen_ended": "C:\\\\Users\\\\yourusername\\\\Documents\\\\pycmo\\\\pycmo\\\\configs\\\\scen_has_ended.txt",
-    "command_cli_output_path": "C:\\ProgramData\\Command Professional Edition 2\\Analysis_Int"
+    "command_cli_output_path": "C:\\ProgramData\\Command Professional Edition 2\\Analysis_Int",
+    "pickle_path": "C:\\Users\\yourusername\\Documents\\Python Proj\\AI\\pycmo\\pickle\\"
 }
 ```
 5. Navigate to the folder than contains `setup.py` and install the repository using `pip install .` Anytime you make changes to the files in the project folder, you need to reinstall the package using `pip install .`.
