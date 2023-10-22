@@ -4,7 +4,7 @@
 
 import os
 import json
-import random
+import subprocess
 
 from pycmo.configs import config
 
@@ -36,7 +36,7 @@ def read_cmo_steam_observation_file(file_path:str=os.path.join(config['command_p
     unit = observation_file_json["MemberRecords"][0]
     return unit
 
-def parse_observation(observation):
+def filter_observation(observation):
     return {
         'guid': observation['Member_GUID'],
         'type': observation['MemberType'],
@@ -47,24 +47,8 @@ def parse_observation(observation):
         'speed': observation['Speed'],
     }
 
-# def take_action(observation:tuple):
-#     unit_longitude = observation['longitude']
-#     unit_latitude = observation['latitude']
-#     delta_longitude = (random.random() * 2) - 1
-#     delta_latitude = (random.random() * 2) - 1
-#     return 
-
-def move_randomly(side, unit_name, initial_longitude, initial_latitude):
-    """
-    local side = "Israel"\n
-    local sufa = ScenEdit_GetUnit({side = side, name = "Sufa #1"})
-    local latitude = math.random() + math.random(-90, 91)
-    local longitude = math.random() + math.random(-180, 181)
-    move_unit_to(side, sufa.name, latitude, longitude)
-    """
+def move_diagonally(side, unit_name, initial_longitude, initial_latitude):
     base_script = f"local side = '{side}'\nlocal sufa = ScenEdit_GetUnit({{side = side, name = '{unit_name}'}})\n"
-    # delta_longitude = (random.random() * 2) - 1
-    # delta_latitude = (random.random() * 2) - 1
     delta_longitude = 0.5
     delta_latitude = 0.5
     new_longitude = initial_longitude + delta_longitude
@@ -77,22 +61,32 @@ def no_op():
     return action
 
 # MAIN LOOP
+# start the game
+game_window_title = "Steam demo - Command v1.06 - Build 1328.10a" 
+resume_key = "{ENTER}"
+start_key = "{ }"
+scripts_folder_path = os.path.join("E:/", "MyProjects", "pycmo", "scripts")
+p = subprocess.Popen(['nonsecureSendKeys.bat', game_window_title, start_key], cwd = scripts_folder_path)
+
 scenario_ended = False
 raw_observation = read_cmo_steam_observation_file(observation_file_path)
 agent_action_filename = os.path.join(".", "scripts", "steam_demo", "python_agent_action.lua")
 
 while not scenario_ended:
     next_raw_observation = read_cmo_steam_observation_file(observation_file_path)
-    if raw_observation and next_raw_observation != raw_observation:
-        observation = parse_observation(raw_observation)
-        action = move_randomly(side, sufa, observation['longitude'], observation['latitude'])
+
+    if next_raw_observation and next_raw_observation != raw_observation:
+        observation = filter_observation(next_raw_observation)
+        action = move_diagonally(side, sufa, observation['longitude'], observation['latitude'])
         print(action)
 
         try:
             with open(agent_action_filename, 'w') as f:
                 f.write(action)
-        except PermissionError:
+        except (PermissionError, FileNotFoundError):
             pass
-
+        
+        # after we finish writing the action, resume the game
+        p = subprocess.Popen(['nonsecureSendKeys.bat', game_window_title, resume_key], cwd = scripts_folder_path)
 
     raw_observation = next_raw_observation
