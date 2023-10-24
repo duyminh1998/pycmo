@@ -5,6 +5,7 @@
 import os
 import json
 import subprocess
+import random
 
 from pycmo.configs import config
 
@@ -47,12 +48,12 @@ def filter_observation(observation):
         'speed': observation['Speed'],
     }
 
-def move_diagonally(side, unit_name, initial_longitude, initial_latitude):
+def move_aircraft(side:str, unit_name:str, initial_longitude:float, initial_latitude:float):
     base_script = f"local side = '{side}'\nlocal sufa = ScenEdit_GetUnit({{side = side, name = '{unit_name}'}})\n"
-    delta_longitude = 0.5
-    delta_latitude = 0.5
-    new_longitude = initial_longitude + delta_longitude
-    new_latitude = initial_latitude + delta_latitude
+    delta_longitude = (random.random() * 1) - 0.5
+    delta_latitude = (random.random() * 1) - 0.5
+    new_longitude = float(initial_longitude) + delta_longitude
+    new_latitude = float(initial_latitude) + delta_latitude
     action = base_script + f'move_unit_to(side, sufa.name, {new_latitude}, {new_longitude})'
     return action
 
@@ -66,19 +67,30 @@ game_window_title = "Steam demo - Command v1.06 - Build 1328.10a"
 resume_key = "{ENTER}"
 start_key = "{ }"
 scripts_folder_path = os.path.join("E:/", "MyProjects", "pycmo", "scripts")
+# change working directory to scripts folder to use the nonsecureSendKeys.bat file
+# TODO think of a better way to do this
+os.chdir(scripts_folder_path)
 p = subprocess.Popen(['nonsecureSendKeys.bat', game_window_title, start_key], cwd = scripts_folder_path)
 
 scenario_ended = False
-raw_observation = read_cmo_steam_observation_file(observation_file_path)
-agent_action_filename = os.path.join(".", "scripts", "steam_demo", "python_agent_action.lua")
+current_raw_observation = read_cmo_steam_observation_file(observation_file_path)
+agent_action_filename = os.path.join(scripts_folder_path, "steam_demo", "python_agent_action.lua")
+
+# reset action filename
+try:
+    with open(agent_action_filename, 'w') as f:
+        f.write("")
+except (PermissionError, FileNotFoundError):
+    pass
 
 while not scenario_ended:
     next_raw_observation = read_cmo_steam_observation_file(observation_file_path)
 
-    if next_raw_observation and next_raw_observation != raw_observation:
+    if next_raw_observation and next_raw_observation != current_raw_observation:
         observation = filter_observation(next_raw_observation)
-        action = move_diagonally(side, sufa, observation['longitude'], observation['latitude'])
-        print(action)
+        print(f"New observation: {observation}")
+        action = move_aircraft(side, sufa, observation['longitude'], observation['latitude'])
+        print(f"Action: {action}")
 
         try:
             with open(agent_action_filename, 'w') as f:
@@ -89,4 +101,4 @@ while not scenario_ended:
         # after we finish writing the action, resume the game
         p = subprocess.Popen(['nonsecureSendKeys.bat', game_window_title, resume_key], cwd = scripts_folder_path)
 
-    raw_observation = next_raw_observation
+    current_raw_observation = next_raw_observation

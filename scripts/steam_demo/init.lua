@@ -19,6 +19,17 @@ local agent_action_trigger_name = 'Execute agent action every seconds'
 local agent_action_name = 'Agent action'
 local agent_action_script_text = setup_script_text .. "ScenEdit_RunScript(scripts_path .. lua_script_foldername ..'" .. agent_action_lua_filename .. "', true)"
 
+-- Remove these events, triggers, and actions if they are already present
+local scenario_events = ScenEdit_GetEvents(1)
+for i = 1, #scenario_events do
+    local event = scenario_events[i]
+    if event.description == agent_action_event_name then
+        ScenEdit_SetEvent(event.description, {mode = 'remove'})
+        ScenEdit_SetTrigger({description = agent_action_trigger_name, mode = 'remove'})
+        ScenEdit_SetAction({description = agent_action_name, mode = 'remove'})
+    end
+end
+
 local execute_agent_action_event = ScenEdit_SetEvent(agent_action_event_name, {mode='add', IsRepeatable=true})
 ScenEdit_SetTrigger({mode = 'add', type = 'RegularTime', Interval = execute_agent_action_every_seconds, name = agent_action_trigger_name})
 ScenEdit_SetEventTrigger(execute_agent_action_event.guid, {mode = 'add', name = agent_action_trigger_name})
@@ -29,6 +40,17 @@ local export_observation_event_name = 'Export observation'
 local export_observation_trigger_name = 'Export observation every seconds'
 local export_observation_action_name = 'Export observation'
 local export_observation_action_script_text = setup_script_text .. "ScenEdit_RunScript(scripts_path .. lua_script_foldername ..'" .. export_observation_lua_filename .. "', true)"
+
+-- Remove these events, triggers, and actions if they are already present
+local scenario_events = ScenEdit_GetEvents(1)
+for i = 1, #scenario_events do
+    local event = scenario_events[i]
+    if event.description == export_observation_event_name then
+        ScenEdit_SetEvent(event.description, {mode = 'remove'})
+        ScenEdit_SetTrigger({description = export_observation_trigger_name, mode = 'remove'})
+        ScenEdit_SetAction({description = export_observation_action_name, mode = 'remove'})
+    end
+end
 
 local export_observation_action_event = ScenEdit_SetEvent(export_observation_event_name, {mode='add', IsRepeatable=true})
 ScenEdit_SetTrigger({mode = 'add', type = 'RegularTime', Interval = export_observations_every_seconds, name = export_observation_trigger_name})
