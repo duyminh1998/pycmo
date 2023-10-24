@@ -66,7 +66,7 @@ def no_op():
 game_window_title = "Steam demo - Command v1.06 - Build 1328.10a" 
 resume_key = "{ENTER}"
 start_key = "{ }"
-scripts_folder_path = os.path.join("E:/", "MyProjects", "pycmo", "scripts")
+scripts_folder_path = os.path.join(config["pycmo_path"], "scripts")
 # change working directory to scripts folder to use the nonsecureSendKeys.bat file
 # TODO think of a better way to do this
 os.chdir(scripts_folder_path)

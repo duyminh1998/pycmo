@@ -26,13 +26,20 @@ EncodingMode = 8
 ```python
 {
     "command_path": "C:\\Program Files (x86)\\Command Professional Edition 2\\",
+    "pycmo_path": "C:\\Users\\yourusername\\Documents\\pycmo",
     "observation_path": "C:\\\\Users\\\\yourusername\\\\Documents\\\\pycmo\\\\raw\\\\steps\\\\",
     "scen_ended": "C:\\\\Users\\\\yourusername\\\\Documents\\\\pycmo\\\\pycmo\\\\configs\\\\scen_has_ended.txt",
     "command_cli_output_path": "C:\\ProgramData\\Command Professional Edition 2\\Analysis_Int",
-    "pickle_path": "C:\\Users\\yourusername\\Documents\\Python Proj\\AI\\pycmo\\pickle\\"
+    "pickle_path": "C:\\Users\\yourusername\\Documents\\pycmo\\pickle\\"
 }
 ```
 5. Navigate to the folder than contains `setup.py` and install the repository using `pip install .` Anytime you make changes to the files in the project folder, you need to reinstall the package using `pip install .`. Alternatively, use `pip install -e .` to install the package in editable mode. After doing this you can change the code without needing to continue to install it.
+
+## Run an agent (Steam edition only)
+1. Load the provided demo scenario `scen/steam_demo.scen` in the game.
+2. Copy the contents in `scripts/steam_demo/init.lua` to the in-game script editor and run the code. This should set up events in the scenario to handle agent actions (which come from a Python script we run later) and regular exporting of observations. Save the scenario after you run the script and reload the scenario.
+3. You might have to open the `scripts/steam_demo/sample_agent.py` file and edit line 66 (`game_window_title` variable) to whatever the title of your active Command window is (e.g. your build number or version might be different). This is needed for us to send commands to the game.
+4. Run `scripts/steam_demo/sample_agent.py`. The agent will control the `Sufa #1` aircraft and give it a random course every 6 seconds. Observations are exported every 5 seconds.
 
 ## Run an agent (Premium edition only)
 1a. Open a terminal within the game's directory and load a scenario in Interactive mode. For example, 
