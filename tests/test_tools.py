@@ -3,9 +3,9 @@ import datetime
 import os
 
 from pycmo.lib.tools import *
-from pycmo.configs import config
+from pycmo.configs.config import get_config
 
-config = config.get_config()
+config = get_config()
 
 parse_datetime_test_parameters = [
     (0, datetime(1, 1, 1)),
