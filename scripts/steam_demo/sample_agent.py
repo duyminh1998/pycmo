@@ -7,15 +7,11 @@ import json
 import subprocess
 import random
 
-from pycmo.configs import config
+from pycmo.configs.config import get_config
+from pycmo.lib.protocol import SteamClient
 
 # open config and set important files and folder paths
-config = config.get_config()
-
-# SIDE INFO
-side = "Israel"
-sufa = "Sufa #1"
-observation_file_path = os.path.join(config['command_path'], 'ImportExport', 'Israel_units.inst')
+config = get_config()
 
 # CONSTANTS
 latitude_min = -90
@@ -24,7 +20,7 @@ longitude_min = -180
 longitude_max = 180
 
 # INIT
-def read_cmo_steam_observation_file(file_path:str=os.path.join(config['command_path'], 'ImportExport', 'Israel_units.inst')) -> any or None:
+def read_cmo_steam_observation_file(file_path:str=os.path.join(config['steam_observation_folder_path'], 'Israel_units.inst')) -> any or None:
     try:
         with open(file_path, 'r') as f:
             observation_file_contents = f.read()
@@ -62,43 +58,41 @@ def no_op():
     return action
 
 # MAIN LOOP
-# start the game
-game_window_title = "Steam demo - Command v1.06 - Build 1328.10a" 
-resume_key = "{ENTER}"
-start_key = "{ }"
-scripts_folder_path = os.path.join(config["pycmo_path"], "scripts")
-# change working directory to scripts folder to use the nonsecureSendKeys.bat file
-# TODO think of a better way to do this
-os.chdir(scripts_folder_path)
-p = subprocess.Popen(['nonsecureSendKeys.bat', game_window_title, start_key], cwd = scripts_folder_path)
+# SIDE INFO
+side = "Israel"
+sufa = "Sufa #1"
 
-scenario_ended = False
-current_raw_observation = read_cmo_steam_observation_file(observation_file_path)
+scenario_name = "Steam demo"
+command_version = "Command v1.06 - Build 1328.10a"
+
+observation_file_path = os.path.join(config['steam_observation_folder_path'], 'Israel_units.inst')
+scripts_folder_path = config["scripts_path"]
 agent_action_filename = os.path.join(scripts_folder_path, "steam_demo", "python_agent_action.lua")
 
-# reset action filename
-try:
-    with open(agent_action_filename, 'w') as f:
-        f.write("")
-except (PermissionError, FileNotFoundError):
-    pass
 
-while not scenario_ended:
-    next_raw_observation = read_cmo_steam_observation_file(observation_file_path)
+client = SteamClient(scenario_name, agent_action_filename, command_version)
 
-    if next_raw_observation and next_raw_observation != current_raw_observation:
-        observation = filter_observation(next_raw_observation)
-        print(f"New observation: {observation}")
-        action = move_aircraft(side, sufa, observation['longitude'], observation['latitude'])
-        print(f"Action: {action}")
+# start the game
+scenario_started = client.start_scenario()
 
-        try:
-            with open(agent_action_filename, 'w') as f:
-                f.write(action)
-        except (PermissionError, FileNotFoundError):
-            pass
-        
-        # after we finish writing the action, resume the game
-        p = subprocess.Popen(['nonsecureSendKeys.bat', game_window_title, resume_key], cwd = scripts_folder_path)
+if scenario_started:
+    scenario_ended = False
+    current_raw_observation = read_cmo_steam_observation_file(observation_file_path)
 
-    current_raw_observation = next_raw_observation
+    # reset agent action to nothing
+    client.send("")
+
+    while not scenario_ended:
+        next_raw_observation = read_cmo_steam_observation_file(observation_file_path)
+
+        if next_raw_observation and next_raw_observation != current_raw_observation:
+            observation = filter_observation(next_raw_observation)
+            print(f"New observation:\n{observation}")
+            action = move_aircraft(side, sufa, observation['longitude'], observation['latitude'])
+            print(f"Action:\n{action}")
+
+            action_written = client.send(action)
+            if action_written:
+                scenario_started = client.start_scenario()
+                
+        current_raw_observation = next_raw_observation
