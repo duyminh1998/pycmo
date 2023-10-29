@@ -3,41 +3,25 @@
 # Purpose: A sample agent to interact with the steam_demo scenario, demonstrating our ability to work with the Steam version of CMO.
 
 import os
-import json
 import random
 import xmltodict
 
 from pycmo.configs.config import get_config
+from pycmo.lib.tools import cmo_steam_observation_file_to_xml
 from pycmo.lib.protocol import SteamClient
+from pycmo.lib.features import FeaturesFromSteam, Unit
 
 # open config and set important files and folder paths
 config = get_config()
 
 # CONSTANTS
-latitude_min = -90
-latitude_max = 90
-longitude_min = -180
-longitude_max = 180
 
 # INIT
-def cmo_steam_observation_file_to_xml(file_path:str=os.path.join(config['steam_observation_folder_path'], 'Steam demo.inst')) -> any or None:
-    try:
-        with open(file_path, 'r') as f:
-            observation_file_contents = f.read()
-    except FileNotFoundError:
-        return None
-    try:
-        observation_file_json = json.loads(observation_file_contents)
-    except json.decoder.JSONDecodeError:
-        return None
-    observation_xml = observation_file_json["Comments"]
-    return observation_xml
-
-def filter_observation(xml):         
-    scen_dic = xmltodict.parse(xml) # our scenario xml is now in 'dic'
-    units = scen_dic['Scenario']['ActiveUnits']['Aircraft']
+def get_unit_from_observation(xml, player_side, unit_name) -> Unit:         
+    features = FeaturesFromSteam(xml, player_side)
+    units = features.units
     for unit in units:
-        if unit['Name'] == 'Sufa #1':
+        if unit.Name == unit_name:
             return unit
 
 def move_aircraft(side:str, unit_name:str, initial_longitude:float, initial_latitude:float):
@@ -82,10 +66,11 @@ if scenario_started:
         next_raw_observation = cmo_steam_observation_file_to_xml(observation_file_path)
 
         if next_raw_observation and next_raw_observation != current_raw_observation:
-            observation = filter_observation(next_raw_observation)
-            print(f"New observation:\n{observation}")
-            action = move_aircraft(side, sufa, observation['LON'], observation['LAT'])
-            print(f"Action:\n{action}")
+            observation = get_unit_from_observation(next_raw_observation, side, sufa)
+            print(f"New observation:\n{observation}\n")
+
+            action = move_aircraft(side, sufa, observation.Lon, observation.Lat)
+            print(f"Action:\n{action}\n")
 
             action_written = client.send(action)
             if action_written:
