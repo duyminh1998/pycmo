@@ -98,13 +98,45 @@ function ExportUnitToXML(guid)
     if unit.loadoutdbid ~= nil then
         unit_xml = unit_xml .. WrapInXML(ExportUnitLoadoutToXML(unit.name), 'Loadout')
     end
-    unit_xml = unit_xml .. WrapInXML('', 'Doctrine')
-    unit_xml = unit_xml .. WrapInXML('', 'Sensors')
-    unit_xml = unit_xml .. WrapInXML('', 'Comms')
-    unit_xml = unit_xml .. WrapInXML('', 'Propulsion')
-    unit_xml = unit_xml .. WrapInXML('', 'Fuel')
+    if unit.mounts ~= nil then
+        unit_xml = unit_xml .. ExportUnitMountsToXML(unit)
+    end
+    if unit.fuel ~= nil then
+        unit_xml = unit_xml .. ExportUnitFuelsToXML(unit)
+    end
+    -- unit_xml = unit_xml .. WrapInXML('', 'Doctrine')
+    -- unit_xml = unit_xml .. WrapInXML('', 'Sensors')
+    -- unit_xml = unit_xml .. WrapInXML('', 'Comms')
+    -- unit_xml = unit_xml .. WrapInXML('', 'Propulsion')
     
     return WrapInXML(unit_xml, unit.type)
+end
+
+function ExportUnitFuelsToXML(unit)
+    local fuels_xml = ""
+
+    local unit_fuels = unit.fuel
+
+    for fuel_type, fuel in pairs(unit_fuels) do
+        fuels_xml = fuels_xml .. ExportFuelToXML(fuel)
+    end
+
+    if fuels_xml ~= "" then
+        return WrapInXML(fuels_xml, "Fuel")
+    else
+        return fuels_xml
+    end
+    
+end
+
+function ExportFuelToXML(fuel)
+    local fuel_xml = ''
+
+    fuel_xml = fuel_xml .. WrapInXML(fuel.type, "FT")
+    fuel_xml = fuel_xml .. WrapInXML(fuel.current, "CQ")
+    fuel_xml = fuel_xml .. WrapInXML(fuel.max, "MQ")
+
+    return WrapInXML(fuel_xml, "FuelRec")
 end
 
 function ExportUnitLoadoutToXML(unitname)
@@ -121,7 +153,7 @@ function ExportUnitLoadoutToXML(unitname)
 end
 
 function ExportUnitLoadoutWeaponsToXML(unitname)
-    local weapon_xml = ""
+    local weapons_xml = ""
 
     local loadout_weapons = ScenEdit_GetLoadout({unitname = unitname}).weapons
 
@@ -129,19 +161,62 @@ function ExportUnitLoadoutWeaponsToXML(unitname)
 
     for weapon_idx = 1, #loadout_weapons do
         local loadout_weapon = loadout_weapons[weapon_idx]
-
-        weapon_xml = weapon_xml .. "<WRec>"
-
-        weapon_xml = weapon_xml .. WrapInXML(loadout_weapon.wpn_guid, 'ID')
-        weapon_xml = weapon_xml .. WrapInXML(loadout_weapon.wpn_dbid, 'WeapID')
-        if loadout_weapon.wpn_current ~= nil then weapon_xml = weapon_xml .. WrapInXML(loadout_weapon.wpn_current, 'CL') end
-        if loadout_weapon.wpn_maxcap ~= nil then  weapon_xml = weapon_xml .. WrapInXML(loadout_weapon.wpn_maxcap, 'ML') end
-
-        weapon_xml = weapon_xml .. "</WRec>"
+        weapons_xml = weapons_xml .. ExportWeaponToXML(loadout_weapon)
     end
 
-    return weapon_xml
+    return weapons_xml
 end
+
+function ExportUnitMountsToXML(unit)
+    local mounts_xml = ""
+
+    local unit_mounts = unit.mounts
+
+    if #unit_mounts == 0 then return '' end
+
+    for mount_idx = 1, #unit_mounts do
+        local unit_mount = unit_mounts[mount_idx]
+        mounts_xml = mounts_xml .. ExportMountToXML(unit_mount)
+    end
+
+    return WrapInXML(mounts_xml, "Mounts")
+end
+
+function ExportMountToXML(mount)
+    local mount_xml = ""
+
+    mount_xml = mount_xml .. WrapInXML(mount.mount_guid, 'ID')
+    mount_xml = mount_xml .. WrapInXML(mount.mount_dbid, 'DBID')
+    mount_xml = mount_xml .. WrapInXML(mount.mount_name, 'Name')
+    mount_xml = mount_xml .. WrapInXML(mount.mount_status, 'MountStatus')
+    if mount.mount_weapons ~= nil then mount_xml = mount_xml .. WrapInXML(ExportUnitMountWeaponsToXML(mount.mount_weapons), 'MW') end
+
+    return WrapInXML(mount_xml, "Mount")
+end
+
+function ExportUnitMountWeaponsToXML(mount_weapons)
+    local weapons_xml = ""
+
+    if #mount_weapons == 0 then return '' end
+
+    for weapon_idx = 1, #mount_weapons do
+        local mount_weapon = mount_weapons[weapon_idx]
+        weapons_xml = weapons_xml .. ExportWeaponToXML(mount_weapon)
+    end
+
+    return weapons_xml
+end
+
+function ExportWeaponToXML(weapon)
+    local weapon_xml = ""
+    
+    weapon_xml = weapon_xml .. WrapInXML(weapon.wpn_guid, 'ID')
+    weapon_xml = weapon_xml .. WrapInXML(weapon.wpn_dbid, 'WeapID')
+    if weapon.wpn_current ~= nil then weapon_xml = weapon_xml .. WrapInXML(weapon.wpn_current, 'CL') end
+    if weapon.wpn_maxcap ~= nil then  weapon_xml = weapon_xml .. WrapInXML(weapon.wpn_maxcap, 'ML') end
+ 
+    return WrapInXML(weapon_xml, "WRec")
+ end
 
 function WrapInXML(data, tag)
     return '<' .. tag .. '>' .. tostring(data) .. '</' .. tag .. '>'

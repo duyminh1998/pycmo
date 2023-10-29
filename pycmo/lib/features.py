@@ -175,9 +175,9 @@ class Features(object):
                             cs = float(active_units[i]['CS'])
                         if 'CA' in active_units[i].keys() and active_units[i]['CA'] != None:
                             ca = float(active_units[i]['CA'])
-                        # if 'Fuel' in active_units[i].keys():
-                        #     cf = float(active_units[i]['Fuel']['FuelRec']['CQ'])
-                        #     mf = float(active_units[i]['Fuel']['FuelRec']['MQ'])
+                        if 'Fuel' in active_units[i].keys():
+                            cf = float(active_units[i]['Fuel']['FuelRec']['CQ'])
+                            mf = float(active_units[i]['Fuel']['FuelRec']['MQ'])
                         unit_ids.append(Unit(i, unit_id, name, self.player_side, dbid, key, ch, cs, ca, lon, lat, cf, mf, mount, loadout))
                 except KeyError:
                     pass                        
