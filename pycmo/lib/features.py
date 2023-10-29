@@ -88,7 +88,12 @@ class Features(object):
             (Game) a named tuple containing the meta data of the game.
         """
         try:
-            return Game(self.scen_dic['Scenario']["TimelineID"],
+            timeline_id = self.scen_dic['Scenario']["TimelineID"]
+        except KeyError:
+            timeline_id = None
+            
+        try:
+            return Game(timeline_id,
                             self.scen_dic['Scenario']["Time"],
                             self.scen_dic['Scenario']["Title"],
                             self.scen_dic['Scenario']["ZeroHour"],
@@ -346,25 +351,3 @@ class FeaturesFromSteam(Features):
             raise ValueError('Cannot find player side.')
         self.side_ = self.get_side_properties(player_side_index)
         # self.contacts = self.get_contacts(player_side_index)
-
-    def get_meta(self) -> Game:
-        """
-        Description:
-            Get meta data (top-level scenario data).
-
-        Keyword Arguments:
-            None
-        
-        Returns:
-            (Game) a named tuple containing the meta data of the game.
-        """
-        try:
-            return Game(None,
-                        self.scen_dic['Scenario']["Time"],
-                        self.scen_dic['Scenario']["Title"],
-                        self.scen_dic['Scenario']["ZeroHour"],
-                        self.scen_dic['Scenario']["StartTime"],
-                        self.scen_dic['Scenario']["Duration"],
-                        self.get_sides())
-        except KeyError:
-            raise KeyError("Failed to get scenario properties.")
