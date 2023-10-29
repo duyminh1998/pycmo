@@ -4,8 +4,8 @@
 
 import os
 import json
-import subprocess
 import random
+import xmltodict
 
 from pycmo.configs.config import get_config
 from pycmo.lib.protocol import SteamClient
@@ -20,7 +20,7 @@ longitude_min = -180
 longitude_max = 180
 
 # INIT
-def read_cmo_steam_observation_file(file_path:str=os.path.join(config['steam_observation_folder_path'], 'Israel_units.inst')) -> any or None:
+def read_cmo_steam_observation_file(file_path:str=os.path.join(config['steam_observation_folder_path'], 'Steam demo.inst')) -> any or None:
     try:
         with open(file_path, 'r') as f:
             observation_file_contents = f.read()
@@ -30,19 +30,15 @@ def read_cmo_steam_observation_file(file_path:str=os.path.join(config['steam_obs
         observation_file_json = json.loads(observation_file_contents)
     except json.decoder.JSONDecodeError:
         return None
-    unit = observation_file_json["MemberRecords"][0]
-    return unit
+    observation_xml = observation_file_json["Comments"]
+    return observation_xml
 
-def filter_observation(observation):
-    return {
-        'guid': observation['Member_GUID'],
-        'type': observation['MemberType'],
-        'name': observation['MemberName'],
-        'longitude': observation['Longitude'],
-        'latitude': observation['Latitude'],
-        'altitude': observation['Altitude'],
-        'speed': observation['Speed'],
-    }
+def filter_observation(xml):         
+    scen_dic = xmltodict.parse(xml) # our scenario xml is now in 'dic'
+    units = scen_dic['Scenario']['ActiveUnits']['Aircraft']
+    for unit in units:
+        if unit['Name'] == 'Sufa #1':
+            return unit
 
 def move_aircraft(side:str, unit_name:str, initial_longitude:float, initial_latitude:float):
     base_script = f"local side = '{side}'\nlocal sufa = ScenEdit_GetUnit({{side = side, name = '{unit_name}'}})\n"
@@ -65,7 +61,7 @@ sufa = "Sufa #1"
 scenario_name = "Steam demo"
 command_version = "Command v1.06 - Build 1328.10a"
 
-observation_file_path = os.path.join(config['steam_observation_folder_path'], 'Israel_units.inst')
+observation_file_path = os.path.join(config['steam_observation_folder_path'], f'{scenario_name}.inst')
 scripts_folder_path = config["scripts_path"]
 agent_action_filename = os.path.join(scripts_folder_path, "steam_demo", "python_agent_action.lua")
 
@@ -88,7 +84,7 @@ if scenario_started:
         if next_raw_observation and next_raw_observation != current_raw_observation:
             observation = filter_observation(next_raw_observation)
             print(f"New observation:\n{observation}")
-            action = move_aircraft(side, sufa, observation['longitude'], observation['latitude'])
+            action = move_aircraft(side, sufa, observation['LON'], observation['LAT'])
             print(f"Action:\n{action}")
 
             action_written = client.send(action)
