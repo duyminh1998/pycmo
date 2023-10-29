@@ -314,7 +314,7 @@ class Features(object):
             print("ERROR: failed to get side contacts.")
             return contact_id
 
-class FeaturesFromSteam(object):
+class FeaturesFromSteam(Features):
     """
     Renders feature layers from a Command: Modern Operations scenario XML into named tuples.
     """
@@ -337,7 +337,7 @@ class FeaturesFromSteam(object):
         
         # get features
         self.player_side = player_side
-        # self.meta = self.get_meta() # Return the scenario-level rmation of the scenario
+        self.meta = self.get_meta() # Return the scenario-level rmation of the scenario
         # self.avai_weapons = []
         # self.units = self.get_side_units(player_side)
         # try:
@@ -346,3 +346,25 @@ class FeaturesFromSteam(object):
         #     raise ValueError('Cannot find player side.')
         # self.side_ = self.get_side_properties(player_side_index)
         # self.contacts = self.get_contacts(player_side_index)
+
+    def get_meta(self) -> Game:
+        """
+        Description:
+            Get meta data (top-level scenario data).
+
+        Keyword Arguments:
+            None
+        
+        Returns:
+            (Game) a named tuple containing the meta data of the game.
+        """
+        try:
+            return Game(None,
+                        self.scen_dic['Scenario']["CurrentTimeNum"],
+                        self.scen_dic['Scenario']["Title"],
+                        None,
+                        self.scen_dic['Scenario']["StartTimeNum"],
+                        self.scen_dic['Scenario']["DurationNum"],
+                        self.get_sides())
+        except KeyError:
+            raise KeyError("Failed to get scenario properties.")
