@@ -27,7 +27,7 @@ Contact = collections.namedtuple("ContactInfo", ["XML_ID", "ID", 'Name', 'CS', '
 
 class Features(object):
     """
-    Render feature layers from Command scenario XML into named tuples.
+    Render feature layers from a Command: Professional Edition scenario XML into named tuples.
     """
     def __init__(self, xml:str, player_side:str) -> None:
         """
@@ -313,3 +313,36 @@ class Features(object):
         except:
             print("ERROR: failed to get side contacts.")
             return contact_id
+
+class FeaturesFromSteam(object):
+    """
+    Renders feature layers from a Command: Modern Operations scenario XML into named tuples.
+    """
+    def __init__(self, xml:str, player_side:str) -> None:
+        """
+        Description:
+            Initialize a Features object to hold observations.
+
+        Keyword Arguments:
+            xml: the path to the xml file containing the game observations.
+            player_side: the side of the player. Dictates the units that they can actually control.
+        
+        Returns:
+            None
+        """
+        try:         
+            self.scen_dic = xmltodict.parse(xml) # our scenario xml is now in 'dic'
+        except FileNotFoundError as error:
+            raise ValueError("Unable to parse scenario xml.")
+        
+        # get features
+        self.player_side = player_side
+        # self.meta = self.get_meta() # Return the scenario-level rmation of the scenario
+        # self.avai_weapons = []
+        # self.units = self.get_side_units(player_side)
+        # try:
+        #     player_side_index = self.get_sides().index(player_side)
+        # except:
+        #     raise ValueError('Cannot find player side.')
+        # self.side_ = self.get_side_properties(player_side_index)
+        # self.contacts = self.get_contacts(player_side_index)

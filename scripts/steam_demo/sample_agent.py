@@ -20,7 +20,7 @@ longitude_min = -180
 longitude_max = 180
 
 # INIT
-def read_cmo_steam_observation_file(file_path:str=os.path.join(config['steam_observation_folder_path'], 'Steam demo.inst')) -> any or None:
+def cmo_steam_observation_file_to_xml(file_path:str=os.path.join(config['steam_observation_folder_path'], 'Steam demo.inst')) -> any or None:
     try:
         with open(file_path, 'r') as f:
             observation_file_contents = f.read()
@@ -73,13 +73,13 @@ scenario_started = client.start_scenario()
 
 if scenario_started:
     scenario_ended = False
-    current_raw_observation = read_cmo_steam_observation_file(observation_file_path)
+    current_raw_observation = cmo_steam_observation_file_to_xml(observation_file_path)
 
     # reset agent action to nothing
     client.send("")
 
     while not scenario_ended:
-        next_raw_observation = read_cmo_steam_observation_file(observation_file_path)
+        next_raw_observation = cmo_steam_observation_file_to_xml(observation_file_path)
 
         if next_raw_observation and next_raw_observation != current_raw_observation:
             observation = filter_observation(next_raw_observation)

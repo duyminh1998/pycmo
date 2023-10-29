@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import os
 import numpy as np
 import subprocess
+import json
 
 def parse_datetime(time_int:int) -> datetime:
     """
@@ -153,3 +154,18 @@ def process_exists(process_name):
     last_line = output.strip().split('\r\n')[-1]
     # because Fail message could be translated
     return last_line.lower().startswith(process_name.lower())
+
+def cmo_steam_observation_file_to_xml(file_path:str) -> any or None:
+    try:
+        with open(file_path, 'r') as f:
+            observation_file_contents = f.read()
+    except FileNotFoundError:
+        return None
+    
+    try:
+        observation_file_json = json.loads(observation_file_contents)
+    except json.decoder.JSONDecodeError:
+        return None
+    
+    observation_xml = observation_file_json["Comments"]
+    return observation_xml

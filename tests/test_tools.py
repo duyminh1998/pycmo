@@ -51,3 +51,9 @@ def test_discretize_2d_space():
 
 def test_get_nearest_point_from_location():
     ...
+
+def test_cmo_steam_observation_file_to_xml():
+    observation_file_path = os.path.join(config['pycmo_path'], 'tests', "fixtures", 'test_steam_observation.inst')
+    xml_string = cmo_steam_observation_file_to_xml(observation_file_path)
+    assert isinstance(xml_string, str)
+    assert len(xml_string) > 1
