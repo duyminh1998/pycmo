@@ -4,7 +4,6 @@
 
 import os
 import random
-import xmltodict
 
 from pycmo.configs.config import get_config
 from pycmo.lib.tools import cmo_steam_observation_file_to_xml
