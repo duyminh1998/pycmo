@@ -156,8 +156,8 @@ class Features(object):
                         unit_id = active_units[i]['ID']
                         name = active_units[i]['Name']
                         dbid = active_units[i]['DBID']
-                        lon = float(active_units[i]['LonLR'])
-                        lat = float(active_units[i]['LatLR'])
+                        lon = float(active_units[i]['Lon'])
+                        lat = float(active_units[i]['Lat'])
                         ch = None
                         cs = None
                         ca = None
@@ -175,9 +175,9 @@ class Features(object):
                             cs = float(active_units[i]['CS'])
                         if 'CA' in active_units[i].keys() and active_units[i]['CA'] != None:
                             ca = float(active_units[i]['CA'])
-                        if 'Fuel' in active_units[i].keys():
-                            cf = float(active_units[i]['Fuel']['FuelRec']['CQ'])
-                            mf = float(active_units[i]['Fuel']['FuelRec']['MQ'])
+                        # if 'Fuel' in active_units[i].keys():
+                        #     cf = float(active_units[i]['Fuel']['FuelRec']['CQ'])
+                        #     mf = float(active_units[i]['Fuel']['FuelRec']['MQ'])
                         unit_ids.append(Unit(i, unit_id, name, self.player_side, dbid, key, ch, cs, ca, lon, lat, cf, mf, mount, loadout))
                 except KeyError:
                     pass                        
@@ -338,13 +338,13 @@ class FeaturesFromSteam(Features):
         # get features
         self.player_side = player_side
         self.meta = self.get_meta() # Return the scenario-level rmation of the scenario
-        # self.avai_weapons = []
-        # self.units = self.get_side_units(player_side)
-        # try:
-        #     player_side_index = self.get_sides().index(player_side)
-        # except:
-        #     raise ValueError('Cannot find player side.')
-        # self.side_ = self.get_side_properties(player_side_index)
+        self.avai_weapons = []
+        self.units = self.get_side_units(player_side)
+        try:
+            player_side_index = self.get_sides().index(player_side)
+        except:
+            raise ValueError('Cannot find player side.')
+        self.side_ = self.get_side_properties(player_side_index)
         # self.contacts = self.get_contacts(player_side_index)
 
     def get_meta(self) -> Game:
@@ -360,11 +360,11 @@ class FeaturesFromSteam(Features):
         """
         try:
             return Game(None,
-                        self.scen_dic['Scenario']["CurrentTimeNum"],
+                        self.scen_dic['Scenario']["Time"],
                         self.scen_dic['Scenario']["Title"],
-                        None,
-                        self.scen_dic['Scenario']["StartTimeNum"],
-                        self.scen_dic['Scenario']["DurationNum"],
+                        self.scen_dic['Scenario']["ZeroHour"],
+                        self.scen_dic['Scenario']["StartTime"],
+                        self.scen_dic['Scenario']["Duration"],
                         self.get_sides())
         except KeyError:
             raise KeyError("Failed to get scenario properties.")

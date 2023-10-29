@@ -12,12 +12,10 @@ function ScenEdit_ExportScenarioToXML()
 
     scenario_xml = scenario_xml .. WrapInXML(scenario.Title, 'Title')
     scenario_xml = scenario_xml .. WrapInXML(scenario.FileName, 'FileName')
-    scenario_xml = scenario_xml .. WrapInXML(scenario.CurrentTime, 'CurrentTime')
-    scenario_xml = scenario_xml .. WrapInXML(scenario.CurrentTimeNum, 'CurrentTimeNum')
-    scenario_xml = scenario_xml .. WrapInXML(scenario.StartTime, 'StartTime')
-    scenario_xml = scenario_xml .. WrapInXML(scenario.StartTimeNum, 'StartTimeNum')
-    scenario_xml = scenario_xml .. WrapInXML(scenario.Duration, 'Duration')
-    scenario_xml = scenario_xml .. WrapInXML(scenario.DurationNum, 'DurationNum')
+    scenario_xml = scenario_xml .. WrapInXML(scenario.CurrentTimeNum, 'Time')
+    scenario_xml = scenario_xml .. WrapInXML(scenario.StartTimeNum, 'StartTime')
+    scenario_xml = scenario_xml .. WrapInXML(scenario.StartTimeNum, 'ZeroHour')
+    scenario_xml = scenario_xml .. WrapInXML(scenario.DurationNum, 'Duration')
     scenario_xml = scenario_xml .. WrapInXML(scenario.SaveVersion, 'SaveVersion')
     scenario_xml = scenario_xml .. WrapInXML(scenario.CampaignScore, 'CampaignScore')
     scenario_xml = scenario_xml .. WrapInXML(scenario.HasStarted, 'HasStarted')
@@ -84,17 +82,22 @@ function ExportUnitToXML(guid)
     end
 
     unit_xml = unit_xml .. WrapInXML(unit.guid, 'ID')
+    unit_xml = unit_xml .. WrapInXML(unit.dbid, 'DBID')
     unit_xml = unit_xml .. WrapInXML(unit.name, 'Name')
     unit_xml = unit_xml .. WrapInXML(unit.side, 'Side')
+    unit_xml = unit_xml .. WrapInXML(unit.classname, 'ClassName')
     unit_xml = unit_xml .. WrapInXML(unit.proficiency, 'Proficiency')
-    unit_xml = unit_xml .. WrapInXML(unit.latitude, 'LAT')
-    unit_xml = unit_xml .. WrapInXML(unit.longitude, 'LON')
+    unit_xml = unit_xml .. WrapInXML(unit.latitude, 'Lat')
+    unit_xml = unit_xml .. WrapInXML(unit.longitude, 'Lon')
     unit_xml = unit_xml .. WrapInXML(unit.altitude, 'CA')
     unit_xml = unit_xml .. WrapInXML(unit.heading, 'CH')
     unit_xml = unit_xml .. WrapInXML(unit.speed, 'CS')
-    unit_xml = unit_xml .. WrapInXML(unit.throttle, 'THR')
+    unit_xml = unit_xml .. WrapInXML(unit.throttle, 'Thr')
     unit_xml = unit_xml .. WrapInXML(unit.fuelstate, 'FuelState')
     unit_xml = unit_xml .. WrapInXML(unit.weaponstate, 'WeaponState')
+    if unit.loadoutdbid ~= nil then
+        unit_xml = unit_xml .. WrapInXML(ExportUnitLoadoutToXML(unit.name), 'Loadout')
+    end
     unit_xml = unit_xml .. WrapInXML('', 'Doctrine')
     unit_xml = unit_xml .. WrapInXML('', 'Sensors')
     unit_xml = unit_xml .. WrapInXML('', 'Comms')
@@ -102,6 +105,42 @@ function ExportUnitToXML(guid)
     unit_xml = unit_xml .. WrapInXML('', 'Fuel')
     
     return WrapInXML(unit_xml, unit.type)
+end
+
+function ExportUnitLoadoutToXML(unitname)
+    local loadout_xml = ""
+
+    local unit_loadout = ScenEdit_GetLoadout({unitname = unitname})
+
+    loadout_xml = loadout_xml .. WrapInXML(unit_loadout.dbid, 'ID')
+    loadout_xml = loadout_xml .. WrapInXML(unit_loadout.dbid, 'DBID')
+    loadout_xml = loadout_xml .. WrapInXML(unit_loadout.name, 'Name')
+    loadout_xml = loadout_xml .. WrapInXML(ExportUnitLoadoutWeaponsToXML(unitname), 'Weaps')
+
+    return WrapInXML(loadout_xml, "Loadout")
+end
+
+function ExportUnitLoadoutWeaponsToXML(unitname)
+    local weapon_xml = ""
+
+    local loadout_weapons = ScenEdit_GetLoadout({unitname = unitname}).weapons
+
+    if #loadout_weapons == 0 then return '' end
+
+    for weapon_idx = 1, #loadout_weapons do
+        local loadout_weapon = loadout_weapons[weapon_idx]
+
+        weapon_xml = weapon_xml .. "<WRec>"
+
+        weapon_xml = weapon_xml .. WrapInXML(loadout_weapon.wpn_guid, 'ID')
+        weapon_xml = weapon_xml .. WrapInXML(loadout_weapon.wpn_dbid, 'WeapID')
+        if loadout_weapon.wpn_current ~= nil then weapon_xml = weapon_xml .. WrapInXML(loadout_weapon.wpn_current, 'CL') end
+        if loadout_weapon.wpn_maxcap ~= nil then  weapon_xml = weapon_xml .. WrapInXML(loadout_weapon.wpn_maxcap, 'ML') end
+
+        weapon_xml = weapon_xml .. "</WRec>"
+    end
+
+    return weapon_xml
 end
 
 function WrapInXML(data, tag)
