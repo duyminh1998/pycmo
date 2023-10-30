@@ -4,9 +4,10 @@
 # Purpose: A Command environment.
 
 # imports
-from msilib.schema import Feature
-from pycmo.lib import features, actions
+from pycmo.lib import actions
+from pycmo.lib.features import Features, FeaturesFromSteam
 from pycmo.lib.protocol import Client, SteamClient
+from pycmo.lib.tools import cmo_steam_observation_file_to_xml
 import collections, enum
 import time, os
 
@@ -135,7 +136,7 @@ class CPEEnv():
             self.client.send(data)
             if step_file_name in os.listdir(self.step_dest): # the game has been progressed and the new step information has been saved
                 paused = True
-                observation = features.Features(os.path.join(self.step_dest, step_file_name), self.player_side)
+                observation = Features(os.path.join(self.step_dest, step_file_name), self.player_side)
                 reward = observation.side_.TotalScore
                 return TimeStep(step_id, StepType(1), reward, observation)
             time.sleep(0.1) # else, sleep for 0.1 second to give the game a chance to catch up
@@ -144,7 +145,7 @@ class CPEEnv():
         reward = observation.side_.TotalScore
         return TimeStep(step_id, StepType(2), 0, observation)        
 
-    def get_obs(self, step_id:int) -> features.Features:
+    def get_obs(self, step_id:int) -> Features:
         """
         Description:
             Returns the observation at a particular timestep. This is done by calling the game to export the entire scenario to xml.
@@ -158,7 +159,7 @@ class CPEEnv():
         data = "--script \nfile = io.open('{}', 'w')".format(self.step_dest + str(step_id) + '.xml')
         data += "\nio.output(file) \ntheXML = ScenEdit_ExportScenarioToXML() \nio.write(theXML) \nio.close(file)"
         self.client.send(data)
-        return features.Features(os.path.join(self.step_dest, str(step_id) + ".xml"), self.player_side)     
+        return Features(os.path.join(self.step_dest, str(step_id) + ".xml"), self.player_side)     
 
     def reset_connection(self) -> bool:
         """
@@ -193,7 +194,7 @@ class CPEEnv():
             return True
         return False
     
-    def action_spec(self, observation:features.Features) -> actions.AvailableFunctions:
+    def action_spec(self, observation:Features) -> actions.AvailableFunctions:
         """
         Description:
             Returns the available actions given an observation.
@@ -219,26 +220,88 @@ class CPEEnv():
         """
         return self.client.end_connection()
     
-class CMOEnv(CPEEnv):
+class CMOEnv():
     """
     A wrapper that extracts observations from and sends actions to Command: Modern Operations (Steam).
     """
-    def __init__(self, step_dest: str, step_size: list, player_side: str, scen_ended_path: str):
-        self.client = SteamClient() # initialize a client to send data to the game
-        self.client.connect() # connect the client to the game
+    def __init__(self, 
+                 scenario_name:str,
+                 player_side: str, 
+                 step_size: list, 
+                 command_version:str,
+                 observation_path: str, 
+                 action_path: str,
+                 scen_ended_path: str):
+        self.client = SteamClient(scenario_name=scenario_name, agent_action_filename=action_path, command_version=command_version) # initialize a client to send data to the game
+        if not self.client.connect(): # connect the client to the game
+            raise FileNotFoundError("No running instance of Command to connect to.")
+        
         self.player_side = player_side # the player's side, this is used to identify units that the player can actually control
-        self.step_dest = step_dest # the path to the folder containing the xml steps files. These steps files are used to generate observations.
-        self.scen_ended = scen_ended_path # the path to the text file recording whether or not the scenario has ended. "hacky" way to determine when a scenario ends because the current Lua command for this check is buggy in-game.
+
         # the step size in h, m, s
         self.h = step_size[0]
         self.m = step_size[1]
         self.s = step_size[2]
+        
+        self.observation_path = observation_path # the path to the folder containing the xml steps files. These steps files are used to generate observations.
+        self.action_path = action_path
+        self.scen_ended = scen_ended_path # the path to the text file recording whether or not the scenario has ended. "hacky" way to determine when a scenario ends because the current Lua command for this check is buggy in-game.
 
-    def step(self):
-        ...
+        self.current_observation = None
+        self.step_id = 0
 
-    def get_obs(self):
-        ...
+    def reset(self) -> TimeStep:
+        try:
+            with open(self.scen_ended, 'w') as f:
+                f.write('False') # note in the scenario has ended file that the scenario has ended
+            
+            # reset agent action to nothing
+            self.client.send('')
+            
+            initial_observation = self.get_obs()
+            if not initial_observation:
+                raise FileNotFoundError("Cannot find observation file to reset the environment.")
+            
+            self.current_observation = initial_observation
+            self.step_id = 0
+
+            return TimeStep(0, StepType(0), 0, initial_observation) # return initial time step
+        
+        except FileNotFoundError:
+            raise FileNotFoundError("Cannot find scen_has_ended.txt.")
+    
+    def step(self, action=None) -> TimeStep:
+        # send the agent's action
+        action_written = False
+        if action != None:
+            action_written = self.client.send(action)
+
+        # step the environment forwards
+        if action_written:
+            self.client.start_scenario()
+
+        # get the corresponding observation and reward
+        # continuously poll the game until the correct time step duration has passed
+        new_observation = self.get_obs()
+        while new_observation.meta.Time == self.current_observation.meta.Time:
+            time.sleep(0.1)
+            new_observation = self.get_obs()
+
+        observation = new_observation
+        self.current_observation = new_observation
+        reward = observation.side_.TotalScore
+        new_timestep = TimeStep(self.step_id, StepType(1), reward, observation)
+        self.step_id += 1
+        
+        return new_timestep
+
+        # if the game has ended, then save the timestep information with a different step type
+        # observation = self.get_obs(step_id)
+        # reward = observation.side_.TotalScore
+        # return TimeStep(step_id, StepType(2), 0, observation)    
+
+    def get_obs(self) -> FeaturesFromSteam:
+        return FeaturesFromSteam(cmo_steam_observation_file_to_xml(self.observation_path), self.player_side) 
 
     def check_game_ended(self):
         ...

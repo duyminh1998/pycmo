@@ -9,16 +9,13 @@ from pycmo.configs.config import get_config
 from pycmo.lib.tools import cmo_steam_observation_file_to_xml
 from pycmo.lib.protocol import SteamClient
 from pycmo.lib.features import FeaturesFromSteam, Unit
+from pycmo.env.cmo_env import CMOEnv
 
 # open config and set important files and folder paths
 config = get_config()
 
-# CONSTANTS
-
-# INIT
-def get_unit_from_observation(xml, player_side, unit_name) -> Unit:         
-    features = FeaturesFromSteam(xml, player_side)
-    units = features.units
+# FUNCTIONS
+def get_unit_from_observation(units, unit_name) -> Unit:
     for unit in units:
         if unit.Name == unit_name:
             return unit
@@ -38,41 +35,43 @@ def no_op():
 
 # MAIN LOOP
 # SIDE INFO
-side = "Israel"
 sufa = "Sufa #1"
 
 scenario_name = "Steam demo"
+player_side = "Israel"
+step_size = ['0', '0', '1']
 command_version = "Command v1.06 - Build 1328.10a"
+observation_path = os.path.join(config['steam_observation_folder_path'], f'{scenario_name}.inst')
+action_path = os.path.join(config["scripts_path"], "steam_demo", "python_agent_action.lua")
+scen_ended_path = config['scen_ended']
 
-observation_file_path = os.path.join(config['steam_observation_folder_path'], f'{scenario_name}.inst')
-scripts_folder_path = config["scripts_path"]
-agent_action_filename = os.path.join(scripts_folder_path, "steam_demo", "python_agent_action.lua")
-
-
-client = SteamClient(scenario_name, agent_action_filename, command_version)
+cmo_env = CMOEnv(
+        scenario_name=scenario_name,
+        player_side=player_side,
+        step_size=step_size,
+        observation_path=observation_path,
+        action_path=action_path,
+        scen_ended_path=scen_ended_path,
+        command_version=command_version
+)
 
 # start the game
-scenario_started = client.start_scenario()
+# scenario_started = cmo_env.client.start_scenario()
+scenario_started = True
 
 if scenario_started:
     scenario_ended = False
-    current_raw_observation = cmo_steam_observation_file_to_xml(observation_file_path)
-
-    # reset agent action to nothing
-    client.send("")
+    old_state = cmo_env.reset()
 
     while not scenario_ended:
-        next_raw_observation = cmo_steam_observation_file_to_xml(observation_file_path)
+        observation = old_state.observation
+        
+        sufa_info = get_unit_from_observation(observation.units, sufa)
+        action = move_aircraft(player_side, sufa, sufa_info.Lon, sufa_info.Lat)
+        print(f"Action:\n{action}\n")
+    
+        new_state = cmo_env.step(action)
+        print(f"New observation:\n{new_state}\n")
 
-        if next_raw_observation and next_raw_observation != current_raw_observation:
-            observation = get_unit_from_observation(next_raw_observation, side, sufa)
-            print(f"New observation:\n{observation}\n")
-
-            action = move_aircraft(side, sufa, observation.Lon, observation.Lat)
-            print(f"Action:\n{action}\n")
-
-            action_written = client.send(action)
-            if action_written:
-                scenario_started = client.start_scenario()
-                
-        current_raw_observation = next_raw_observation
+        # set old state as the previous new state
+        old_state = new_state
