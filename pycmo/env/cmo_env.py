@@ -5,7 +5,8 @@
 
 # imports
 from msilib.schema import Feature
-from pycmo.lib import features, protocol, actions
+from pycmo.lib import features, actions
+from pycmo.lib.protocol import Client, SteamClient
 import collections, enum
 import time, os
 
@@ -61,9 +62,9 @@ class StepType(enum.IntEnum):
     # Denotes the last `TimeStep` in a sequence.
     LAST = 2
 
-class CMOEnv():
+class CPEEnv():
     """
-    A wrapper that extracts observations from and sends actions to the game.
+    A wrapper that extracts observations from and sends actions to Command: Professional Edition.
     """
     def __init__(self, step_dest: str, step_size: list, player_side: str, scen_ended_path: str) -> None:
         """
@@ -79,7 +80,7 @@ class CMOEnv():
         Returns:
             None
         """
-        self.client = protocol.Client() # initialize a client to send data to the game
+        self.client = Client() # initialize a client to send data to the game
         self.client.connect() # connect the client to the game
         self.player_side = player_side # the player's side, this is used to identify units that the player can actually control
         self.step_dest = step_dest # the path to the folder containing the xml steps files. These steps files are used to generate observations.
@@ -217,3 +218,27 @@ class CMOEnv():
             (bool) whether the connection was successfully ended.    
         """
         return self.client.end_connection()
+    
+class CMOEnv(CPEEnv):
+    """
+    A wrapper that extracts observations from and sends actions to Command: Modern Operations (Steam).
+    """
+    def __init__(self, step_dest: str, step_size: list, player_side: str, scen_ended_path: str):
+        self.client = SteamClient() # initialize a client to send data to the game
+        self.client.connect() # connect the client to the game
+        self.player_side = player_side # the player's side, this is used to identify units that the player can actually control
+        self.step_dest = step_dest # the path to the folder containing the xml steps files. These steps files are used to generate observations.
+        self.scen_ended = scen_ended_path # the path to the text file recording whether or not the scenario has ended. "hacky" way to determine when a scenario ends because the current Lua command for this check is buggy in-game.
+        # the step size in h, m, s
+        self.h = step_size[0]
+        self.m = step_size[1]
+        self.s = step_size[2]
+
+    def step(self):
+        ...
+
+    def get_obs(self):
+        ...
+
+    def check_game_ended(self):
+        ...
