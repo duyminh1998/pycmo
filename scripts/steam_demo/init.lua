@@ -57,3 +57,26 @@ ScenEdit_SetTrigger({mode = 'add', type = 'RegularTime', Interval = export_obser
 ScenEdit_SetEventTrigger(export_observation_action_event.guid, {mode = 'add', name = export_observation_trigger_name})
 ScenEdit_SetAction({mode = 'add',type = 'LuaScript', name = export_observation_action_name, ScriptText = export_observation_action_script_text})
 ScenEdit_SetEventAction(export_observation_action_event.guid, {mode = 'add', name = export_observation_action_name})
+
+-- Set up an event to export the scenario when it is first loaded
+local export_observation_event_name = 'Export observation initially'
+local export_observation_trigger_name = 'Scenario is Loaded'
+local export_observation_action_name = 'Export observation initially'
+local export_observation_action_script_text = setup_script_text .. "ScenEdit_ExportScenarioToXML()"
+
+-- Remove these events, triggers, and actions if they are already present
+local scenario_events = ScenEdit_GetEvents(1)
+for i = 1, #scenario_events do
+    local event = scenario_events[i]
+    if event.description == export_observation_event_name then
+        ScenEdit_SetEvent(event.description, {mode = 'remove'})
+        ScenEdit_SetTrigger({description = export_observation_trigger_name, mode = 'remove'})
+        ScenEdit_SetAction({description = export_observation_action_name, mode = 'remove'})
+    end
+end
+
+local export_observation_action_event = ScenEdit_SetEvent(export_observation_event_name, {mode='add', IsRepeatable=true})
+ScenEdit_SetTrigger({mode = 'add', type = 'ScenLoaded', name = export_observation_trigger_name})
+ScenEdit_SetEventTrigger(export_observation_action_event.guid, {mode = 'add', name = export_observation_trigger_name})
+ScenEdit_SetAction({mode = 'add',type = 'LuaScript', name = export_observation_action_name, ScriptText = export_observation_action_script_text})
+ScenEdit_SetEventAction(export_observation_action_event.guid, {mode = 'add', name = export_observation_action_name})
