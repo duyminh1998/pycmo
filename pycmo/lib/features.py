@@ -350,4 +350,4 @@ class FeaturesFromSteam(Features):
         except:
             raise ValueError('Cannot find player side.')
         self.side_ = self.get_side_properties(player_side_index)
-        # self.contacts = self.get_contacts(player_side_index)
+        self.contacts = self.get_contacts(player_side_index)

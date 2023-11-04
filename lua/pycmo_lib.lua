@@ -47,11 +47,39 @@ function ExportSidesToXML()
         sides_xml = sides_xml .. WrapInXML('', 'Missions')
         sides_xml = sides_xml .. WrapInXML('', 'Prof')
         sides_xml = sides_xml .. WrapInXML('', 'Doctrine')
+        sides_xml = sides_xml .. ExportContactsToXML(side.name)
 
         sides_xml = sides_xml .. "</Side>"
     end
 
     return sides_xml
+end
+
+function ExportContactsToXML(side_name)
+    local contacts_xml = ""
+
+    local contacts = ScenEdit_GetContacts(side_name)
+
+    for contact_idx = 1, #contacts do
+        local contact = contacts[contact_idx]
+        contacts_xml = contacts_xml .. ExportContactToXML(contact)
+    end
+    
+    return WrapInXML(contacts_xml, "Contacts")
+end
+
+function ExportContactToXML(contact)
+    local contact_xml = ""
+
+    contact_xml = contact_xml .. WrapInXML(contact.guid, "ID")
+    contact_xml = contact_xml .. WrapInXML(contact.name, "Name")
+    contact_xml = contact_xml .. WrapInXML(contact.type, "Type")
+    if contact.altitude ~= nil then contact_xml = contact_xml .. WrapInXML(contact.altitude, "CA") end
+    if contact.speed ~= nil then contact_xml = contact_xml .. WrapInXML(contact.speed, "CS") end
+    if contact.latitude ~= nil then contact_xml = contact_xml .. WrapInXML(contact.latitude, "Lat") end
+    if contact.longitude ~= nil then contact_xml = contact_xml .. WrapInXML(contact.longitude, "Lon") end
+    
+    return WrapInXML(contact_xml, "Contact")
 end
 
 function ExportUnitsToXML()

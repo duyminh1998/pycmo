@@ -2,7 +2,7 @@ import pytest
 import os
 
 from pycmo.configs.config import get_config
-from pycmo.lib.features import FeaturesFromSteam, Game, Side, Weapon, Loadout, Mount, Unit
+from pycmo.lib.features import FeaturesFromSteam, Game, Side, Weapon, Loadout, Mount, Unit, Contact
 from pycmo.lib.tools import cmo_steam_observation_file_to_xml
 
 config = get_config()
@@ -123,3 +123,16 @@ def test_features_from_steam_get_unit():
     assert sufa_aircraft.MaxFuel == 8450
     assert len(sufa_aircraft.Mounts) > 0
     assert len(sufa_aircraft.Loadout) > 0
+
+def test_features_from_steam_get_contacts():
+    features = FeaturesFromSteam(xml=scenario_xml, player_side=side)
+    contacts = features.contacts
+    assert len(contacts) > 0
+    contact = contacts[0]
+    assert isinstance(contact, Contact)
+    assert contact.ID == "0HXVM6-0HMUTDCKTG4AA"
+    assert contact.Name == "MacDill Runway Access Point (Very Large Aircraft)"
+    assert contact.CS == 0.0
+    assert contact.CA == 6.0
+    assert contact.Lon == -82.516819017376
+    assert contact.Lat == 27.852581555226
