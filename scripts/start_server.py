@@ -2,8 +2,7 @@
 # Date: 08/28/2021
 # Purpose: Start a CMO server for the agents to connect to.
 
-from protocol import Server
-from pycmo.configs import config
+from pycmo.lib.protocol import Server
 import sys
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@
 
 # imports
 from pycmo.lib.protocol import Server # Server to handle connection
-from pycmo.env.cmo_env import CMOEnv # CMO environment, functions as the client that sends actions and receives observations
+from pycmo.env.cmo_env import CPEEnv # CPE environment, functions as the client that sends actions and receives observations
 # agents
 from pycmo.agents.rule_based_agent import RuleBasedAgent
 from pycmo.agents.scripted_agent import ScriptedAgent
@@ -42,8 +42,8 @@ def run_loop(player_side:str, config:dict, step_size:list=['0', '0', '1'], agent
         x.start()
         time.sleep(10)
     
-    # build CMO environment
-    env = CMOEnv(steps_path, step_size, player_side, config["scen_ended"])
+    # build CPE environment
+    env = CPEEnv(steps_path, step_size, player_side, config["scen_ended"])
     
     # initial variables and state
     step_id = 0

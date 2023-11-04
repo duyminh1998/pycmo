@@ -7,6 +7,8 @@
 from datetime import datetime, timedelta
 import os
 import numpy as np
+import subprocess
+import json
 
 def parse_datetime(time_int:int) -> datetime:
     """
@@ -142,3 +144,28 @@ def get_nearest_point_from_location(raw_lat:float, raw_long:float, coords:list) 
             closest_pt = coord
     # return closest point
     return closest_pt
+
+def process_exists(process_name):
+    """Check whether a process exists. https://stackoverflow.com/questions/7787120/check-if-a-process-is-running-or-not-on-windows"""
+    call = 'TASKLIST', '/FI', 'imagename eq %s' % process_name
+    # use buildin check_output right away
+    output = subprocess.check_output(call).decode()
+    # check in last line for process name
+    last_line = output.strip().split('\r\n')[-1]
+    # because Fail message could be translated
+    return last_line.lower().startswith(process_name.lower())
+
+def cmo_steam_observation_file_to_xml(file_path:str) -> any or None:
+    try:
+        with open(file_path, 'r') as f:
+            observation_file_contents = f.read()
+    except FileNotFoundError:
+        return None
+    
+    try:
+        observation_file_json = json.loads(observation_file_contents)
+    except json.decoder.JSONDecodeError:
+        return None
+    
+    observation_xml = observation_file_json["Comments"]
+    return observation_xml

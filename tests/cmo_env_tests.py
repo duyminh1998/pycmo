@@ -11,11 +11,11 @@ from pycmo.lib.tools import *
 # open config and set important files and folder paths
 config = config.get_config()
 
-# test CMOEnv class
+# test CPEEnv class
 # init
 step_size = ['0', '0', '1']
 side = 'US'
-env = cmo_env.CMOEnv(config['observation_path'], step_size, side, config['scen_ended'])
+env = cmo_env.CPEEnv(config['observation_path'], step_size, side, config['scen_ended'])
 
 # reset
 step = env.reset()
