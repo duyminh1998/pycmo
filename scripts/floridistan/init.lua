@@ -4,7 +4,7 @@
 
 -- Edit these variables as needed
 local pycmo_path = 'E:/MyProjects/pycmo/'
-local lua_script_foldername = pycmo_path .. 'scripts/steam_demo/'
+local lua_script_foldername = pycmo_path .. 'scripts/floridistan/'
 local pycmo_lib_lua_filename = pycmo_path .. 'lua/pycmo_lib.lua'
 local agent_action_lua_filename = 'agent_action.lua'
 local export_observation_lua_filename = 'export_observation.lua'
