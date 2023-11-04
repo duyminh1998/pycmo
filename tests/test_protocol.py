@@ -8,7 +8,7 @@ config = get_config()
 
 scenario_name = "Steam demo"
 agent_action_filename = os.path.join(config['pycmo_path'], 'tests', "fixtures", "test_python_agent_action.lua")
-command_version = "Command v1.06 - Build 1328.10a"
+command_version = config["command_mo_version"]
 client = SteamClient(scenario_name=scenario_name, 
                         agent_action_filename=agent_action_filename, 
                         command_version=command_version)

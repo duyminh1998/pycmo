@@ -168,7 +168,7 @@ class SteamClient():
     def __init__(self, 
                  scenario_name:str,
                  agent_action_filename:str="python_agent_action.lua",
-                 command_version:str="Command v1.06 - Build 1328.10a") -> None:
+                 command_version:str=config["command_mo_version"]) -> None:
         self.scenario_name = scenario_name
         self.agent_action_filename = agent_action_filename
         self.cmo_window_title = f"{scenario_name} - {command_version}"
