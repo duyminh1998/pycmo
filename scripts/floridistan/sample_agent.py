@@ -26,11 +26,12 @@ def no_op():
 main_unit = "Lightning #1"
 
 scenario_name = "floridistan"
+scenario_script_folder_name = "floridistan"
 player_side = "BLUE"
 step_size = ['0', '0', '1']
 command_version = config["command_mo_version"]
 observation_path = os.path.join(config['steam_observation_folder_path'], f'{scenario_name}.inst')
-action_path = os.path.join(config["scripts_path"], scenario_name, "agent_action.lua")
+action_path = os.path.join(config["scripts_path"], scenario_script_folder_name, "agent_action.lua")
 scen_ended_path = config['scen_ended']
 
 cmo_env = CMOEnv(
