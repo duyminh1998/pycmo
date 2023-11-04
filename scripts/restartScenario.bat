@@ -9,7 +9,7 @@
 
 var sh=new ActiveXObject("WScript.Shell"); 
 
-sh.AppActivate("Steam demo - Command v1.06 - Build 1328.10a")
+sh.AppActivate("Steam demo - Command v1.06 - Build 1328.11")
 sh.SendKeys("%{1}"); 
 sh.SendKeys("{ENTER}"); 
 WScript.Sleep(500)

@@ -6,7 +6,7 @@
 local pycmo_path = 'E:/MyProjects/pycmo/'
 local lua_script_foldername = pycmo_path .. 'scripts/steam_demo/'
 local pycmo_lib_lua_filename = pycmo_path .. 'lua/pycmo_lib.lua'
-local agent_action_lua_filename = 'python_agent_action.lua'
+local agent_action_lua_filename = 'agent_action.lua'
 local export_observation_lua_filename = 'export_observation.lua'
 local execute_agent_action_every_seconds = '0' -- '0' = 1 second, '1' = 5 seconds, '2' = 15 seconds
 local export_observations_every_seconds = '1'
@@ -62,7 +62,7 @@ ScenEdit_SetEventAction(export_observation_action_event.guid, {mode = 'add', nam
 local export_observation_event_name = 'Export observation initially'
 local export_observation_trigger_name = 'Scenario is Loaded'
 local export_observation_action_name = 'Export observation initially'
-local export_observation_action_script_text = setup_script_text .. "ScenEdit_ExportScenarioToXML()"
+local export_observation_action_script_text = "ScenEdit_RunScript('" .. pycmo_lib_lua_filename .. "', true)\nScenEdit_ExportScenarioToXML()"
 
 -- Remove these events, triggers, and actions if they are already present
 local scenario_events = ScenEdit_GetEvents(1)
