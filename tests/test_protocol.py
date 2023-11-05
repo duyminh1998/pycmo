@@ -32,22 +32,21 @@ def test_steam_client_send():
         assert f.read() == action
 
 # these tests can only be run when Command is open
-def test_steam_client_connect():
-    assert client.connect() == True # have CMO running for this test to pass 
+# def test_steam_client_connect():
+#     assert client.connect() == True # have CMO running for this test to pass 
 
-def test_steam_client_start_scenario():
-    assert client.connect() == True # have CMO running for this test to pass 
-    assert client.start_scenario() == True
+# def test_steam_client_start_scenario():
+#     assert client.connect() == True # have CMO running for this test to pass 
+#     assert client.start_scenario() == True
 
-def test_steam_client_close_scenario_message():
-    assert client.connect() == True # have CMO running for this test to pass 
-    assert client.close_scenario_message() == True
+# def test_steam_client_close_scenario_message():
+#     assert client.connect() == True # have CMO running for this test to pass 
+#     assert client.close_scenario_message() == True
 
-def test_steam_client_restart_scenario():
-    assert client.connect() == True # have CMO running for this test to pass 
-    assert client.restart_scenario() == True
+# def test_steam_client_restart_scenario():
+#     assert client.connect() == True # have CMO running for this test to pass 
+#     assert client.restart_scenario() == True
 
-def test_steam_client_close_scenario_end_message():
-    assert client.connect() == True # have CMO running for this test to pass 
-    assert client.close_scenario_end_message() == True
-    
+# def test_steam_client_close_scenario_end_message():
+#     assert client.connect() == True # have CMO running for this test to pass 
+#     assert client.close_scenario_end_message() == True
