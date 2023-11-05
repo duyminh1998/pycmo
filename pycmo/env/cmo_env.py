@@ -310,6 +310,7 @@ class CMOEnv():
         try:
             scenario_ended = cmo_steam_observation_file_to_xml(self.scen_ended)
             if scenario_ended == "true":
+                self.client.close_scenario_end_message()
                 return True
             return False
         except FileNotFoundError:
