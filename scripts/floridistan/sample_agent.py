@@ -5,25 +5,81 @@
 import os
 
 from pycmo.configs.config import get_config
-from pycmo.lib.features import Unit
+from pycmo.lib.features import FeaturesFromSteam, Unit, Contact
 from pycmo.env.cmo_env import CMOEnv
 
 # open config and set important files and folder paths
 config = get_config()
 
-# FUNCTIONS
-def get_unit_from_observation(units, unit_name) -> Unit:
-    for unit in units:
-        if unit.Name == unit_name:
-            return unit
+class ScriptedAgent:
+    def __init__(self, player_side:str, attacker_name:str, target_name:str, strike_weapon_name:str):
+        self.state = 0
+        self.player_side = player_side
+        self.attacker_name = attacker_name
+        self.target_name = target_name
+        self.strike_weapon_name = strike_weapon_name
 
-def no_op():
-    action = ''
-    return action
+    def get_unit_info_from_observation(self, features: FeaturesFromSteam, unit_name:str) -> Unit:
+        units = features.units
+        for unit in units:
+            if unit.Name == unit_name:
+                return unit
+        return None
+            
+    def get_contact_info_from_observation(self, features: FeaturesFromSteam, contact_name:str) -> Contact:
+        contacts = features.contacts
+        for contact in contacts:
+            if contact.Name == contact_name:
+                return contact
+        return None
+
+    def action(self, features: FeaturesFromSteam) -> str:
+        action = ""
+        attacker = self.get_unit_info_from_observation(features=features, unit_name=self.attacker_name)
+        target = self.get_contact_info_from_observation(features=features, contact_name=self.target_name)
+
+        # in the first state, launch the requested aircraft
+        if self.state == 0:
+            action = f'ScenEdit_SetUnit({{side = "{self.player_side}", name = "{attacker.Name}", launch = true}})'
+            self.state += 1
+
+        # in the second state, move aircraft to the intermediate point
+        elif self.state == 1 and attacker.CA > 10000:
+            base_script = f"local side = '{self.player_side}'\nlocal attacker = ScenEdit_GetUnit({{side = side, name = '{attacker.Name}'}})\n"
+            new_longitude = -76.9041036640427 # immediate point outside of SAM radius
+            new_latitude = 28.8515237883916 # immediate point outside of SAM radius
+            action = base_script + f'move_unit_to(side, attacker.name, {new_latitude}, {new_longitude})'
+            self.state += 1
+
+        # in the third state, make aircraft auto-attack the target
+        elif self.state == 2 and attacker.Lon >= -77.5 and target:
+            # strike_weapon_name = "GBU-53/B StormBreaker"
+            # weapon_max_range = 35
+            # print(ScenEdit_GetLoadout( { unitname=attacker.name } ).weapons[3])
+            # ScenEdit_AttackContact('Thunder #1', con_guid, {mode='1', weapon=2855, qty=10 })
+            action = f"ScenEdit_AttackContact('{attacker.Name}', '{target.ID}', {{ mode='0'}})" # attack contact automatically
+            self.state += 1
+
+        # in the fourth state, move aircraft back to the intermediate point
+        elif self.state == 3 and not target:
+            base_script = f"local side = '{self.player_side}'\nlocal attacker = ScenEdit_GetUnit({{side = side, name = '{attacker.Name}'}})\n"
+            new_longitude = -76.9041036640427 # immediate point outside of SAM radius
+            new_latitude = 28.8515237883916 # immediate point outside of SAM radius
+            action = base_script + f'move_unit_to(side, attacker.name, {new_latitude}, {new_longitude})'
+            self.state += 1
+
+        # in the fifth state, RTB
+        elif self.state == 4 and attacker.Lon <= -76:
+            action = f"ScenEdit_SetUnit({{side = '{self.player_side}', name = '{attacker.Name}', RTB = true}})"  
+            self.state += 1
+
+        return action
 
 # MAIN LOOP
 # SIDE INFO
-main_unit = "Lightning #1"
+attacker_name = "Thunder #1"
+target_name = "BTR-82V"
+strike_weapon_name = "GBU-53/B StormBreaker"
 
 scenario_name = "floridistan"
 scenario_script_folder_name = "floridistan"
@@ -44,6 +100,8 @@ cmo_env = CMOEnv(
         command_version=command_version
 )
 
+agent = ScriptedAgent(player_side=player_side, attacker_name=attacker_name, target_name=target_name, strike_weapon_name=strike_weapon_name)
+
 # start the game
 # scenario_started = cmo_env.client.start_scenario()
 scenario_started = True
@@ -55,12 +113,12 @@ if scenario_started:
     while not scenario_ended:
         observation = old_state.observation
         
-        sufa_info = get_unit_from_observation(observation.units, main_unit)
-        action = no_op()
-        print(f"Action:\n{action}\n")
+        action = agent.action(observation)
+        if action != "":
+            print(f"Action:\n{action}\n")
     
         new_state = cmo_env.step(action)
-        print(f"New observation:\n{new_state}\n")
+        # print(f"New observation:\n{agent.get_unit_info_from_observation(new_state.observation, attacker_name)}\n")
 
         # set old state as the previous new state
         old_state = new_state
