@@ -7,6 +7,7 @@
 import socket
 import subprocess
 import os
+from time import sleep
 
 from pycmo.configs.config import get_config
 from pycmo.lib.tools import process_exists
@@ -168,10 +169,12 @@ class SteamClient():
     def __init__(self, 
                  scenario_name:str,
                  agent_action_filename:str="python_agent_action.lua",
-                 command_version:str=config["command_mo_version"]) -> None:
+                 command_version:str=config["command_mo_version"],
+                 restart_duration:int=10) -> None:
         self.scenario_name = scenario_name
         self.agent_action_filename = agent_action_filename
         self.cmo_window_title = f"{scenario_name} - {command_version}"
+        self.restart_duration = restart_duration
 
     def connect(self, command_process_name:str="Command.exe") -> bool:
         return process_exists(command_process_name)
@@ -197,6 +200,15 @@ class SteamClient():
         try:
             os.chdir(config['scripts_path'])
             subprocess.Popen(['nonsecureSendKeys.bat', self.cmo_window_title, key])
+            return True
+        except FileNotFoundError:
+            return False
+        
+    def restart_scenario(self) -> bool:
+        try:
+            os.chdir(config['scripts_path'])
+            subprocess.Popen(['restartScenario.bat', self.cmo_window_title, str(int(self.restart_duration / 2) * 1000)])
+            sleep(self.restart_duration)
             return True
         except FileNotFoundError:
             return False
