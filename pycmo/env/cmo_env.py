@@ -254,6 +254,8 @@ class CMOEnv():
         try:
             # with open(self.scen_ended, 'w') as f:
             #     f.write('False') # note in the scenario has ended file that the scenario has ended
+            if not self.client.restart_scenario():
+                raise ValueError("Client was not able to restart the scenario.")
             
             # reset agent action to nothing
             self.client.send('')

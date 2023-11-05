@@ -44,7 +44,7 @@ step_size = ['0', '0', '1']
 command_version = config["command_mo_version"]
 observation_path = os.path.join(config['steam_observation_folder_path'], f'{scenario_name}.inst')
 action_path = os.path.join(config["scripts_path"], scenario_script_folder_name, "agent_action.lua")
-scen_ended_path = config['scen_ended']
+scen_ended_path = os.path.join(config['steam_observation_folder_path'], f'{scenario_name}_scen_has_ended.inst')
 
 cmo_env = CMOEnv(
         scenario_name=scenario_name,
