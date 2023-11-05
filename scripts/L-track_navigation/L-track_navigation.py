@@ -74,7 +74,7 @@ def run_Q_Learning_loop(
         agent = QLearning(discount, eta, epsilon, epsilon_anneal_rate)
 
     # initialize environment
-    env = cmo_env.CMOEnv(steps_path, step_size, player_side, config_file["scen_ended"])
+    env = cmo_env.CPEEnv(steps_path, step_size, player_side, config_file["scen_ended"])
 
     # initial variables and state
     step_id = 0

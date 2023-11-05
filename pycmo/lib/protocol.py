@@ -6,10 +6,13 @@
 # imports
 import socket
 import subprocess
-from pycmo.configs import config
+import os
+
+from pycmo.configs.config import get_config
+from pycmo.lib.tools import process_exists
 
 # open config and set important files and folder paths
-config = config.get_config()
+config = get_config()
 
 class Server():
     """
@@ -64,7 +67,7 @@ class Server():
         self.start_game()
 
     def end_game(self):
-        # TOOD
+        # TODO
         pass
 
 class Client():
@@ -159,3 +162,41 @@ class Client():
             return True
         except:
             raise ConnectionError("Failed to close client connection.")
+        
+class SteamClient():
+    """The Client connects to the Steam edition of the game and sends actions to the game."""
+    def __init__(self, 
+                 scenario_name:str,
+                 agent_action_filename:str="python_agent_action.lua",
+                 command_version:str=config["command_mo_version"]) -> None:
+        self.scenario_name = scenario_name
+        self.agent_action_filename = agent_action_filename
+        self.cmo_window_title = f"{scenario_name} - {command_version}"
+
+    def connect(self, command_process_name:str="Command.exe") -> bool:
+        return process_exists(command_process_name)
+
+    def send(self, data:str) -> bool:
+        try:
+            with open(self.agent_action_filename, 'w') as f:
+                f.write(data)
+            return True
+        except (PermissionError, FileNotFoundError):
+            return False
+    
+    def start_scenario(self) -> bool:
+        return self.send_key_press("{ }")
+    
+    def pause_scenario(self) -> bool:
+        return self.send_key_press("{ }")
+    
+    def close_scenario_message(self) -> bool:
+        return self.send_key_press("{ENTER}")
+        
+    def send_key_press(self, key:str) -> bool:
+        try:
+            os.chdir(config['scripts_path'])
+            subprocess.Popen(['nonsecureSendKeys.bat', self.cmo_window_title, key])
+            return True
+        except FileNotFoundError:
+            return False

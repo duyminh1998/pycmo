@@ -27,7 +27,7 @@ Contact = collections.namedtuple("ContactInfo", ["XML_ID", "ID", 'Name', 'CS', '
 
 class Features(object):
     """
-    Render feature layers from Command scenario XML into named tuples.
+    Render feature layers from a Command: Professional Edition scenario XML into named tuples.
     """
     def __init__(self, xml:str, player_side:str) -> None:
         """
@@ -88,7 +88,12 @@ class Features(object):
             (Game) a named tuple containing the meta data of the game.
         """
         try:
-            return Game(self.scen_dic['Scenario']["TimelineID"],
+            timeline_id = self.scen_dic['Scenario']["TimelineID"]
+        except KeyError:
+            timeline_id = None
+            
+        try:
+            return Game(timeline_id,
                             self.scen_dic['Scenario']["Time"],
                             self.scen_dic['Scenario']["Title"],
                             self.scen_dic['Scenario']["ZeroHour"],
@@ -156,8 +161,8 @@ class Features(object):
                         unit_id = active_units[i]['ID']
                         name = active_units[i]['Name']
                         dbid = active_units[i]['DBID']
-                        lon = float(active_units[i]['LonLR'])
-                        lat = float(active_units[i]['LatLR'])
+                        lon = float(active_units[i]['Lon'])
+                        lat = float(active_units[i]['Lat'])
                         ch = None
                         cs = None
                         ca = None
@@ -313,3 +318,36 @@ class Features(object):
         except:
             print("ERROR: failed to get side contacts.")
             return contact_id
+
+class FeaturesFromSteam(Features):
+    """
+    Renders feature layers from a Command: Modern Operations scenario XML into named tuples.
+    """
+    def __init__(self, xml:str, player_side:str) -> None:
+        """
+        Description:
+            Initialize a Features object to hold observations.
+
+        Keyword Arguments:
+            xml: the path to the xml file containing the game observations.
+            player_side: the side of the player. Dictates the units that they can actually control.
+        
+        Returns:
+            None
+        """
+        try:         
+            self.scen_dic = xmltodict.parse(xml) # our scenario xml is now in 'dic'
+        except FileNotFoundError as error:
+            raise ValueError("Unable to parse scenario xml.")
+        
+        # get features
+        self.player_side = player_side
+        self.meta = self.get_meta() # Return the scenario-level rmation of the scenario
+        self.avai_weapons = []
+        self.units = self.get_side_units(player_side)
+        try:
+            player_side_index = self.get_sides().index(player_side)
+        except:
+            raise ValueError('Cannot find player side.')
+        self.side_ = self.get_side_properties(player_side_index)
+        self.contacts = self.get_contacts(player_side_index)
