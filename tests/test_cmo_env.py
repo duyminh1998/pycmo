@@ -13,7 +13,7 @@ step_size = ['0', '0', '1']
 command_version = config["command_mo_version"]
 observation_path = os.path.join(config['pycmo_path'], 'tests', "fixtures", "test_steam_observation.inst")
 action_path = os.path.join(config['pycmo_path'], 'tests', "fixtures", "test_cmo_env.lua")
-scen_ended_path = config['scen_ended']
+scen_ended_path = os.path.join(config['pycmo_path'], 'tests', "fixtures", "Steam demo_scen_has_ended.inst")
 
 def init_cmo_env():
     return CMOEnv(
@@ -43,4 +43,8 @@ def test_cmo_env_get_obs():
     assert len(aircrafts) == 8
     assert scenario_title == 'Steam demo'
     assert len(sides) == 2
-    assert len(units) == 9    
+    assert len(units) == 9
+
+def test_cmo_env_check_game_ended():
+    cmo_env = init_cmo_env()
+    assert cmo_env.check_game_ended() == True

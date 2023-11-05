@@ -252,8 +252,8 @@ class CMOEnv():
 
     def reset(self) -> TimeStep:
         try:
-            with open(self.scen_ended, 'w') as f:
-                f.write('False') # note in the scenario has ended file that the scenario has ended
+            # with open(self.scen_ended, 'w') as f:
+            #     f.write('False') # note in the scenario has ended file that the scenario has ended
             
             # reset agent action to nothing
             self.client.send('')
@@ -304,4 +304,10 @@ class CMOEnv():
         return FeaturesFromSteam(cmo_steam_observation_file_to_xml(self.observation_path), self.player_side) 
 
     def check_game_ended(self):
-        ...
+        try:
+            scenario_ended = cmo_steam_observation_file_to_xml(self.scen_ended)
+            if scenario_ended == "true":
+                return True
+            return False
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Cannot find {self.scen_ended}")

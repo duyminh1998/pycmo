@@ -4,6 +4,11 @@ function move_unit_to(side, unit_name, latitude, longitude)
     end
 end
 
+function ScenarioHasEnded(ended)
+    local scenario = VP_GetScenario()
+    WriteData(tostring(ended), scenario.Title .. '_scen_has_ended.inst')
+end
+
 -- Functions to emulate ScenEdit_ExportScenarioToXML()
 function ScenEdit_ExportScenarioToXML()
     local scenario_xml = "<?xml version='1.0' encoding='utf-8'?><Scenario>"
