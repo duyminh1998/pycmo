@@ -1,4 +1,4 @@
-function setup_observation_export_agent_action(lua_script_foldername, pycmo_lib_lua_filename, agent_action_lua_filename, export_observation_lua_filename, execute_agent_action_every_seconds, export_observations_every_seconds)
+function setup_observation_export_agent_action(lua_script_foldername, pycmo_lib_lua_filename, agent_action_lua_filename, export_observation_lua_filename, execute_agent_action_every_seconds, export_observations_every_seconds, time_compression)
     local setup_script_text = "local lua_script_foldername = '" .. lua_script_foldername .. "'\nScenEdit_RunScript('" .. pycmo_lib_lua_filename .. "', true)\n"
 
     local agent_action_event_name = 'Execute agent action'
@@ -46,10 +46,11 @@ function setup_observation_export_agent_action(lua_script_foldername, pycmo_lib_
     ScenEdit_SetEventAction(export_observation_action_event.guid, {mode = 'add', name = export_observation_action_name})
     
     -- Set up an event to export the scenario when it is first loaded
+    if time_compression == nil then time_compression = 0 end
     local export_observation_event_name = 'Export observation initially'
     local export_observation_trigger_name = 'Scenario is Loaded'
     local export_observation_action_name = 'Export observation initially'
-    local export_observation_action_script_text = "ScenEdit_RunScript('" .. pycmo_lib_lua_filename .. "', true)\nScenEdit_ExportScenarioToXML()"
+    local export_observation_action_script_text = "ScenEdit_RunScript('" .. pycmo_lib_lua_filename .. "', true)\nScenEdit_ExportScenarioToXML()\n" .. "VP_SetTimeCompression(" .. time_compression .. ")"
     
     -- Remove these events, triggers, and actions if they are already present
     local scenario_events = ScenEdit_GetEvents(1)
