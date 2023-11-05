@@ -285,7 +285,7 @@ class CMOEnv():
         # get the corresponding observation and reward
         # continuously poll the game until the correct time step duration has passed
         new_observation = self.get_obs()
-        while new_observation.meta.Time == self.current_observation.meta.Time:
+        while new_observation.meta.Time == self.current_observation.meta.Time and not self.check_game_ended():
             time.sleep(0.1)
             new_observation = self.get_obs()
 
@@ -298,6 +298,7 @@ class CMOEnv():
         return new_timestep
 
         # if the game has ended, then save the timestep information with a different step type
+        # if self.check_game_ended():
         # observation = self.get_obs(step_id)
         # reward = observation.side_.TotalScore
         # return TimeStep(step_id, StepType(2), 0, observation)    

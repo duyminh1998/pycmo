@@ -46,3 +46,8 @@ def test_steam_client_close_scenario_message():
 def test_steam_client_restart_scenario():
     assert client.connect() == True # have CMO running for this test to pass 
     assert client.restart_scenario() == True
+
+def test_steam_client_close_scenario_end_message():
+    assert client.connect() == True # have CMO running for this test to pass 
+    assert client.close_scenario_end_message() == True
+    

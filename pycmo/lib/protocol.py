@@ -195,7 +195,15 @@ class SteamClient():
     
     def close_scenario_message(self) -> bool:
         return self.send_key_press("{ENTER}")
-        
+    
+    def close_scenario_end_message(self) -> bool:
+        try:
+            os.chdir(config['scripts_path'])
+            subprocess.Popen(['closeScenarioEndMessage.bat'])
+            return True
+        except FileNotFoundError:
+            return False
+            
     def send_key_press(self, key:str) -> bool:
         try:
             os.chdir(config['scripts_path'])

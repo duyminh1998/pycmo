@@ -61,8 +61,8 @@ cmo_env = CMOEnv(
 scenario_started = True
 
 if scenario_started:
-    scenario_ended = False
     old_state = cmo_env.reset()
+    scenario_ended = cmo_env.check_game_ended()
 
     while not scenario_ended:
         observation = old_state.observation
@@ -76,3 +76,5 @@ if scenario_started:
 
         # set old state as the previous new state
         old_state = new_state
+
+        scenario_ended = cmo_env.check_game_ended()
