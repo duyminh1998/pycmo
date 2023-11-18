@@ -35,18 +35,19 @@ function parseArgs(){
 parseArgs();
 
 sh.AppActivate(title)
-WScript.Sleep(100);
+WScript.Sleep(1000);
 sh.SendKeys("%f");
-WScript.Sleep(100);
+WScript.Sleep(500);
+sh.SendKeys("{DOWN}");
+sh.SendKeys("{DOWN}");
 sh.SendKeys("{DOWN}"); 
-sh.SendKeys("{DOWN}"); 
-sh.SendKeys("{DOWN}"); 
-WScript.Sleep(100)
+WScript.Sleep(1000)
 sh.SendKeys("{RIGHT}"); 
-WScript.Sleep(100)
+WScript.Sleep(500)
 sh.SendKeys("{ENTER}"); 
 WScript.Sleep(loadDuration);
 sh.AppActivate(title);
 sh.AppActivate("Side selection and briefing");
-sh.SendKeys("{ESC}"); 
+sh.SendKeys("%{ }"); 
+sh.SendKeys("m"); 
 WScript.Quit(0);

@@ -217,6 +217,9 @@ class SteamClient():
             os.chdir(config['scripts_path'])
             subprocess.Popen(['restartScenario.bat', self.cmo_window_title, str(int(self.restart_duration / 2) * 1000)])
             sleep(self.restart_duration)
+            sleep(self.restart_duration / 2)
+            subprocess.Popen(['PowerShell.exe', '-ExecutionPolicy', 'RemoteSigned', '-File', 'MouseMove.ps1'])
+            sleep(self.restart_duration / 2)
             return True
         except FileNotFoundError:
             return False
