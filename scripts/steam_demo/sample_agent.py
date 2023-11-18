@@ -59,24 +59,21 @@ cmo_env = CMOEnv(
 )
 
 # start the game
-# scenario_started = cmo_env.client.start_scenario()
-scenario_started = True
+state = cmo_env.reset()
+scenario_ended = cmo_env.check_game_ended()
 
-if scenario_started:
-    old_state = cmo_env.reset()
-    scenario_ended = cmo_env.check_game_ended()
-
-    while not scenario_ended:
-        observation = old_state.observation
-        
-        sufa_info = get_unit_from_observation(observation.units, sufa)
-        action = move_aircraft(player_side, sufa, sufa_info.Lon, sufa_info.Lat)
-        print(f"Action:\n{action}\n")
+while not scenario_ended:
+    print(f"Step: {state.step_id}")
+    print(f"State:\n{state}\n")
     
-        new_state = cmo_env.step(action)
-        print(f"New observation:\n{new_state}\n")
+    sufa_info = get_unit_from_observation(state.observation.units, sufa)
+    action = move_aircraft(player_side, sufa, sufa_info.Lon, sufa_info.Lat)
+    print(f"Action:\n{action}\n")
 
-        # set old state as the previous new state
-        old_state = new_state
+    state = cmo_env.step(action)
 
+    scenario_ended = cmo_env.check_game_ended()
+    if scenario_ended:
+        cmo_env.client.close_scenario_end_message()
+        state = cmo_env.reset()
         scenario_ended = cmo_env.check_game_ended()
