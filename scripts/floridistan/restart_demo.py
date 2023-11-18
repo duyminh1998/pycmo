@@ -116,7 +116,7 @@ for _ in range(stop_at_step * iterations):
     print(f"Step: {state.step_id}")
 
     if state.step_id > 0 and (state.step_id % stop_at_step) == 0:
-        observation = cmo_env.end_game()
+        state = cmo_env.end_game()
         print("Ending game")
     else:
         if not scenario_ended:
