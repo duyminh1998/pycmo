@@ -10,7 +10,7 @@ from pycmo.env.cmo_env import CPEEnv, CMOEnv # CPE environment, functions as the
 from pycmo.agents.base_agent import BaseAgent
 # auxiliary functions
 import threading, time
-from pycmo.lib.tools import *
+from pycmo.lib.tools import print_env_information, clean_up_steps, ticks_to_unix, parse_datetime
 
 def run_loop(player_side:str, config:dict, step_size:list=['0', '0', '1'], agent=None, max_steps=None, server=False, scen_file=None) -> None:
     """

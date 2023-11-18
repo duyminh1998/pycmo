@@ -9,11 +9,6 @@ from pycmo.lib.run_loop import run_loop_steam
 config = get_config()
 
 # MAIN LOOP
-# SIDE INFO
-attacker_name = "Thunder #1"
-target_name = "BTR-82V"
-strike_weapon_name = "GBU-53/B StormBreaker"
-
 scenario_name = "floridistan"
 scenario_script_folder_name = "floridistan"
 player_side = "BLUE"
@@ -34,6 +29,10 @@ cmo_env = CMOEnv(
         scen_ended_path=scen_ended_path,
         pycmo_lua_lib_path=pycmo_lua_lib_path
 )
+
+attacker_name = "Thunder #1"
+target_name = "BTR-82V"
+strike_weapon_name = "GBU-53/B StormBreaker"
 
 agent = ScriptedAgent(player_side=player_side, attacker_name=attacker_name, target_name=target_name, strike_weapon_name=strike_weapon_name)
 
