@@ -293,11 +293,11 @@ class CMOEnv():
             time.sleep(0.1)
             new_observation = self.get_obs()
 
+        self.step_id += 1
         observation = new_observation
         self.current_observation = new_observation
         reward = observation.side_.TotalScore
         new_timestep = TimeStep(self.step_id, StepType(1), reward, observation)
-        self.step_id += 1
         
         # if the game has ended, then save the timestep information with a different step type
         if self.check_game_ended():
