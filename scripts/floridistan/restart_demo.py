@@ -3,7 +3,6 @@
 # Purpose: A sample agent to interact with the steam_demo scenario, demonstrating our ability to work with the Steam version of CMO.
 
 import os
-from time import sleep
 
 from pycmo.configs.config import get_config
 from pycmo.lib.features import FeaturesFromSteam, Unit, Contact

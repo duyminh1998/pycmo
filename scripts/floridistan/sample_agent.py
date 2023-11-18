@@ -3,7 +3,6 @@
 # Purpose: A sample agent to interact with the steam_demo scenario, demonstrating our ability to work with the Steam version of CMO.
 
 import os
-from time import sleep
 
 from pycmo.configs.config import get_config
 from pycmo.lib.features import FeaturesFromSteam, Unit, Contact
@@ -125,10 +124,9 @@ while not scenario_ended:
         # scenario_ended = cmo_env.check_game_ended()
     scenario_ended = cmo_env.check_game_ended()
     if scenario_ended:
-        sleep(1)
         cmo_env.client.close_scenario_end_message()
         state = cmo_env.reset()
-        observation = state.observation
         scenario_ended = cmo_env.check_game_ended()
+        agent = ScriptedAgent(player_side=player_side, attacker_name=attacker_name, target_name=target_name, strike_weapon_name=strike_weapon_name)
 
 # cmo_env.close()
