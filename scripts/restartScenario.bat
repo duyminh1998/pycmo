@@ -8,19 +8,47 @@
 
 
 var sh=new ActiveXObject("WScript.Shell"); 
+var ARGS = WScript.Arguments; 
+var scriptName=ARGS.Item(0); 
 
-sh.AppActivate("Steam demo - Command v1.06 - Build 1328.11")
-sh.SendKeys("%{1}"); 
-sh.SendKeys("{ENTER}"); 
-WScript.Sleep(500)
+var title = "";
+var loadDuration = "5000";
+
+function printHelp(){ 
+        WScript.Echo(scriptName + " - restarts a scenario in Command"); 
+        WScript.Echo("Usage:"); 
+        WScript.Echo("call " + scriptName + " title string"); 
+        WScript.Echo("title  - the title of the application"); 
+        WScript.Echo("loadDuration  - how long it takes for the scenario to load"); 
+} 
+
+function parseArgs(){ 
+        if (ARGS.Length < 3) { 
+                WScript.Echo("insufficient arguments"); 
+                printHelp(); 
+                WScript.Quit(43); 
+        }
+        title=ARGS.Item(1);
+        loadDuration=ARGS.Item(2);
+}
+
+parseArgs();
+
+sh.AppActivate(title)
+WScript.Sleep(1000);
+sh.SendKeys("%f");
+WScript.Sleep(500);
+sh.SendKeys("{DOWN}");
+sh.SendKeys("{DOWN}");
 sh.SendKeys("{DOWN}"); 
-sh.SendKeys("{DOWN}"); 
-sh.SendKeys("{DOWN}"); 
-WScript.Sleep(500)
+WScript.Sleep(1000)
 sh.SendKeys("{RIGHT}"); 
 WScript.Sleep(500)
 sh.SendKeys("{ENTER}"); 
-WScript.Sleep(3000)
-sh.AppActivate("Side selection and briefing")
-sh.SendKeys("{ESCAPE}"); 
+WScript.Sleep(loadDuration);
+sh.AppActivate(title);
+sh.AppActivate("Side selection and briefing");
+sh.SendKeys("%{ }"); 
+sh.SendKeys("m");
+WScript.Sleep(1000) 
 WScript.Quit(0);

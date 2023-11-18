@@ -231,7 +231,8 @@ class CMOEnv():
                  command_version:str,
                  observation_path: str, 
                  action_path: str,
-                 scen_ended_path: str):
+                 scen_ended_path: str,
+                 pycmo_lua_lib_path: str):
         self.client = SteamClient(scenario_name=scenario_name, agent_action_filename=action_path, command_version=command_version) # initialize a client to send data to the game
         if not self.client.connect(): # connect the client to the game
             raise FileNotFoundError("No running instance of Command to connect to.")
@@ -246,26 +247,27 @@ class CMOEnv():
         self.observation_path = observation_path # the path to the folder containing the xml steps files. These steps files are used to generate observations.
         self.action_path = action_path
         self.scen_ended = scen_ended_path # the path to the text file recording whether or not the scenario has ended. "hacky" way to determine when a scenario ends because the current Lua command for this check is buggy in-game.
+        self.pycmo_lua_lib_path = pycmo_lua_lib_path # the path to the pycmo_lib.lua file
 
         self.current_observation = None
         self.step_id = 0
 
     def reset(self) -> TimeStep:
         try:
-            with open(self.scen_ended, 'w') as f:
-                f.write('False') # note in the scenario has ended file that the scenario has ended
-            
-            # reset agent action to nothing
+            if not self.client.restart_scenario():
+                raise ValueError("Client was not able to restart the scenario.")
+
             self.client.send('')
-            
+
             initial_observation = self.get_obs()
             if not initial_observation:
                 raise FileNotFoundError("Cannot find observation file to reset the environment.")
             
             self.current_observation = initial_observation
+            reward = initial_observation.side_.TotalScore
             self.step_id = 0
 
-            return TimeStep(0, StepType(0), 0, initial_observation) # return initial time step
+            return TimeStep(self.step_id, StepType(0), reward, initial_observation) # return initial time step
         
         except FileNotFoundError:
             raise FileNotFoundError("Cannot find scen_has_ended.txt.")
@@ -283,25 +285,40 @@ class CMOEnv():
         # get the corresponding observation and reward
         # continuously poll the game until the correct time step duration has passed
         new_observation = self.get_obs()
-        while new_observation.meta.Time == self.current_observation.meta.Time:
+        while new_observation.meta.Time == self.current_observation.meta.Time and not self.check_game_ended():
             time.sleep(0.1)
             new_observation = self.get_obs()
 
+        self.step_id += 1
         observation = new_observation
         self.current_observation = new_observation
         reward = observation.side_.TotalScore
         new_timestep = TimeStep(self.step_id, StepType(1), reward, observation)
-        self.step_id += 1
+        
+        # if the game has ended, then save the timestep information with a different step type
+        if self.check_game_ended():
+            observation = self.get_obs()
+            reward = observation.side_.TotalScore
+            return TimeStep(self.step_id, StepType(2), reward, observation)    
         
         return new_timestep
 
-        # if the game has ended, then save the timestep information with a different step type
-        # observation = self.get_obs(step_id)
-        # reward = observation.side_.TotalScore
-        # return TimeStep(step_id, StepType(2), 0, observation)    
 
     def get_obs(self) -> FeaturesFromSteam:
         return FeaturesFromSteam(cmo_steam_observation_file_to_xml(self.observation_path), self.player_side) 
 
     def check_game_ended(self):
-        ...
+        try:
+            scenario_ended = cmo_steam_observation_file_to_xml(self.scen_ended)
+            if scenario_ended == "true":
+                # self.client.close_scenario_end_message()
+                return True
+            return False
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Cannot find {self.scen_ended}")
+        
+    def end_game(self) -> TimeStep:
+        pycmo_lua_lib_path = self.pycmo_lua_lib_path.replace('\\', '/')
+        action = f"ScenEdit_RunScript('{pycmo_lua_lib_path}', true)\nScenarioHasEnded(true)\nScenEdit_EndScenario()"
+        return self.step(action)
+    

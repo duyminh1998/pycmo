@@ -108,25 +108,28 @@ agent = ScriptedAgent(player_side=player_side, attacker_name=attacker_name, targ
 state = cmo_env.reset()
 scenario_ended = cmo_env.check_game_ended()
 
-while not scenario_ended:
+stop_at_step = 25
+iterations = 5
+
+for _ in range(stop_at_step * iterations):
     print(f"Step: {state.step_id}")
 
-    action = agent.action(state.observation)
-    if action != "":
-        print(f"Action:\n{action}\n")
-    state = cmo_env.step(action)
+    if state.step_id > 0 and (state.step_id % stop_at_step) == 0:
+        state = cmo_env.end_game()
+        print("Ending game")
+    else:
+        if not scenario_ended:
+            action = agent.action(state.observation)
+            if action != "":
+                print(f"Action:\n{action}\n")
+            state = cmo_env.step(action)
 
     # print(f"New observation:\n{agent.get_unit_info_from_observation(new_state.observation, attacker_name)}\n")
 
-    # if terminated or truncated:
-        # state = cmo_env.reset()
-        # observation = state.observation
-        # scenario_ended = cmo_env.check_game_ended()
     scenario_ended = cmo_env.check_game_ended()
+
     if scenario_ended:
         cmo_env.client.close_scenario_end_message()
         state = cmo_env.reset()
         scenario_ended = cmo_env.check_game_ended()
         agent = ScriptedAgent(player_side=player_side, attacker_name=attacker_name, target_name=target_name, strike_weapon_name=strike_weapon_name)
-
-# cmo_env.close()

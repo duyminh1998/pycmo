@@ -44,35 +44,36 @@ step_size = ['0', '0', '1']
 command_version = config["command_mo_version"]
 observation_path = os.path.join(config['steam_observation_folder_path'], f'{scenario_name}.inst')
 action_path = os.path.join(config["scripts_path"], scenario_script_folder_name, "agent_action.lua")
-scen_ended_path = config['scen_ended']
+scen_ended_path = os.path.join(config['steam_observation_folder_path'], f'{scenario_name}_scen_has_ended.inst')
+pycmo_lua_lib_path = os.path.join(config['pycmo_path'], 'lua', 'pycmo_lib.lua')
 
 cmo_env = CMOEnv(
         scenario_name=scenario_name,
         player_side=player_side,
         step_size=step_size,
+        command_version=command_version,
         observation_path=observation_path,
         action_path=action_path,
         scen_ended_path=scen_ended_path,
-        command_version=command_version
+        pycmo_lua_lib_path=pycmo_lua_lib_path,
 )
 
 # start the game
-# scenario_started = cmo_env.client.start_scenario()
-scenario_started = True
+state = cmo_env.reset()
+scenario_ended = cmo_env.check_game_ended()
 
-if scenario_started:
-    scenario_ended = False
-    old_state = cmo_env.reset()
-
-    while not scenario_ended:
-        observation = old_state.observation
-        
-        sufa_info = get_unit_from_observation(observation.units, sufa)
-        action = move_aircraft(player_side, sufa, sufa_info.Lon, sufa_info.Lat)
-        print(f"Action:\n{action}\n")
+while not scenario_ended:
+    print(f"Step: {state.step_id}")
+    print(f"State:\n{state}\n")
     
-        new_state = cmo_env.step(action)
-        print(f"New observation:\n{new_state}\n")
+    sufa_info = get_unit_from_observation(state.observation.units, sufa)
+    action = move_aircraft(player_side, sufa, sufa_info.Lon, sufa_info.Lat)
+    print(f"Action:\n{action}\n")
 
-        # set old state as the previous new state
-        old_state = new_state
+    state = cmo_env.step(action)
+
+    scenario_ended = cmo_env.check_game_ended()
+    if scenario_ended:
+        cmo_env.client.close_scenario_end_message()
+        state = cmo_env.reset()
+        scenario_ended = cmo_env.check_game_ended()
