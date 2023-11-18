@@ -130,7 +130,6 @@ for _ in range(stop_at_step * iterations):
     scenario_ended = cmo_env.check_game_ended()
 
     if scenario_ended:
-        sleep(3)
         cmo_env.client.close_scenario_end_message()
         state = cmo_env.reset()
         scenario_ended = cmo_env.check_game_ended()

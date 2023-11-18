@@ -254,14 +254,9 @@ class CMOEnv():
 
     def reset(self) -> TimeStep:
         try:
-            # if not self.client.close_scenario_end_message():
-            #     raise ValueError("Client was not able to close the scenario end message.")
             if not self.client.restart_scenario():
                 raise ValueError("Client was not able to restart the scenario.")
-            
-            # note in the scen_has_ended.inst file that the scenario is running and is no longer in the ended state
 
-            # reset agent action to nothing
             self.client.send('')
 
             initial_observation = self.get_obs()
@@ -269,9 +264,10 @@ class CMOEnv():
                 raise FileNotFoundError("Cannot find observation file to reset the environment.")
             
             self.current_observation = initial_observation
+            reward = initial_observation.side_.TotalScore
             self.step_id = 0
 
-            return TimeStep(0, StepType(0), 0, initial_observation) # return initial time step
+            return TimeStep(self.step_id, StepType(0), reward, initial_observation) # return initial time step
         
         except FileNotFoundError:
             raise FileNotFoundError("Cannot find scen_has_ended.txt.")
@@ -321,7 +317,7 @@ class CMOEnv():
         except FileNotFoundError:
             raise FileNotFoundError(f"Cannot find {self.scen_ended}")
         
-    def end_game(self) -> bool:
+    def end_game(self) -> TimeStep:
         pycmo_lua_lib_path = self.pycmo_lua_lib_path.replace('\\', '/')
         action = f"ScenEdit_RunScript('{pycmo_lua_lib_path}', true)\nScenarioHasEnded(true)\nScenEdit_EndScenario()"
         return self.step(action)

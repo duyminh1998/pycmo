@@ -199,7 +199,8 @@ class SteamClient():
     def close_scenario_end_message(self) -> bool:
         try:
             os.chdir(config['scripts_path'])
-            subprocess.Popen(['closeScenarioEndMessage.bat'])
+            close_scenario_end_message_process = subprocess.Popen(['closeScenarioEndMessage.bat'])
+            close_scenario_end_message_process.wait()
             return True
         except FileNotFoundError:
             return False
@@ -207,7 +208,8 @@ class SteamClient():
     def send_key_press(self, key:str) -> bool:
         try:
             os.chdir(config['scripts_path'])
-            subprocess.Popen(['nonsecureSendKeys.bat', self.cmo_window_title, key])
+            send_key_process = subprocess.Popen(['nonsecureSendKeys.bat', self.cmo_window_title, key])
+            send_key_process.wait()
             return True
         except FileNotFoundError:
             return False
@@ -215,11 +217,10 @@ class SteamClient():
     def restart_scenario(self) -> bool:
         try:
             os.chdir(config['scripts_path'])
-            subprocess.Popen(['restartScenario.bat', self.cmo_window_title, str(int(self.restart_duration / 2) * 1000)])
-            sleep(self.restart_duration)
-            sleep(self.restart_duration / 2)
-            subprocess.Popen(['PowerShell.exe', '-ExecutionPolicy', 'RemoteSigned', '-File', 'MouseMove.ps1'])
-            sleep(self.restart_duration / 2)
+            restart_process = subprocess.Popen(['restartScenario.bat', self.cmo_window_title, str(int(self.restart_duration / 2) * 1000)])
+            restart_process.wait()
+            subprocess.Popen(['PowerShell.exe', '-ExecutionPolicy', 'RemoteSigned', '-File', 'MoveMouseEnterScenario.ps1'])
+            sleep(5)
             return True
         except FileNotFoundError:
             return False
