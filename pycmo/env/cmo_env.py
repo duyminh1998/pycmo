@@ -306,6 +306,9 @@ class CMOEnv():
 
     def get_obs(self) -> FeaturesFromSteam:
         return FeaturesFromSteam(cmo_steam_observation_file_to_xml(self.observation_path), self.player_side) 
+    
+    def action_spec(self, observation:Features) -> actions.AvailableFunctions:    
+        return actions.AvailableFunctions(observation)
 
     def check_game_ended(self):
         try:
