@@ -10,9 +10,10 @@ config = get_config()
 
 # MAIN LOOP
 scenario_name = "floridistan"
-scenario_script_folder_name = "floridistan"
 player_side = "BLUE"
 step_size = ['0', '0', '1']
+scenario_script_folder_name = "floridistan" # name of folder containing the lua script that the agent will use
+
 command_version = config["command_mo_version"]
 observation_path = os.path.join(config['steam_observation_folder_path'], f'{scenario_name}.inst')
 action_path = os.path.join(config["scripts_path"], scenario_script_folder_name, "agent_action.lua")
