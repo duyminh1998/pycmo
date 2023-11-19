@@ -1,6 +1,6 @@
 # Author: Minh Hua
-# Date: 10/21/2023
-# Purpose: A sample agent to interact with the steam_demo scenario, demonstrating our ability to work with the Steam version of CMO.
+# Date: 11/19/2023
+# Purpose: A sample agent to interact with the floridistan scenario, but the scenario restarts every 25 steps.
 
 import os
 

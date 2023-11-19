@@ -1,6 +1,7 @@
 # Author: Minh Hua
 # Date: 10/21/2023
 # Purpose: A sample agent to interact with the steam_demo scenario, demonstrating our ability to work with the Steam version of CMO.
+# Can be used with the steam_demo_restart.scen to demonstrate pycmo's ability to restart a scenario.
 
 import os
 

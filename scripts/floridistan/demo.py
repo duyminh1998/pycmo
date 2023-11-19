@@ -1,3 +1,7 @@
+# Author: Minh Hua
+# Date: 11/19/2023
+# Purpose: A sample agent to interact with the floridistan scenario, demonstrating our ability to work with the Steam version of CMO.
+
 import os
 
 from sample_agent import ScriptedAgent
