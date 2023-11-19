@@ -218,8 +218,7 @@ class SteamClient():
         try:
             os.chdir(config['scripts_path'])
             restart_process = subprocess.run(['restartScenario.bat', self.cmo_window_title, str(int(self.restart_duration / 2) * 1000)])
-            # per issue # 26, we need to check that we even clicked on the "Enter scenario" button correctly. Might need to check to see if that window is still active, and if it is, close it and restart.
-            # we should move the call to MoveMouseEnterScenario into another function that can be tried multiple times
+            # per issue #26, we need to check that we even clicked on the "Enter scenario" button correctly. Might need to check to see if that window is still active, and if it is, close it and restart.
             # need to check here if the "Side selection and briefing" window is active, and if yes, call self.click_enter_scenario() again
             self.click_enter_scenario()
             retries = 0
