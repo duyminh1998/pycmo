@@ -26,25 +26,25 @@ def init_cmo_env():
     )
 
 # these tests require CMO to be running
-def test_cmo_env_init():
-    cmo_env = init_cmo_env()
-    assert isinstance(cmo_env, CMOEnv)
+# def test_cmo_env_init():
+#     cmo_env = init_cmo_env()
+#     assert isinstance(cmo_env, CMOEnv)
 
-def test_cmo_env_get_obs():
-    cmo_env = init_cmo_env()
-    observation = cmo_env.get_obs()
-    scen_dic = observation.scen_dic
-    units = observation.units
-    aircrafts = scen_dic['Scenario']['ActiveUnits']['Aircraft']
-    scenario_title = scen_dic['Scenario']['Title']
-    sides = scen_dic['Scenario']['Sides']['Side']
+# def test_cmo_env_get_obs():
+#     cmo_env = init_cmo_env()
+#     observation = cmo_env.get_obs()
+#     scen_dic = observation.scen_dic
+#     units = observation.units
+#     aircrafts = scen_dic['Scenario']['ActiveUnits']['Aircraft']
+#     scenario_title = scen_dic['Scenario']['Title']
+#     sides = scen_dic['Scenario']['Sides']['Side']
     
-    assert isinstance(observation, FeaturesFromSteam)
-    assert len(aircrafts) == 8
-    assert scenario_title == 'Steam demo'
-    assert len(sides) == 2
-    assert len(units) == 9
+#     assert isinstance(observation, FeaturesFromSteam)
+#     assert len(aircrafts) == 8
+#     assert scenario_title == 'Steam demo'
+#     assert len(sides) == 2
+#     assert len(units) == 9
 
-def test_cmo_env_check_game_ended():
-    cmo_env = init_cmo_env()
-    assert cmo_env.check_game_ended() == True
+# def test_cmo_env_check_game_ended():
+#     cmo_env = init_cmo_env()
+#     assert cmo_env.check_game_ended() == True
