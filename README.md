@@ -37,9 +37,9 @@ EncodingMode = 8
 
 ## Run an agent (Steam edition only)
 1. Load the provided demo scenario `scen/steam_demo.scen` in the game.
-2. Edit `scripts/steam_demo/init.lua` as needed and copy the contents to the in-game script editor and run the code. This should set up events in the scenario to handle agent actions (which come from a Python script we run later) and regular exporting of observations. Save the scenario after you run the script and reload the scenario.
+2. Edit `scripts/steam_demo/init.lua` as needed and copy the contents to the in-game script editor and run the code (You only need to do this if your scenario does not have any events. If you are using the scenario from this repository then the events should have already been set up). This should set up events in the scenario to handle agent actions (which come from a Python script we run later) and regular exporting of observations. Save the scenario after you run the script and reload the scenario.
 3. You might have to open the `pycmo/configs/config.py` file (create from `pycmo/configs/config_template.py` if file does not exist) and edit line 19 (`command_mo_version` variable) to whatever the version of Command you have (e.g. your build number or version might be different). This is needed for us to send commands to the game.
-4. Run `scripts/steam_demo/sample_agent.py`. The agent will control the `Sufa #1` aircraft and give it a random course every 6 seconds. Observations are exported every 5 seconds.
+4. Run `scripts/steam_demo/demo.py`. The agent will control the `Sufa #1` aircraft and give it a random course every 6 seconds. Observations are exported every 5 seconds.
 
 ## Run an agent (Premium edition only)
 1a. Open a terminal within the game's directory and load a scenario in Interactive mode. For example, 
