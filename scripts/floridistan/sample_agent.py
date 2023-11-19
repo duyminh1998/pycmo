@@ -1,6 +1,7 @@
 # Author: Minh Hua
 # Date: 10/21/2023
-# Purpose: A sample agent to interact with the steam_demo scenario, demonstrating our ability to work with the Steam version of CMO.
+# Purpose: A sample agent to interact with the floridistan scenario, demonstrating our ability to work with the Steam version of CMO.
+# Scripted agent that will process observations and go through a series of states to strike a target.
 
 from pycmo.lib import actions
 from pycmo.agents.base_agent import BaseAgent

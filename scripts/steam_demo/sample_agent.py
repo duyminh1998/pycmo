@@ -1,6 +1,7 @@
 # Author: Minh Hua
 # Date: 10/21/2023
 # Purpose: A sample agent to interact with the steam_demo scenario, demonstrating our ability to work with the Steam version of CMO.
+# Randomly moves an aircraft every timestep.
 
 import random
 
