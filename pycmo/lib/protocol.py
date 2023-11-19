@@ -219,6 +219,8 @@ class SteamClient():
             os.chdir(config['scripts_path'])
             restart_process = subprocess.Popen(['restartScenario.bat', self.cmo_window_title, str(int(self.restart_duration / 2) * 1000)])
             restart_process.wait()
+            # per issue # 26, we need to check that we even clicked on the "Enter scenario" button correctly. Might need to check to see if that window is still active, and if it is, close it and restart.
+            # we should move the call to MoveMouseEnterScenario into another function that can be tried multiple times
             subprocess.Popen(['PowerShell.exe', '-ExecutionPolicy', 'RemoteSigned', '-File', 'MoveMouseEnterScenario.ps1'])
             sleep(5)
             return True

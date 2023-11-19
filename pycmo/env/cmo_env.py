@@ -232,7 +232,8 @@ class CMOEnv():
                  observation_path: str, 
                  action_path: str,
                  scen_ended_path: str,
-                 pycmo_lua_lib_path: str = None):
+                 pycmo_lua_lib_path: str = None,
+                 max_resets: int = 10):
         self.client = SteamClient(scenario_name=scenario_name, agent_action_filename=action_path, command_version=command_version) # initialize a client to send data to the game
         if not self.client.connect(): # connect the client to the game
             raise FileNotFoundError("No running instance of Command to connect to.")
@@ -246,14 +247,32 @@ class CMOEnv():
             config = get_config()
             pycmo_lua_lib_path = os.path.join(config['pycmo_path'], 'lua', 'pycmo_lib.lua')
         self.pycmo_lua_lib_path = pycmo_lua_lib_path # the path to the pycmo_lib.lua file
+        self.max_resets = max_resets
 
         self.current_observation = None
         self.step_id = 0
+
+        # per comment (https://github.com/duyminh1998/pycmo/issues/25#issuecomment-1817773399) on issue #25, we need to edit the *_scen_has_ended.inst file when we init the env that the scenario has ended?
+        with open(self.scen_ended, 'r') as file:
+            data = file.readlines()
+            data[7] = '  "Comments": "true",\n'
+        with open(self.scen_ended, 'w') as file:
+            file.writelines(data)
 
     def reset(self) -> TimeStep:
         try:
             if not self.client.restart_scenario():
                 raise ValueError("Client was not able to restart the scenario.")
+
+            # check that the scenario loaded event has fired correctly in CMO, and if not, restart the scenario
+            retries = 0
+            while self.check_game_ended() and retries < self.max_resets:
+                print(f"Scenario not loaded properly. Retrying... (Attempt {retries} of {self.max_resets})")
+                if not self.client.restart_scenario():
+                    raise ValueError("Client was not able to restart the scenario.")
+                retries += 1
+            if self.check_game_ended():
+                raise ValueError("Scenario not restarting and loading properly. Please check game files.")
 
             self.client.send('')
 
@@ -308,7 +327,7 @@ class CMOEnv():
     def action_spec(self, observation:Features) -> actions.AvailableFunctions:    
         return actions.AvailableFunctions(observation)
 
-    def check_game_ended(self):
+    def check_game_ended(self) -> bool:
         try:
             scenario_ended = cmo_steam_observation_file_to_xml(self.scen_ended)
             if scenario_ended == "true":
