@@ -252,17 +252,18 @@ class CMOEnv():
         self.current_observation = None
         self.step_id = 0
 
-        # per comment (https://github.com/duyminh1998/pycmo/issues/25#issuecomment-1817773399) on issue #25, do we need to edit the *_scen_has_ended.inst file when we init the env that the scenario has ended?
+        # per comment (https://github.com/duyminh1998/pycmo/issues/25#issuecomment-1817773399) on issue #25, we need to edit the *_scen_has_ended.inst file when we init the env that the scenario has ended?
+        with open(self.scen_ended, 'r') as file:
+            data = file.readlines()
+            data[7] = '  "Comments": "true",\n'
+        with open(self.scen_ended, 'w') as file:
+            file.writelines(data)
 
     def reset(self) -> TimeStep:
         try:
-            # per comment (https://github.com/duyminh1998/pycmo/issues/25#issuecomment-1817773399) on issue #25, do we need to edit the *_scen_has_ended.inst file when we init the env that the scenario has ended?
-
             if not self.client.restart_scenario():
                 raise ValueError("Client was not able to restart the scenario.")
-            
-            # per issue # 26, we need to check that we even clicked on the "Enter scenario" button correctly. Might need to check to see if that window is still active, and if it is, close it and restart.
-            
+
             # check that the scenario loaded event has fired correctly in CMO, and if not, restart the scenario
             retries = 0
             while self.check_game_ended() and retries < self.max_resets:
