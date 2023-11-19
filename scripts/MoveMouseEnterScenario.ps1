@@ -68,6 +68,13 @@ public static void LeftClickAtPoint(int x, int y)
 }
 '@
 
+$wshell = New-Object -ComObject wscript.shell;
+$wshell.AppActivate('Side selection and briefing')
+Start-Sleep -s 1
+$wshell.SendKeys("%{ }"); 
+$wshell.SendKeys("m");
+Start-Sleep -s 1
+
 $MOVEMENTSIZEY = 770
 $MOVEMENTSIZEX = 600
 
@@ -79,7 +86,6 @@ $POSITION.x -= $MOVEMENTSIZEX
 Add-Type -TypeDefinition $cSource -ReferencedAssemblies System.Windows.Forms,System.Drawing
 
 # Send a click at a specified point
-$wshell = New-Object -ComObject wscript.shell;
-$wshell.AppActivate('Side selection and briefing')
 $wshell.SendKeys('{ESC}')
 [Clicker]::LeftClickAtPoint($POSITION.x, $POSITION.y)
+Start-Sleep -s 1
