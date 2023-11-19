@@ -1,3 +1,7 @@
+# Author: Minh Hua
+# Date: 10/21/2023
+# Purpose: A sample agent to interact with the steam_demo scenario, demonstrating our ability to work with the Steam version of CMO.
+
 import os
 
 from sample_agent import RandomAgent
@@ -6,6 +10,7 @@ from pycmo.configs.config import get_config
 from pycmo.env.cmo_env import CMOEnv
 from pycmo.lib.run_loop import run_loop_steam
 
+# open config and set important files and folder paths
 config = get_config()
 
 # MAIN LOOP

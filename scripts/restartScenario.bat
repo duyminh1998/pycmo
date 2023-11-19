@@ -47,8 +47,4 @@ WScript.Sleep(500)
 sh.SendKeys("{ENTER}"); 
 WScript.Sleep(loadDuration);
 sh.AppActivate(title);
-sh.AppActivate("Side selection and briefing");
-sh.SendKeys("%{ }"); 
-sh.SendKeys("m");
-WScript.Sleep(1000) 
 WScript.Quit(0);
