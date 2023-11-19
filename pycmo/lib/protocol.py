@@ -221,6 +221,8 @@ class SteamClient():
             restart_process.wait()
             subprocess.Popen(['PowerShell.exe', '-ExecutionPolicy', 'RemoteSigned', '-File', 'MoveMouseEnterScenario.ps1'])
             sleep(5)
+            # per issue # 26, we need to check that we even clicked on the "Enter scenario" button correctly. Might need to check to see if that window is still active, and if it is, close it and restart.
+
             return True
         except FileNotFoundError:
             return False
