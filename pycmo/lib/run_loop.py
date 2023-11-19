@@ -5,7 +5,7 @@
 
 # imports
 from pycmo.lib.protocol import Server # Server to handle connection
-from pycmo.env.cmo_env import CPEEnv, CMOEnv # CPE environment, functions as the client that sends actions and receives observations
+from pycmo.env.cmo_env import CPEEnv, CMOEnv, StepType # CPE environment, functions as the client that sends actions and receives observations
 # agents
 from pycmo.agents.base_agent import BaseAgent
 # auxiliary functions
@@ -90,11 +90,9 @@ def run_loop_steam(env: CPEEnv | CMOEnv,
 
     # Configure a limit for the maximum number of steps
     total_steps = 0
-    if max_steps == None:
-        max_steps = 1000
 
     # main loop
-    while not (env.check_game_ended() or (total_steps > max_steps)):
+    while (not max_steps) or (total_steps < max_steps):
         print_env_information(state.step_id, parse_datetime(int(state.observation.meta.Time)), action, state.reward, state.reward)
 
         # perform random actions or choose the action
@@ -108,7 +106,7 @@ def run_loop_steam(env: CPEEnv | CMOEnv,
         state = env.step(action)
         total_steps += 1
 
-        if env.check_game_ended():
+        if state.step_type == StepType(2) or env.check_game_ended():
             env.client.close_scenario_end_message()
             state = env.reset()
             agent.reset()
