@@ -24,11 +24,9 @@ EncodingMode = 8
 3. Unzip the repo anywhere.
 4. Edit the project's `pycmo/configs/config_template.py` file to fit your system's paths, then rename it as `pycmo/configs/config.py` (IMPORTANT). You only need to edit the lines 8 - 10:
 ```python
-{
-    pycmo_path = os.path.join("path/to", "pycmo")
-    cmo_path = os.path.join("path/to/steam/installation/of", "Command - Modern Operations")
-    command_mo_version = "Command v1.06 - Build 1328.11"
-}
+pycmo_path = os.path.join("path/to", "pycmo")
+cmo_path = os.path.join("path/to/steam/installation/of", "Command - Modern Operations")
+command_mo_version = "Command v1.06 - Build 1328.11"
 ```
 5. Navigate to the folder than contains `setup.py` and install the repository using `pip install .` Anytime you make changes to the files in the project folder, you need to reinstall the package using `pip install .`. Alternatively, use `pip install -e .` to install the package in editable mode. After doing this you can change the code without needing to continue to install it.
 
