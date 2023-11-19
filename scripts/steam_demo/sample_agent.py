@@ -1,78 +1,35 @@
 # Author: Minh Hua
 # Date: 10/21/2023
 # Purpose: A sample agent to interact with the steam_demo scenario, demonstrating our ability to work with the Steam version of CMO.
+# Randomly moves an aircraft every timestep.
 
-import os
 import random
 
-from pycmo.configs.config import get_config
-from pycmo.lib.tools import cmo_steam_observation_file_to_xml
-from pycmo.lib.protocol import SteamClient
+from pycmo.lib import actions
+from pycmo.agents.base_agent import BaseAgent
 from pycmo.lib.features import FeaturesFromSteam, Unit
-from pycmo.env.cmo_env import CMOEnv
 
-# open config and set important files and folder paths
-config = get_config()
+class RandomAgent(BaseAgent):
+    def __init__(self, player_side:str, ac_name:str):
+        super().__init__(player_side)
+        self.ac_name = ac_name
 
-# FUNCTIONS
-def get_unit_from_observation(units, unit_name) -> Unit:
-    for unit in units:
-        if unit.Name == unit_name:
-            return unit
+    def get_unit_info_from_observation(self, features: FeaturesFromSteam, unit_name:str) -> Unit:
+        units = features.units
+        for unit in units:
+            if unit.Name == unit_name:
+                return unit
+        return None
 
-def move_aircraft(side:str, unit_name:str, initial_longitude:float, initial_latitude:float):
-    base_script = f"local side = '{side}'\nlocal sufa = ScenEdit_GetUnit({{side = side, name = '{unit_name}'}})\n"
-    delta_longitude = (random.random() * 1) - 0.5
-    delta_latitude = (random.random() * 1) - 0.5
-    new_longitude = float(initial_longitude) + delta_longitude
-    new_latitude = float(initial_latitude) + delta_latitude
-    action = base_script + f'move_unit_to(side, sufa.name, {new_latitude}, {new_longitude})'
-    return action
+    def action(self, features: FeaturesFromSteam, VALID_FUNCTIONS:actions.AvailableFunctions) -> str:
+        action = ""
+        ac = self.get_unit_info_from_observation(features=features, unit_name=self.ac_name)
 
-def no_op():
-    action = ''
-    return action
+        base_script = f"local side = '{self.player_side}'\nlocal sufa = ScenEdit_GetUnit({{side = side, name = '{self.ac_name}'}})\n"
+        delta_longitude = (random.random() * 1) - 0.5
+        delta_latitude = (random.random() * 1) - 0.5
+        new_longitude = float(ac.Lon) + delta_longitude
+        new_latitude = float(ac.Lat) + delta_latitude
+        action = base_script + f'move_unit_to(side, sufa.name, {new_latitude}, {new_longitude})'
 
-# MAIN LOOP
-# SIDE INFO
-sufa = "Sufa #1"
-
-scenario_name = "Steam demo"
-scenario_script_folder_name = "steam_demo"
-player_side = "Israel"
-step_size = ['0', '0', '1']
-command_version = config["command_mo_version"]
-observation_path = os.path.join(config['steam_observation_folder_path'], f'{scenario_name}.inst')
-action_path = os.path.join(config["scripts_path"], scenario_script_folder_name, "agent_action.lua")
-scen_ended_path = config['scen_ended']
-
-cmo_env = CMOEnv(
-        scenario_name=scenario_name,
-        player_side=player_side,
-        step_size=step_size,
-        observation_path=observation_path,
-        action_path=action_path,
-        scen_ended_path=scen_ended_path,
-        command_version=command_version
-)
-
-# start the game
-# scenario_started = cmo_env.client.start_scenario()
-scenario_started = True
-
-if scenario_started:
-    scenario_ended = False
-    old_state = cmo_env.reset()
-
-    while not scenario_ended:
-        observation = old_state.observation
-        
-        sufa_info = get_unit_from_observation(observation.units, sufa)
-        action = move_aircraft(player_side, sufa, sufa_info.Lon, sufa_info.Lat)
-        print(f"Action:\n{action}\n")
-    
-        new_state = cmo_env.step(action)
-        print(f"New observation:\n{new_state}\n")
-
-        # set old state as the previous new state
-        old_state = new_state
+        return action

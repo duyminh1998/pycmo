@@ -50,7 +50,7 @@ function setup_observation_export_agent_action(lua_script_foldername, pycmo_lib_
     local export_observation_event_name = 'Export observation initially'
     local export_observation_trigger_name = 'Scenario is Loaded'
     local export_observation_action_name = 'Export observation initially'
-    local export_observation_action_script_text = "ScenEdit_RunScript('" .. pycmo_lib_lua_filename .. "', true)\nScenEdit_ExportScenarioToXML()\n" .. "VP_SetTimeCompression(" .. time_compression .. ")"
+    local export_observation_action_script_text = "ScenEdit_RunScript('" .. pycmo_lib_lua_filename .. "', true)\nScenEdit_ExportScenarioToXML()\n" .. "VP_SetTimeCompression(" .. time_compression .. ")\nScenarioHasEnded(false)"
     
     -- Remove these events, triggers, and actions if they are already present
     local scenario_events = ScenEdit_GetEvents(1)
@@ -68,4 +68,27 @@ function setup_observation_export_agent_action(lua_script_foldername, pycmo_lib_
     ScenEdit_SetEventTrigger(export_observation_action_event.guid, {mode = 'add', name = export_observation_trigger_name})
     ScenEdit_SetAction({mode = 'add',type = 'LuaScript', name = export_observation_action_name, ScriptText = export_observation_action_script_text})
     ScenEdit_SetEventAction(export_observation_action_event.guid, {mode = 'add', name = export_observation_action_name})
+
+    -- Set up an event to write to a file to note when a scenario has ended
+    local scenario_ended_event_name = 'Scenario has Ended'
+    local scenario_ended_trigger_name = 'Scenario has Ended'
+    local scenario_ended_action_name = 'Scenario has Ended'
+    local scenario_ended_action_script_text = "ScenEdit_RunScript('" .. pycmo_lib_lua_filename .. "', true)\nScenarioHasEnded(true)"
+    
+    -- Remove these events, triggers, and actions if they are already present
+    local scenario_events = ScenEdit_GetEvents(1)
+    for i = 1, #scenario_events do
+        local event = scenario_events[i]
+        if event.description == scenario_ended_event_name then
+            ScenEdit_SetEvent(event.description, {mode = 'remove'})
+            ScenEdit_SetTrigger({description = scenario_ended_trigger_name, mode = 'remove'})
+            ScenEdit_SetAction({description = scenario_ended_action_name, mode = 'remove'})
+        end
+    end
+    
+    local scenario_ended_event = ScenEdit_SetEvent(scenario_ended_event_name, {mode='add', IsRepeatable=true})
+    ScenEdit_SetTrigger({mode = 'add', type = 'ScenEnded', name = scenario_ended_trigger_name})
+    ScenEdit_SetEventTrigger(scenario_ended_event.guid, {mode = 'add', name = scenario_ended_trigger_name})
+    ScenEdit_SetAction({mode = 'add',type = 'LuaScript', name = scenario_ended_action_name, ScriptText = scenario_ended_action_script_text})
+    ScenEdit_SetEventAction(scenario_ended_event.guid, {mode = 'add', name = scenario_ended_action_name})
 end

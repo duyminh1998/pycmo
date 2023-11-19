@@ -7,6 +7,7 @@
 import socket
 import subprocess
 import os
+from time import sleep
 
 from pycmo.configs.config import get_config
 from pycmo.lib.tools import process_exists
@@ -168,10 +169,14 @@ class SteamClient():
     def __init__(self, 
                  scenario_name:str,
                  agent_action_filename:str="python_agent_action.lua",
-                 command_version:str=config["command_mo_version"]) -> None:
+                 command_version:str=config["command_mo_version"],
+                 restart_duration:int=10,
+                 enter_scenario_max_retries:int=10) -> None:
         self.scenario_name = scenario_name
         self.agent_action_filename = agent_action_filename
         self.cmo_window_title = f"{scenario_name} - {command_version}"
+        self.restart_duration = restart_duration
+        self.enter_scenario_max_retries = enter_scenario_max_retries
 
     def connect(self, command_process_name:str="Command.exe") -> bool:
         return process_exists(command_process_name)
@@ -192,11 +197,55 @@ class SteamClient():
     
     def close_scenario_message(self) -> bool:
         return self.send_key_press("{ENTER}")
-        
+    
+    def close_scenario_end_message(self) -> bool:
+        try:
+            os.chdir(config['scripts_path'])
+            close_scenario_end_message_process = subprocess.run(['closeScenarioEndMessage.bat'])
+            return True
+        except FileNotFoundError:
+            raise FileNotFoundError("Cannot find 'closeScenarioEndMessage.bat' script.")
+            
     def send_key_press(self, key:str) -> bool:
         try:
             os.chdir(config['scripts_path'])
-            subprocess.Popen(['nonsecureSendKeys.bat', self.cmo_window_title, key])
+            send_key_process = subprocess.run(['nonsecureSendKeys.bat', self.cmo_window_title, key])
             return True
         except FileNotFoundError:
-            return False
+            raise FileNotFoundError("Cannot find 'nonsecureSendKeys.bat' script.")
+        
+    def restart_scenario(self) -> bool:
+        try:
+            os.chdir(config['scripts_path'])
+            restart_process = subprocess.run(['restartScenario.bat', self.cmo_window_title, str(int(self.restart_duration / 2) * 1000)])
+            # per issue #26, need to check here if the "Side selection and briefing" window is active, and if yes, call self.click_enter_scenario() again
+            self.click_enter_scenario()
+            retries = 0
+            while self.check_side_selection_window_exists() and retries < self.enter_scenario_max_retries:
+                print(f"Steam client was not able to enter scenario. Retrying... (Attempt {retries} of {self.enter_scenario_max_retries})")
+                self.click_enter_scenario()
+                retries += 1
+            if self.check_side_selection_window_exists():
+                raise ValueError("Steam client was not able to enter scenario properly. Please protocol.py or the 'MoveMouseEnterScenario.ps1' script.")
+            
+            return True
+        except FileNotFoundError:
+            raise FileNotFoundError("Cannot find 'restartScenario.bat' script.")
+        
+    def click_enter_scenario(self) -> bool:
+        try:
+            os.chdir(config['scripts_path'])
+            click_enter_scenario_process = subprocess.run(['PowerShell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'MoveMouseEnterScenario.ps1'])
+            return True
+        except FileNotFoundError:
+            raise FileNotFoundError("Cannot find 'MoveMouseEnterScenario.ps1' script.")
+
+    def check_side_selection_window_exists(self) -> bool:
+        try:
+            os.chdir(config['scripts_path'])
+            check_window_exists_process = subprocess.run(['PowerShell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'checkWindowByTitle.ps1'], capture_output=True, text=True)
+            process_exists = check_window_exists_process.stdout
+            if process_exists: return True
+            else: return False
+        except FileNotFoundError:
+            raise FileNotFoundError("Cannot find 'checkWindowByTitle.ps1' script.")
