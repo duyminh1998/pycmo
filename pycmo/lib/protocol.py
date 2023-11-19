@@ -218,8 +218,7 @@ class SteamClient():
         try:
             os.chdir(config['scripts_path'])
             restart_process = subprocess.run(['restartScenario.bat', self.cmo_window_title, str(int(self.restart_duration / 2) * 1000)])
-            # per issue #26, we need to check that we even clicked on the "Enter scenario" button correctly. Might need to check to see if that window is still active, and if it is, close it and restart.
-            # need to check here if the "Side selection and briefing" window is active, and if yes, call self.click_enter_scenario() again
+            # per issue #26, need to check here if the "Side selection and briefing" window is active, and if yes, call self.click_enter_scenario() again
             self.click_enter_scenario()
             retries = 0
             while self.check_side_selection_window_exists() and retries < self.enter_scenario_max_retries:
