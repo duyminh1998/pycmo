@@ -155,7 +155,7 @@ def process_exists(process_name):
     # because Fail message could be translated
     return last_line.lower().startswith(process_name.lower())
 
-def cmo_steam_observation_file_to_xml(file_path:str) -> any or None:
+def cmo_steam_observation_file_to_xml(file_path:str) -> str or None:
     try:
         with open(file_path, 'r') as f:
             observation_file_contents = f.read()
