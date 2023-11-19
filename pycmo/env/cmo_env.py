@@ -7,6 +7,7 @@
 from pycmo.lib import actions
 from pycmo.lib.features import Features, FeaturesFromSteam
 from pycmo.lib.protocol import Client, SteamClient
+from pycmo.configs.config import get_config
 from pycmo.lib.tools import cmo_steam_observation_file_to_xml
 import collections, enum
 import time, os
@@ -226,27 +227,24 @@ class CMOEnv():
     """
     def __init__(self, 
                  scenario_name:str,
-                 player_side: str, 
-                 step_size: list, 
+                 player_side: str,
                  command_version:str,
                  observation_path: str, 
                  action_path: str,
                  scen_ended_path: str,
-                 pycmo_lua_lib_path: str):
+                 pycmo_lua_lib_path: str = None):
         self.client = SteamClient(scenario_name=scenario_name, agent_action_filename=action_path, command_version=command_version) # initialize a client to send data to the game
         if not self.client.connect(): # connect the client to the game
             raise FileNotFoundError("No running instance of Command to connect to.")
         
         self.player_side = player_side # the player's side, this is used to identify units that the player can actually control
-
-        # the step size in h, m, s
-        self.h = step_size[0]
-        self.m = step_size[1]
-        self.s = step_size[2]
         
         self.observation_path = observation_path # the path to the folder containing the xml steps files. These steps files are used to generate observations.
         self.action_path = action_path
         self.scen_ended = scen_ended_path # the path to the text file recording whether or not the scenario has ended. "hacky" way to determine when a scenario ends because the current Lua command for this check is buggy in-game.
+        if not pycmo_lua_lib_path:
+            config = get_config()
+            pycmo_lua_lib_path = os.path.join(config['pycmo_path'], 'lua', 'pycmo_lib.lua')
         self.pycmo_lua_lib_path = pycmo_lua_lib_path # the path to the pycmo_lib.lua file
 
         self.current_observation = None
@@ -306,6 +304,9 @@ class CMOEnv():
 
     def get_obs(self) -> FeaturesFromSteam:
         return FeaturesFromSteam(cmo_steam_observation_file_to_xml(self.observation_path), self.player_side) 
+    
+    def action_spec(self, observation:Features) -> actions.AvailableFunctions:    
+        return actions.AvailableFunctions(observation)
 
     def check_game_ended(self):
         try:

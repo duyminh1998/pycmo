@@ -4,132 +4,68 @@
 
 import os
 
+from sample_agent import ScriptedAgent
+
 from pycmo.configs.config import get_config
-from pycmo.lib.features import FeaturesFromSteam, Unit, Contact
-from pycmo.env.cmo_env import CMOEnv
+from pycmo.env.cmo_env import CMOEnv, StepType
+from pycmo.lib.tools import print_env_information, parse_datetime
 
 # open config and set important files and folder paths
 config = get_config()
 
-class ScriptedAgent:
-    def __init__(self, player_side:str, attacker_name:str, target_name:str, strike_weapon_name:str):
-        self.state = 0
-        self.player_side = player_side
-        self.attacker_name = attacker_name
-        self.target_name = target_name
-        self.strike_weapon_name = strike_weapon_name
-
-    def get_unit_info_from_observation(self, features: FeaturesFromSteam, unit_name:str) -> Unit:
-        units = features.units
-        for unit in units:
-            if unit.Name == unit_name:
-                return unit
-        return None
-            
-    def get_contact_info_from_observation(self, features: FeaturesFromSteam, contact_name:str) -> Contact:
-        contacts = features.contacts
-        for contact in contacts:
-            if contact.Name == contact_name:
-                return contact
-        return None
-
-    def action(self, features: FeaturesFromSteam) -> str:
-        action = ""
-        attacker = self.get_unit_info_from_observation(features=features, unit_name=self.attacker_name)
-        target = self.get_contact_info_from_observation(features=features, contact_name=self.target_name)
-
-        # in the first state, launch the requested aircraft
-        if self.state == 0:
-            action = f'ScenEdit_SetUnit({{side = "{self.player_side}", name = "{attacker.Name}", launch = true}})'
-            self.state += 1
-
-        # in the second state, move aircraft to the intermediate point
-        elif self.state == 1 and attacker.CA > 10000:
-            base_script = f"local side = '{self.player_side}'\nlocal attacker = ScenEdit_GetUnit({{side = side, name = '{attacker.Name}'}})\n"
-            new_longitude = -76.9041036640427 # immediate point outside of SAM radius
-            new_latitude = 28.8515237883916 # immediate point outside of SAM radius
-            action = base_script + f'move_unit_to(side, attacker.name, {new_latitude}, {new_longitude})'
-            self.state += 1
-
-        # in the third state, make aircraft auto-attack the target
-        elif self.state == 2 and attacker.Lon >= -77.5 and target:
-            # strike_weapon_name = "GBU-53/B StormBreaker"
-            # weapon_max_range = 35
-            # print(ScenEdit_GetLoadout( { unitname=attacker.name } ).weapons[3])
-            # ScenEdit_AttackContact('Thunder #1', con_guid, {mode='1', weapon=2855, qty=10 })
-            action = f"ScenEdit_AttackContact('{attacker.Name}', '{target.ID}', {{ mode='0'}})" # attack contact automatically
-            self.state += 1
-
-        # in the fourth state, move aircraft back to the intermediate point
-        elif self.state == 3 and not target:
-            base_script = f"local side = '{self.player_side}'\nlocal attacker = ScenEdit_GetUnit({{side = side, name = '{attacker.Name}'}})\n"
-            new_longitude = -76.9041036640427 # immediate point outside of SAM radius
-            new_latitude = 28.8515237883916 # immediate point outside of SAM radius
-            action = base_script + f'move_unit_to(side, attacker.name, {new_latitude}, {new_longitude})'
-            self.state += 1
-
-        # in the fifth state, RTB
-        elif self.state == 4 and attacker.Lon <= -76:
-            action = f"ScenEdit_SetUnit({{side = '{self.player_side}', name = '{attacker.Name}', RTB = true}})"  
-            self.state += 1
-
-        return action
-
 # MAIN LOOP
-# SIDE INFO
-attacker_name = "Thunder #1"
-target_name = "BTR-82V"
-strike_weapon_name = "GBU-53/B StormBreaker"
-
 scenario_name = "floridistan"
-scenario_script_folder_name = "floridistan"
 player_side = "BLUE"
-step_size = ['0', '0', '1']
+scenario_script_folder_name = "floridistan" # name of folder containing the lua script that the agent will use
+
 command_version = config["command_mo_version"]
 observation_path = os.path.join(config['steam_observation_folder_path'], f'{scenario_name}.inst')
 action_path = os.path.join(config["scripts_path"], scenario_script_folder_name, "agent_action.lua")
 scen_ended_path = os.path.join(config['steam_observation_folder_path'], f'{scenario_name}_scen_has_ended.inst')
-pycmo_lua_lib_path = os.path.join(config['pycmo_path'], 'lua', 'pycmo_lib.lua')
 
-cmo_env = CMOEnv(
+env = CMOEnv(
         scenario_name=scenario_name,
         player_side=player_side,
-        step_size=step_size,
         command_version=command_version,
         observation_path=observation_path,
         action_path=action_path,
         scen_ended_path=scen_ended_path,
-        pycmo_lua_lib_path=pycmo_lua_lib_path
 )
+
+attacker_name = "Thunder #1"
+target_name = "BTR-82V"
+strike_weapon_name = "GBU-53/B StormBreaker"
 
 agent = ScriptedAgent(player_side=player_side, attacker_name=attacker_name, target_name=target_name, strike_weapon_name=strike_weapon_name)
 
 # start the game
-state = cmo_env.reset()
-scenario_ended = cmo_env.check_game_ended()
+state = env.reset()
+action = ''
 
 stop_at_step = 25
 iterations = 5
 
+# main loop
 for _ in range(stop_at_step * iterations):
-    print(f"Step: {state.step_id}")
+    print_env_information(state.step_id, parse_datetime(int(state.observation.meta.Time)), action, state.reward, state.reward)
 
     if state.step_id > 0 and (state.step_id % stop_at_step) == 0:
-        state = cmo_env.end_game()
-        print("Ending game")
+        state = env.end_game()
+        print("Ending game...")
     else:
-        if not scenario_ended:
-            action = agent.action(state.observation)
-            if action != "":
-                print(f"Action:\n{action}\n")
-            state = cmo_env.step(action)
+        if not env.check_game_ended():
+            # perform random actions or choose the action
+            available_actions = env.action_spec(state.observation)
+            if agent:
+                action = agent.action(state.observation, available_actions.VALID_FUNCTIONS)
+            else:
+                action = '' # No action if no agent is loaded
 
-    # print(f"New observation:\n{agent.get_unit_info_from_observation(new_state.observation, attacker_name)}\n")
+            # get new state and observation, rewards, discount
+            state = env.step(action)
 
-    scenario_ended = cmo_env.check_game_ended()
-
-    if scenario_ended:
-        cmo_env.client.close_scenario_end_message()
-        state = cmo_env.reset()
-        scenario_ended = cmo_env.check_game_ended()
-        agent = ScriptedAgent(player_side=player_side, attacker_name=attacker_name, target_name=target_name, strike_weapon_name=strike_weapon_name)
+    if state.step_type == StepType(2) or env.check_game_ended():
+        env.client.close_scenario_end_message()
+        state = env.reset()
+        action = ''
+        agent.reset()

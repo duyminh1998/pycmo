@@ -5,14 +5,12 @@
 
 # imports
 from pycmo.lib.protocol import Server # Server to handle connection
-from pycmo.env.cmo_env import CPEEnv # CPE environment, functions as the client that sends actions and receives observations
+from pycmo.env.cmo_env import CPEEnv, CMOEnv, StepType # CPE environment, functions as the client that sends actions and receives observations
 # agents
-from pycmo.agents.rule_based_agent import RuleBasedAgent
-from pycmo.agents.scripted_agent import ScriptedAgent
+from pycmo.agents.base_agent import BaseAgent
 # auxiliary functions
 import threading, time
-from pycmo.lib.tools import *
-from pycmo.configs import config
+from pycmo.lib.tools import print_env_information, clean_up_steps, ticks_to_unix, parse_datetime
 
 def run_loop(player_side:str, config:dict, step_size:list=['0', '0', '1'], agent=None, max_steps=None, server=False, scen_file=None) -> None:
     """
@@ -83,20 +81,32 @@ def run_loop(player_side:str, config:dict, step_size:list=['0', '0', '1'], agent
         if step_id % 10 == 0:
             clean_up_steps(steps_path)
 
-# for debugging
-if __name__ == "__main__":
-    # open config
-    config = config.get_config()
+def run_loop_steam(env: CPEEnv | CMOEnv,
+                   agent:BaseAgent=None, 
+                   max_steps=None) -> None:       
+    # start the game
+    state = env.reset()
+    action = ""
 
-    # scenario file and player side
-    # scen_file = "C:\\ProgramData\\Command Professional Edition 2\\Scenarios\\Standalone Scenarios\\Wooden Leg, 1985.scen"
-    # scen_file = "C:\\ProgramData\\Command Professional Edition 2\\Scenarios\\Custom RCS Detection\\Lua Hook Sensor Detection Test.scen"
-    scen_file = ""
-    player_side = "US"
-    step_size = ["00", "00", "01"]
+    # Configure a limit for the maximum number of steps
+    total_steps = 0
 
-    # initalize agent
-    # player_agent = ScriptedAgent('wooden_leg', player_side)
-    # player_agent = RandomAgent('wooden_leg', player_side)
-    player_agent = None
-    run_loop(player_side, config=config, step_size=step_size, agent=player_agent)
+    # main loop
+    while (not max_steps) or (total_steps < max_steps):
+        print_env_information(state.step_id, parse_datetime(int(state.observation.meta.Time)), action, state.reward, state.reward)
+
+        # perform random actions or choose the action
+        available_actions = env.action_spec(state.observation)
+        if agent:
+            action = agent.action(state.observation, available_actions.VALID_FUNCTIONS)
+        else:
+            action = '' # No action if no agent is loaded
+
+        # get new state and observation, rewards, discount
+        state = env.step(action)
+        total_steps += 1
+
+        if state.step_type == StepType(2) or env.check_game_ended():
+            env.client.close_scenario_end_message()
+            state = env.reset()
+            agent.reset()
