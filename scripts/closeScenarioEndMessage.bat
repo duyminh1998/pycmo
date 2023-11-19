@@ -20,8 +20,8 @@ function printHelp(){
 } 
 
 sh.AppActivate(title)
-WScript.Sleep(1000);
+WScript.Sleep(3000); 
 sh.SendKeys("{ }"); 
-WScript.Sleep(1000);
+WScript.Sleep(3000);
 sh.SendKeys("{ESC}"); 
 WScript.Quit(0);
