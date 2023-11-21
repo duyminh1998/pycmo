@@ -10,6 +10,10 @@ import numpy as np
 import subprocess
 import json
 
+from pycmo.configs.config import get_config
+
+config = get_config()
+
 def parse_datetime(time_int:int) -> datetime:
     """
     Description:
@@ -155,6 +159,19 @@ def process_exists(process_name):
     # because Fail message could be translated
     return last_line.lower().startswith(process_name.lower())
 
+def window_exists(window_name: str, script_path: str = os.path.join(config['scripts_path'], 'checkWindowExistsByTitle.ps1')) -> bool:
+    try:
+        script_path_components = script_path.split("\\")
+        if len(script_path_components) > 1:
+            os.chdir(os.path.join(*script_path_components[:-1]))
+        script_name = script_path_components[-1]
+        window_exists_process = subprocess.run(['PowerShell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', script_name, window_name], capture_output=True, text=True)
+        process_exists = bool(window_exists_process.stdout.strip())
+        if process_exists: return True
+        else: return False
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Cannot find '{script_path}'.")
+    
 def cmo_steam_observation_file_to_xml(file_path:str) -> str or None:
     try:
         with open(file_path, 'r') as f:

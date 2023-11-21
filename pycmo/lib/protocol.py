@@ -7,10 +7,9 @@
 import socket
 import subprocess
 import os
-from time import sleep
 
 from pycmo.configs.config import get_config
-from pycmo.lib.tools import process_exists
+from pycmo.lib.tools import process_exists, window_exists
 
 # open config and set important files and folder paths
 config = get_config()
@@ -216,17 +215,18 @@ class SteamClient():
         
     def restart_scenario(self) -> bool:
         try:
+            enter_scenario_window_name = "Side selection and briefing"
             os.chdir(config['scripts_path'])
             restart_process = subprocess.run(['restartScenario.bat', self.cmo_window_title, str(int(self.restart_duration / 2) * 1000)])
             # per issue #26, need to check here if the "Side selection and briefing" window is active, and if yes, call self.click_enter_scenario() again
             self.click_enter_scenario()
             retries = 0
-            while self.check_side_selection_window_exists() and retries < self.enter_scenario_max_retries:
+            while window_exists(enter_scenario_window_name) and retries < self.enter_scenario_max_retries:
                 print(f"Steam client was not able to enter scenario. Retrying... (Attempt {retries} of {self.enter_scenario_max_retries})")
                 self.click_enter_scenario()
                 retries += 1
-            if self.check_side_selection_window_exists():
-                raise ValueError("Steam client was not able to enter scenario properly. Please protocol.py or the 'MoveMouseEnterScenario.ps1' script.")
+            if window_exists(enter_scenario_window_name):
+                raise ValueError("Steam client was not able to enter scenario properly. Please check protocol.py or the 'MoveMouseEnterScenario.ps1' script.")
             
             return True
         except FileNotFoundError:
@@ -240,12 +240,6 @@ class SteamClient():
         except FileNotFoundError:
             raise FileNotFoundError("Cannot find 'MoveMouseEnterScenario.ps1' script.")
 
-    def check_side_selection_window_exists(self) -> bool:
-        try:
-            os.chdir(config['scripts_path'])
-            check_window_exists_process = subprocess.run(['PowerShell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'checkWindowByTitle.ps1'], capture_output=True, text=True)
-            process_exists = check_window_exists_process.stdout
-            if process_exists: return True
-            else: return False
-        except FileNotFoundError:
-            raise FileNotFoundError("Cannot find 'checkWindowByTitle.ps1' script.")
+    def close_popup(self, popup_type: str, window_name: str, closing_script_path: str, max_retries: int) -> bool:
+        ...
+        

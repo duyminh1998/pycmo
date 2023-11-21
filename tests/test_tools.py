@@ -57,3 +57,7 @@ def test_cmo_steam_observation_file_to_xml():
     xml_string = cmo_steam_observation_file_to_xml(observation_file_path)
     assert isinstance(xml_string, str)
     assert len(xml_string) > 1
+
+def test_window_exists():
+    window_name = "Side selection and briefing"
+    assert window_exists(window_name=window_name) == False
