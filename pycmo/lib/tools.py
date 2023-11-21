@@ -159,13 +159,14 @@ def process_exists(process_name):
     # because Fail message could be translated
     return last_line.lower().startswith(process_name.lower())
 
-def window_exists(window_name: str, script_path: str = os.path.join(config['scripts_path'], 'checkWindowExistsByTitle.ps1')) -> bool:
+def window_exists(window_name:str, script_path:str=os.path.join(config['scripts_path'], 'checkWindowExistsByTitle.ps1')) -> bool:
     try:
         script_path_components = script_path.split("\\")
+        script_dir = None
         if len(script_path_components) > 1:
-            os.chdir(os.path.join(*script_path_components[:-1]))
+            script_dir = os.path.join(*script_path_components[:-1])
         script_name = script_path_components[-1]
-        window_exists_process = subprocess.run(['PowerShell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', script_name, window_name], capture_output=True, text=True)
+        window_exists_process = subprocess.run(['PowerShell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', script_name, window_name], capture_output=True, text=True, cwd=script_dir)
         process_exists = bool(window_exists_process.stdout.strip())
         if process_exists: return True
         else: return False
@@ -186,3 +187,15 @@ def cmo_steam_observation_file_to_xml(file_path:str) -> str or None:
     
     observation_xml = observation_file_json["Comments"]
     return observation_xml
+
+def send_key_press(key:str, window_name:str, script_path:str=os.path.join(config['scripts_path'], 'nonsecureSendKeys.bat')) -> bool:
+    try:
+        script_path_components = script_path.split("\\")
+        script_dir = None
+        if len(script_path_components) > 1:
+            script_dir = os.path.join(*script_path_components[:-1])
+        script_name = script_path_components[-1]
+        send_key_process = subprocess.run([script_name, window_name, key], cwd=script_dir)
+        return True
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Cannot find '{script_path}'.")

@@ -9,7 +9,7 @@ import subprocess
 import os
 
 from pycmo.configs.config import get_config
-from pycmo.lib.tools import process_exists, window_exists
+from pycmo.lib.tools import process_exists, window_exists, send_key_press
 
 # open config and set important files and folder paths
 config = get_config()
@@ -206,12 +206,7 @@ class SteamClient():
             raise FileNotFoundError("Cannot find 'closeScenarioEndMessage.bat' script.")
             
     def send_key_press(self, key:str) -> bool:
-        try:
-            os.chdir(config['scripts_path'])
-            send_key_process = subprocess.run(['nonsecureSendKeys.bat', self.cmo_window_title, key])
-            return True
-        except FileNotFoundError:
-            raise FileNotFoundError("Cannot find 'nonsecureSendKeys.bat' script.")
+        return send_key_press(key, self.cmo_window_title)
         
     def restart_scenario(self) -> bool:
         try:
