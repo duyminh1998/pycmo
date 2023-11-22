@@ -8,9 +8,10 @@ from pycmo.lib import actions
 from pycmo.lib.features import Features, FeaturesFromSteam
 from pycmo.lib.protocol import Client, SteamClient
 from pycmo.configs.config import get_config
-from pycmo.lib.tools import cmo_steam_observation_file_to_xml
+from pycmo.lib.tools import cmo_steam_observation_file_to_xml, window_exists
 import collections, enum
-import time, os
+import os
+from time import sleep
 
 class TimeStep(
     collections.namedtuple(
@@ -140,7 +141,7 @@ class CPEEnv():
                 observation = Features(os.path.join(self.step_dest, step_file_name), self.player_side)
                 reward = observation.side_.TotalScore
                 return TimeStep(step_id, StepType(1), reward, observation)
-            time.sleep(0.1) # else, sleep for 0.1 second to give the game a chance to catch up
+            sleep(0.1) # else, sleep for 0.1 second to give the game a chance to catch up
         # if the game has ended, then save the timestep information with a different step type
         observation = self.get_obs(step_id)
         reward = observation.side_.TotalScore
@@ -297,34 +298,35 @@ class CMOEnv():
 
         # step the environment forwards
         if action_written:
-            # safer check, but much slower
-            # if window_exists(window_name="Incoming message"):
-            #     self.client.close_scenario_paused_message()
-            # else:
-            #     self.client.start_scenario()
-            self.client.start_scenario()
-
-        # get the corresponding observation and reward
-        # continuously poll the game until the correct time step duration has passed
-        new_observation = self.get_obs()
-        while new_observation.meta.Time == self.current_observation.meta.Time and not self.check_game_ended():
-            time.sleep(0.1)
-            new_observation = self.get_obs()
-
-        self.step_id += 1
-        observation = new_observation
-        self.current_observation = new_observation
-        reward = observation.side_.TotalScore
-        new_timestep = TimeStep(self.step_id, StepType(1), reward, observation)
+            self.client.start_scenario() # step the game forwards until the message box appears
+            while True:
+                if self.check_game_ended() or window_exists(window_name="Incoming message"):
+                    break
+        else:
+            ...
         
+        new_observation = self.get_obs()
+
         # if the game has ended, then save the timestep information with a different step type
         if self.check_game_ended():
-            observation = self.get_obs()
+            observation = new_observation
             reward = observation.side_.TotalScore
-            return TimeStep(self.step_id, StepType(2), reward, observation)    
-        
-        return new_timestep
+            return TimeStep(self.step_id, StepType(2), reward, observation)
+        else:
+            if new_observation.meta.Time == self.current_observation.meta.Time:
+                # print(f"Time is not advancing. Old time: {self.current_observation.meta.Time}, New time: {new_observation.meta.Time}. Moving forward with old state.")
+                observation = self.current_observation
+                reward = self.current_observation.side_.TotalScore
+                return TimeStep(self.step_id, StepType(1), reward, observation)            
 
+            self.step_id += 1
+            observation = new_observation
+            reward = observation.side_.TotalScore
+            new_timestep = TimeStep(self.step_id, StepType(1), reward, observation)
+            
+            self.current_observation = new_observation
+
+            return new_timestep
 
     def get_obs(self) -> FeaturesFromSteam:
         return FeaturesFromSteam(cmo_steam_observation_file_to_xml(self.observation_path), self.player_side) 
@@ -344,6 +346,6 @@ class CMOEnv():
         
     def end_game(self) -> TimeStep:
         pycmo_lua_lib_path = self.pycmo_lua_lib_path.replace('\\', '/')
-        action = f"ScenEdit_RunScript('{pycmo_lua_lib_path}', true)\nScenarioHasEnded(true)\nScenEdit_EndScenario()"
+        action = f"VP_SetTimeCompression(0)\nScenEdit_RunScript('{pycmo_lua_lib_path}', true)\nScenEdit_ExportScenarioToXML()\nScenarioHasEnded(true)\nScenEdit_EndScenario()"
         return self.step(action)
     
