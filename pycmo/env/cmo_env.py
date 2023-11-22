@@ -297,6 +297,11 @@ class CMOEnv():
 
         # step the environment forwards
         if action_written:
+            # safer check, but much slower
+            # if window_exists(window_name="Incoming message"):
+            #     self.client.close_scenario_paused_message()
+            # else:
+            #     self.client.start_scenario()
             self.client.start_scenario()
 
         # get the corresponding observation and reward
