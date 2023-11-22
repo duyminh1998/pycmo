@@ -7,7 +7,7 @@
 import socket
 import subprocess
 import os
-from typing import Callable
+from typing import Callable, Tuple
 from time import sleep
 
 from pycmo.configs.config import get_config
@@ -197,7 +197,7 @@ class SteamClient():
                     close_popup_action: Callable[[], bool], 
                     close_popup_action_params: dict = {}, 
                     max_retries:int=10, 
-                    wait_for_popup_init_seconds:float | int=-1) -> bool:
+                    wait_for_popup_init_seconds:float | int=-1) -> Tuple[bool, int]:
         if wait_for_popup_init_seconds >= 0:
             sleep(wait_for_popup_init_seconds)
 
@@ -214,7 +214,7 @@ class SteamClient():
         if retries >= max_retries and window_exists(popup_name):
             raise TimeoutError(f"Steam client was not able to close '{popup_name}' popup.")        
         
-        return True
+        return True, retries
         
     def start_scenario(self) -> bool:
         return self.send_key_press_to_game("{ }")
@@ -222,33 +222,37 @@ class SteamClient():
     def pause_scenario(self) -> bool:
         return self.send_key_press_to_game("{ }")
     
-    def close_scenario_paused_message(self) -> bool:
+    def close_scenario_paused_message(self) -> Tuple[bool, int]:
         popup_name = "Incoming message"
-        return self.close_popup(popup_name=popup_name, 
+        close_popup_result, retries = self.close_popup(popup_name=popup_name, 
                                 close_popup_action=self.send_key_press_to_game, 
                                 close_popup_action_params=dict(key="{ENTER}"),
                                 wait_for_popup_init_seconds=0.5)
+        return close_popup_result, retries
     
     def close_scenario_end_message(self) -> bool:
         popup_name = "Scenario End"
         wait_seconds = 1
-        return self.close_popup(popup_name=popup_name, 
+        close_popup_result, _ = self.close_popup(popup_name=popup_name, 
                          close_popup_action=self.send_key_press_to_game, 
                          close_popup_action_params=dict(key="{ENTER}"),
                          wait_for_popup_init_seconds=wait_seconds)
+        return close_popup_result
     
     def close_player_evaluation(self) -> bool:
         popup_name = "Player Evaluation"
         wait_seconds = 1
-        return self.close_popup(popup_name=popup_name, 
+        close_popup_result, _ = self.close_popup(popup_name=popup_name, 
                                 close_popup_action=send_key_press, 
                                 close_popup_action_params=dict(key="{ESC}", window_name=popup_name),
-                                wait_for_popup_init_seconds=wait_seconds)    
+                                wait_for_popup_init_seconds=wait_seconds) 
+        return close_popup_result   
     
     def close_scenario_end_and_player_eval_messages(self) -> bool:
         self.close_scenario_end_message()
         if window_exists(window_name="Incoming message"):
-            self.close_scenario_paused_message()
+            _, retries = self.close_scenario_paused_message()
+            if retries > 0: self.pause_scenario() # weird bug where if we have to close more than one "Incoming message" popup the game will resume, so we need to pause it
         self.close_player_evaluation() 
         return True
     
@@ -258,10 +262,11 @@ class SteamClient():
             popup_name = "Side selection and briefing"
             wait_restart_seconds = int(self.restart_duration / 2)
             print(f"Waiting {wait_restart_seconds} seconds for 'Side selection and briefing' popup to show.")
-            return self.close_popup(popup_name=popup_name, 
+            close_popup_result, _ = self.close_popup(popup_name=popup_name, 
                                     close_popup_action=self.click_enter_scenario, 
                                     max_retries=self.enter_scenario_max_retries,
                                     wait_for_popup_init_seconds=wait_restart_seconds)
+            return close_popup_result   
         except FileNotFoundError:
             raise FileNotFoundError("Cannot find 'restartScenario.bat' script.")
         
