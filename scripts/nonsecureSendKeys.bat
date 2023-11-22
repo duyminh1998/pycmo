@@ -48,7 +48,6 @@ parseArgs();
 keys=replaceAll(keys,"^^","^");
 
 if (title === "") {
-	sh.SendKeys(keys); 
 	WScript.Quit(0);
 }
 sh.AppActivate(title)
