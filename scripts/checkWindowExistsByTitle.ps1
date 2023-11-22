@@ -32,13 +32,15 @@ Add-Type  @"
     }
 "@
 
+$windowName = $args[0]
+
 $windows = New-Object System.Collections.ArrayList
-Get-Process | Where { $_.MainWindowTitle } | foreach {
+Get-Process | Where-Object { $_.MainWindowTitle } | ForEach-Object {
     $_.Threads.ForEach({
         [void][Win32]::EnumThreadWindows($_.Id, {
             param($hwnd, $lparam)
             if ([Win32]::IsIconic($hwnd) -or [Win32]::IsWindowVisible($hwnd)) {
-                if ([Win32]::GetTitle($hwnd) -eq "Side selection and briefing") {
+                if ([Win32]::GetTitle($hwnd) -eq $windowName) {
                     $windows.Add($true)
                 }
             }}, 0)

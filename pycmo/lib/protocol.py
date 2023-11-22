@@ -7,10 +7,11 @@
 import socket
 import subprocess
 import os
+from typing import Callable
 from time import sleep
 
 from pycmo.configs.config import get_config
-from pycmo.lib.tools import process_exists
+from pycmo.lib.tools import process_exists, window_exists, send_key_press
 
 # open config and set important files and folder paths
 config = get_config()
@@ -189,63 +190,71 @@ class SteamClient():
         except (PermissionError, FileNotFoundError):
             return False
     
+    def send_key_press_to_game(self, key:str) -> bool:
+        return send_key_press(key, self.cmo_window_title)
+
+    def close_popup(self, popup_name:str, 
+                    close_popup_action: Callable[[], bool], 
+                    close_popup_action_params: dict = {}, 
+                    max_retries:int=10, 
+                    wait_for_popup_init_seconds:float | int=-1) -> bool:
+        if wait_for_popup_init_seconds >= 0:
+            sleep(wait_for_popup_init_seconds)
+        
+        close_popup_action(**close_popup_action_params)
+
+        retries = 0
+        while window_exists(popup_name) and retries < max_retries:
+            print(f"Steam client was not able to close '{popup_name}' popup. Retrying... (Attempt {retries + 1} of {max_retries})")
+            close_popup_action(**close_popup_action_params)
+            retries += 1
+        if retries >= max_retries and window_exists(popup_name):
+            raise ValueError(f"Steam client was not able to close '{popup_name}' popup.")        
+        
+        return True
+        
     def start_scenario(self) -> bool:
-        return self.send_key_press("{ }")
+        return self.send_key_press_to_game("{ }")
     
     def pause_scenario(self) -> bool:
-        return self.send_key_press("{ }")
+        return self.send_key_press_to_game("{ }")
     
-    def close_scenario_message(self) -> bool:
-        return self.send_key_press("{ENTER}")
+    def close_scenario_paused_message(self) -> bool:
+        popup_name = "Incoming message"
+        return self.close_popup(popup_name=popup_name, 
+                                close_popup_action=self.send_key_press_to_game, 
+                                close_popup_action_params=dict(key="{ENTER}"),
+                                wait_for_popup_init_seconds=0.5)
     
     def close_scenario_end_message(self) -> bool:
-        try:
-            os.chdir(config['scripts_path'])
-            close_scenario_end_message_process = subprocess.run(['closeScenarioEndMessage.bat'])
-            return True
-        except FileNotFoundError:
-            raise FileNotFoundError("Cannot find 'closeScenarioEndMessage.bat' script.")
-            
-    def send_key_press(self, key:str) -> bool:
-        try:
-            os.chdir(config['scripts_path'])
-            send_key_process = subprocess.run(['nonsecureSendKeys.bat', self.cmo_window_title, key])
-            return True
-        except FileNotFoundError:
-            raise FileNotFoundError("Cannot find 'nonsecureSendKeys.bat' script.")
-        
+        scenario_end_popup_name = "Scenario End"
+        player_evaluation_popup_name = "Player Evaluation"
+        wait_seconds = 1
+        self.close_popup(popup_name=scenario_end_popup_name, 
+                         close_popup_action=self.send_key_press_to_game, 
+                         close_popup_action_params=dict(key="{ENTER}"),
+                         wait_for_popup_init_seconds=wait_seconds)
+        return self.close_popup(popup_name=player_evaluation_popup_name, 
+                                close_popup_action=send_key_press, 
+                                close_popup_action_params=dict(key="{ESC}", window_name="Player Evaluation"),
+                                wait_for_popup_init_seconds=wait_seconds)
+    
     def restart_scenario(self) -> bool:
         try:
-            os.chdir(config['scripts_path'])
-            restart_process = subprocess.run(['restartScenario.bat', self.cmo_window_title, str(int(self.restart_duration / 2) * 1000)])
-            # per issue #26, need to check here if the "Side selection and briefing" window is active, and if yes, call self.click_enter_scenario() again
-            self.click_enter_scenario()
-            retries = 0
-            while self.check_side_selection_window_exists() and retries < self.enter_scenario_max_retries:
-                print(f"Steam client was not able to enter scenario. Retrying... (Attempt {retries} of {self.enter_scenario_max_retries})")
-                self.click_enter_scenario()
-                retries += 1
-            if self.check_side_selection_window_exists():
-                raise ValueError("Steam client was not able to enter scenario properly. Please protocol.py or the 'MoveMouseEnterScenario.ps1' script.")
-            
-            return True
+            restart_process = subprocess.run([os.path.join(config['scripts_path'], 'restartScenario.bat'), self.cmo_window_title])
+            popup_name = "Side selection and briefing"
+            wait_restart_seconds = int(self.restart_duration / 2)
+            print(f"Waiting {wait_restart_seconds} seconds for 'Side selection and briefing' popup to show.")
+            return self.close_popup(popup_name=popup_name, 
+                                    close_popup_action=self.click_enter_scenario, 
+                                    max_retries=self.enter_scenario_max_retries,
+                                    wait_for_popup_init_seconds=wait_restart_seconds)
         except FileNotFoundError:
             raise FileNotFoundError("Cannot find 'restartScenario.bat' script.")
         
     def click_enter_scenario(self) -> bool:
         try:
-            os.chdir(config['scripts_path'])
-            click_enter_scenario_process = subprocess.run(['PowerShell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'MoveMouseEnterScenario.ps1'])
+            click_enter_scenario_process = subprocess.run(['PowerShell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', os.path.join(config['scripts_path'], 'MoveMouseEnterScenario.ps1')])
             return True
         except FileNotFoundError:
             raise FileNotFoundError("Cannot find 'MoveMouseEnterScenario.ps1' script.")
-
-    def check_side_selection_window_exists(self) -> bool:
-        try:
-            os.chdir(config['scripts_path'])
-            check_window_exists_process = subprocess.run(['PowerShell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'checkWindowByTitle.ps1'], capture_output=True, text=True)
-            process_exists = check_window_exists_process.stdout
-            if process_exists: return True
-            else: return False
-        except FileNotFoundError:
-            raise FileNotFoundError("Cannot find 'checkWindowByTitle.ps1' script.")
