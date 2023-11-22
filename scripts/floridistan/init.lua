@@ -9,8 +9,8 @@ local pycmo_lib_lua_filename = pycmo_path .. 'lua/pycmo_lib.lua'
 local agent_action_lua_filename = 'agent_action.lua'
 local export_observation_lua_filename = 'export_observation.lua'
 local execute_agent_action_every_seconds = '0' -- '0' = 1 second, '1' = 5 seconds, '2' = 15 seconds, '3' = 30 seconds, '4' = 1 minute, '5' = 5 minutes, '6' = 15 minutes, '7' = 30 minutes, '8' = 1 hour
-local export_observations_every_seconds = '2'
-local time_compression = 3 -- 0 = x1, 1 = x2, 2 = x5, 3 = x15, 4 = turbo, 5 = double turbo
+local export_observations_every_seconds = '3'
+local time_compression = 5 -- 0 = x1, 1 = x2, 2 = x5, 3 = x15, 4 = turbo, 5 = double turbo
 
 -- Call script to setup observation export and agent action handler
 ScenEdit_RunScript(pycmo_path .. 'lua/init.lua', true)
