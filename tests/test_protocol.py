@@ -47,9 +47,9 @@ def test_steam_client_send():
 #     assert client.connect() == True # have CMO running for this test to pass 
 #     assert client.restart_scenario() == True
 
-# def test_steam_client_close_scenario_end_message():
+# def test_steam_client_close_scenario_end_and_player_eval_messages():
 #     assert client.connect() == True # have CMO running for this test to pass 
-#     assert client.close_scenario_end_message() == True
+#     assert client.close_scenario_end_and_player_eval_messages() == True
 
 # def test_steam_client_click_enter_scenario():
 #     assert client.connect() == True # have the "Side selection and briefing" window open for this test to pass

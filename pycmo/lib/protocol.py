@@ -200,6 +200,9 @@ class SteamClient():
                     wait_for_popup_init_seconds:float | int=-1) -> bool:
         if wait_for_popup_init_seconds >= 0:
             sleep(wait_for_popup_init_seconds)
+
+        if not window_exists(popup_name):
+            raise TimeoutError(f"Popup does not exist when SteamClient::close_popup was called. Waited {wait_for_popup_init_seconds} seconds.")
         
         close_popup_action(**close_popup_action_params)
 
@@ -209,7 +212,7 @@ class SteamClient():
             close_popup_action(**close_popup_action_params)
             retries += 1
         if retries >= max_retries and window_exists(popup_name):
-            raise ValueError(f"Steam client was not able to close '{popup_name}' popup.")        
+            raise TimeoutError(f"Steam client was not able to close '{popup_name}' popup.")        
         
         return True
         
@@ -227,17 +230,27 @@ class SteamClient():
                                 wait_for_popup_init_seconds=0.5)
     
     def close_scenario_end_message(self) -> bool:
-        scenario_end_popup_name = "Scenario End"
-        player_evaluation_popup_name = "Player Evaluation"
+        popup_name = "Scenario End"
         wait_seconds = 1
-        self.close_popup(popup_name=scenario_end_popup_name, 
+        return self.close_popup(popup_name=popup_name, 
                          close_popup_action=self.send_key_press_to_game, 
                          close_popup_action_params=dict(key="{ENTER}"),
                          wait_for_popup_init_seconds=wait_seconds)
-        return self.close_popup(popup_name=player_evaluation_popup_name, 
+    
+    def close_player_evaluation(self) -> bool:
+        popup_name = "Player Evaluation"
+        wait_seconds = 1
+        return self.close_popup(popup_name=popup_name, 
                                 close_popup_action=send_key_press, 
-                                close_popup_action_params=dict(key="{ESC}", window_name="Player Evaluation"),
-                                wait_for_popup_init_seconds=wait_seconds)
+                                close_popup_action_params=dict(key="{ESC}", window_name=popup_name),
+                                wait_for_popup_init_seconds=wait_seconds)    
+    
+    def close_scenario_end_and_player_eval_messages(self) -> bool:
+        self.close_scenario_end_message()
+        if window_exists(window_name="Incoming message"):
+            self.close_scenario_paused_message()
+        self.close_player_evaluation() 
+        return True
     
     def restart_scenario(self) -> bool:
         try:
