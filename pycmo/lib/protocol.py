@@ -200,9 +200,6 @@ class SteamClient():
                     wait_for_popup_init_seconds:float | int=-1) -> Tuple[bool, int]:
         if wait_for_popup_init_seconds >= 0:
             sleep(wait_for_popup_init_seconds)
-
-        if not window_exists(popup_name):
-            raise TimeoutError(f"'{popup_name}' popup does not exist when SteamClient::close_popup was called. Waited {wait_for_popup_init_seconds} seconds.")
         
         close_popup_action(**close_popup_action_params)
 
