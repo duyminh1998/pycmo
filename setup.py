@@ -22,6 +22,7 @@ setup(
     ],
     install_requires=[
         'numpy>=1.10',
-        'xmltodict==0.12.0'
+        'xmltodict==0.12.0',
+        'pywin32==306'
     ],
 )

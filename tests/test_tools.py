@@ -70,7 +70,7 @@ def test_cmo_steam_observation_file_to_xml():
 
 # def test_window_exists():
 #     window_name = "Side selection and briefing"
-#     assert window_exists(window_name=window_name) == False
+#     assert window_exists(window_name=window_name, fast=True) == False
 
 # def test_send_key_press():
 #     key = "{ESC}"

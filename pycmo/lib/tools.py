@@ -9,6 +9,7 @@ import os
 import numpy as np
 import subprocess
 import json
+import win32gui
 
 from pycmo.configs.config import get_config
 
@@ -162,14 +163,29 @@ def process_exists(process_name):
     # because Fail message could be translated
     return last_line.lower().startswith(process_name.lower())
 
-def window_exists(window_name:str, script_path:str=os.path.join(config['scripts_path'], 'checkWindowExistsByTitle.ps1')) -> bool:
-    try:
-        window_exists_process = subprocess.run(['PowerShell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', script_path, window_name], capture_output=True, text=True)
-        process_exists = bool(window_exists_process.stdout.strip())
-        if process_exists: return True
-        else: return False
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Cannot find '{script_path}'.")
+def win32gui_window_exists(window_name:str):
+    ret = []
+    def win_enum_handler(hwnd, ctx):
+        if win32gui.IsWindowVisible(hwnd):
+            txt = win32gui.GetWindowText(hwnd)
+            if txt == window_name:
+                ret.append((hwnd,txt))
+    win32gui.EnumWindows(win_enum_handler, None)
+    if len(ret) > 0: return True
+    else: return False
+
+def window_exists(window_name:str, fast:bool=True, script_path:str=None) -> bool:
+    if fast:
+        return win32gui_window_exists(window_name=window_name)
+    else:
+        try:
+            if not script_path: script_path = os.path.join(config['scripts_path'], 'checkWindowExistsByTitle.ps1')
+            window_exists_process = subprocess.run(['PowerShell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', script_path, window_name], capture_output=True, text=True)
+            process_exists = bool(window_exists_process.stdout.strip())
+            if process_exists: return True
+            else: return False
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Cannot find '{script_path}'.")
     
 def cmo_steam_observation_file_to_xml(file_path:str) -> str or None:
     try:
