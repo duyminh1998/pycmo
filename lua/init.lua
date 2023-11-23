@@ -70,10 +70,11 @@ function setup_observation_export_agent_action(lua_script_foldername, pycmo_lib_
     ScenEdit_SetEventAction(export_observation_action_event.guid, {mode = 'add', name = export_observation_action_name})
 
     -- Set up an event to write to a file to note when a scenario has ended
-    local scenario_ended_event_name = 'Scenario has Ended'
-    local scenario_ended_trigger_name = 'Scenario has Ended'
-    local scenario_ended_action_name = 'Scenario has Ended'
-    local scenario_ended_action_script_text = "ScenEdit_RunScript('" .. pycmo_lib_lua_filename .. "', true)\nScenarioHasEnded(true)"
+    local scenario_ended_event_name = 'Teardown and end scenario'
+    local scenario_ended_trigger_name = 'Trigger to end the scenario (default is scenario end time)'
+    local scenario_ended_action_name = 'Teardown before scenario end'
+    local end_the_scenario_action_name = "End the scenario"
+    local scenario_ended_action_script_text = "VP_SetTimeCompression(0)\nScenEdit_RunScript('" .. pycmo_lib_lua_filename .. "', true)\nScenEdit_ExportScenarioToXML()\nScenarioHasEnded(true)"
     
     -- Remove these events, triggers, and actions if they are already present
     local scenario_events = ScenEdit_GetEvents(1)
@@ -83,12 +84,18 @@ function setup_observation_export_agent_action(lua_script_foldername, pycmo_lib_
             ScenEdit_SetEvent(event.description, {mode = 'remove'})
             ScenEdit_SetTrigger({description = scenario_ended_trigger_name, mode = 'remove'})
             ScenEdit_SetAction({description = scenario_ended_action_name, mode = 'remove'})
+            ScenEdit_SetAction({description = end_the_scenario_action_name, mode = 'remove'})
         end
     end
     
     local scenario_ended_event = ScenEdit_SetEvent(scenario_ended_event_name, {mode='add', IsRepeatable=true})
-    ScenEdit_SetTrigger({mode = 'add', type = 'ScenEnded', name = scenario_ended_trigger_name})
+    local scenario = VP_GetScenario()
+    local end_time_offset_seconds = 10
+    local end_time = os.date('%m-%d-%Y %H:%M:%S %p', (tonumber(scenario.CurrentTimeNum) + (tonumber(scenario.DurationNum) - (tonumber(scenario.CurrentTimeNum) - tonumber(scenario.StartTimeNum))) - end_time_offset_seconds)) --teardown end_time_offset_seconds seconds before the scenario ends
+    ScenEdit_SetTrigger({mode = 'add', type = 'Time', time = end_time, name = scenario_ended_trigger_name})
     ScenEdit_SetEventTrigger(scenario_ended_event.guid, {mode = 'add', name = scenario_ended_trigger_name})
     ScenEdit_SetAction({mode = 'add',type = 'LuaScript', name = scenario_ended_action_name, ScriptText = scenario_ended_action_script_text})
     ScenEdit_SetEventAction(scenario_ended_event.guid, {mode = 'add', name = scenario_ended_action_name})
+    ScenEdit_SetAction({mode = 'add',type = 'EndScenario', name = end_the_scenario_action_name})
+    ScenEdit_SetEventAction(scenario_ended_event.guid, {mode = 'add', name = end_the_scenario_action_name})
 end

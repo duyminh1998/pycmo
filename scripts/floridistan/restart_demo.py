@@ -8,7 +8,7 @@ from sample_agent import ScriptedAgent
 
 from pycmo.configs.config import get_config
 from pycmo.env.cmo_env import CMOEnv, StepType
-from pycmo.lib.tools import print_env_information, parse_datetime
+from pycmo.lib.tools import print_env_information, parse_utc
 
 # open config and set important files and folder paths
 config = get_config()
@@ -47,7 +47,7 @@ iterations = 5
 
 # main loop
 for _ in range(stop_at_step * iterations):
-    print_env_information(state.step_id, parse_datetime(int(state.observation.meta.Time)), action, state.reward, state.reward)
+    print_env_information(state.step_id, parse_utc(int(state.observation.meta.Time)), action, state.reward, state.reward)
 
     if state.step_id > 0 and (state.step_id % stop_at_step) == 0:
         state = env.end_game()
@@ -65,7 +65,7 @@ for _ in range(stop_at_step * iterations):
             state = env.step(action)
 
     if state.step_type == StepType(2) or env.check_game_ended():
-        env.client.close_scenario_end_message()
+        env.client.close_scenario_end_and_player_eval_messages()
         state = env.reset()
         action = ''
         agent.reset()

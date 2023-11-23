@@ -32,6 +32,9 @@ def parse_datetime(time_int:int) -> datetime:
     t1 = timedelta(seconds = secs)
     return d1 + t1
 
+def parse_utc(utc:int) -> datetime:
+    return datetime.fromtimestamp(utc)
+
 def ticks_to_unix(ticks:int) -> int:
     """
     Description:
