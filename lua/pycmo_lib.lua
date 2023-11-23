@@ -261,7 +261,7 @@ function WriteData(data, filename)
     ScenEdit_ExportInst(sides[1].name, {}, {filename = filename, comment = data})
 end
 
-function teardown_and_end_scenario(export_observation_event_name)
+function teardown_and_end_scenario(export_observation_event_name, end_scenario)
     VP_SetTimeCompression(0)
     local scenario_events = ScenEdit_GetEvents(1)
     for i = 1, #scenario_events do
@@ -273,4 +273,7 @@ function teardown_and_end_scenario(export_observation_event_name)
     end
     ScenEdit_ExportScenarioToXML()
     ScenarioHasEnded(true)
+    if end_scenario == true then
+        ScenEdit_EndScenario()
+    end
 end

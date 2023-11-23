@@ -73,8 +73,7 @@ function setup_observation_export_agent_action(lua_script_foldername, pycmo_lib_
     local scenario_ended_event_name = 'Teardown and end scenario'
     local scenario_ended_trigger_name = 'Trigger to end the scenario (default is scenario end time)'
     local scenario_ended_action_name = 'Teardown before scenario end'
-    local end_the_scenario_action_name = "End the scenario"
-    local scenario_ended_action_script_text = "ScenEdit_RunScript('" .. pycmo_lib_lua_filename .. "', true)\nteardown_and_end_scenario('" .. export_observation_event_name .. "')"
+    local scenario_ended_action_script_text = "ScenEdit_RunScript('" .. pycmo_lib_lua_filename .. "', true)\nteardown_and_end_scenario('" .. export_observation_event_name .. "', true)"
     
     -- Remove these events, triggers, and actions if they are already present
     local scenario_events = ScenEdit_GetEvents(1)
@@ -84,7 +83,6 @@ function setup_observation_export_agent_action(lua_script_foldername, pycmo_lib_
             ScenEdit_SetEvent(event.description, {mode = 'remove'})
             ScenEdit_SetTrigger({description = scenario_ended_trigger_name, mode = 'remove'})
             ScenEdit_SetAction({description = scenario_ended_action_name, mode = 'remove'})
-            ScenEdit_SetAction({description = end_the_scenario_action_name, mode = 'remove'})
         end
     end
     
@@ -96,6 +94,4 @@ function setup_observation_export_agent_action(lua_script_foldername, pycmo_lib_
     ScenEdit_SetEventTrigger(scenario_ended_event.guid, {mode = 'add', name = scenario_ended_trigger_name})
     ScenEdit_SetAction({mode = 'add',type = 'LuaScript', name = scenario_ended_action_name, ScriptText = scenario_ended_action_script_text})
     ScenEdit_SetEventAction(scenario_ended_event.guid, {mode = 'add', name = scenario_ended_action_name})
-    ScenEdit_SetAction({mode = 'add',type = 'EndScenario', name = end_the_scenario_action_name})
-    ScenEdit_SetEventAction(scenario_ended_event.guid, {mode = 'add', name = end_the_scenario_action_name})
 end
