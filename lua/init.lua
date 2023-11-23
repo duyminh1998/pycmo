@@ -73,6 +73,7 @@ function setup_observation_export_agent_action(lua_script_foldername, pycmo_lib_
     local scenario_ended_event_name = 'Teardown and end scenario'
     local scenario_ended_trigger_name = 'Trigger to end the scenario (default is scenario end time)'
     local scenario_ended_action_name = 'Teardown before scenario end'
+    local end_the_scenario_action_name = "End the scenario"
     local scenario_ended_action_script_text = "VP_SetTimeCompression(0)\nScenEdit_RunScript('" .. pycmo_lib_lua_filename .. "', true)\nScenEdit_ExportScenarioToXML()\nScenarioHasEnded(true)"
     
     -- Remove these events, triggers, and actions if they are already present
@@ -83,7 +84,7 @@ function setup_observation_export_agent_action(lua_script_foldername, pycmo_lib_
             ScenEdit_SetEvent(event.description, {mode = 'remove'})
             ScenEdit_SetTrigger({description = scenario_ended_trigger_name, mode = 'remove'})
             ScenEdit_SetAction({description = scenario_ended_action_name, mode = 'remove'})
-            ScenEdit_SetAction({description = "End the scenario", mode = 'remove'})
+            ScenEdit_SetAction({description = end_the_scenario_action_name, mode = 'remove'})
         end
     end
     
@@ -95,6 +96,6 @@ function setup_observation_export_agent_action(lua_script_foldername, pycmo_lib_
     ScenEdit_SetEventTrigger(scenario_ended_event.guid, {mode = 'add', name = scenario_ended_trigger_name})
     ScenEdit_SetAction({mode = 'add',type = 'LuaScript', name = scenario_ended_action_name, ScriptText = scenario_ended_action_script_text})
     ScenEdit_SetEventAction(scenario_ended_event.guid, {mode = 'add', name = scenario_ended_action_name})
-    ScenEdit_SetAction({mode = 'add',type = 'EndScenario', name = "End the scenario"})
-    ScenEdit_SetEventAction(scenario_ended_event.guid, {mode = 'add', name = "End the scenario"})
+    ScenEdit_SetAction({mode = 'add',type = 'EndScenario', name = end_the_scenario_action_name})
+    ScenEdit_SetEventAction(scenario_ended_event.guid, {mode = 'add', name = end_the_scenario_action_name})
 end
