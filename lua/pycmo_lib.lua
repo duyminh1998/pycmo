@@ -260,3 +260,17 @@ function WriteData(data, filename)
     local sides = VP_GetSides() -- use random side to export data because we do not care about what side we use
     ScenEdit_ExportInst(sides[1].name, {}, {filename = filename, comment = data})
 end
+
+function teardown_and_end_scenario(export_observation_event_name)
+    VP_SetTimeCompression(0)
+    local scenario_events = ScenEdit_GetEvents(1)
+    for i = 1, #scenario_events do
+        local event = scenario_events[i]
+        if event.description == export_observation_event_name then
+            ScenEdit_SetEvent(event.description, {mode = 'remove'})
+            break
+        end
+    end
+    ScenEdit_ExportScenarioToXML()
+    ScenarioHasEnded(true)
+end
