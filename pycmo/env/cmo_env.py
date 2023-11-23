@@ -309,7 +309,7 @@ class CMOEnv():
             # else:
             #     self.client.start_scenario()
             self.client.start_scenario() # step the game forwards until the message box appears
-            while True:
+            while True: # the calls to window_exists(window_name="Incoming message") are very expensive and slow down the game quite a bit
                 if self.check_game_ended() or window_exists(window_name="Incoming message"): # or window_exists(window_name="Scenario End")
                     break
         else:
