@@ -178,6 +178,9 @@ class SteamClient():
         self.cmo_window_title = f"{scenario_name} - {command_version}"
         self.restart_duration = restart_duration
         self.enter_scenario_max_retries = enter_scenario_max_retries
+        self.scenario_paused_popup_name = "Incoming message"
+        self.scenario_end_popup_name = "Scenario End"
+        self.player_evaluation_popup_name = "Player Evaluation"
 
     def connect(self, command_process_name:str="Command.exe") -> bool:
         return process_exists(command_process_name)
@@ -198,18 +201,19 @@ class SteamClient():
                     close_popup_action_params: dict = {}, 
                     max_retries:int=10, 
                     wait_for_popup_init_seconds:float | int=-1) -> Tuple[bool, int]:
+        retries = 0
+
         if wait_for_popup_init_seconds >= 0:
             sleep(wait_for_popup_init_seconds)
         
-        close_popup_action(**close_popup_action_params)
-
-        retries = 0
-        while window_exists(popup_name) and retries < max_retries:
-            print(f"Steam client was not able to close '{popup_name}' popup. Retrying... (Attempt {retries + 1} of {max_retries})")
+        if window_exists(popup_name):
             close_popup_action(**close_popup_action_params)
-            retries += 1
-        if retries >= max_retries and window_exists(popup_name):
-            raise TimeoutError(f"Steam client was not able to close '{popup_name}' popup.")        
+            while window_exists(popup_name) and retries < max_retries:
+                print(f"Steam client was not able to close '{popup_name}' popup. Retrying... (Attempt {retries + 1} of {max_retries})")
+                close_popup_action(**close_popup_action_params)
+                retries += 1
+            if retries >= max_retries and window_exists(popup_name):
+                raise TimeoutError(f"Steam client was not able to close '{popup_name}' popup.")        
         
         return True, retries
         
@@ -220,37 +224,58 @@ class SteamClient():
         return self.send_key_press_to_game("{ }")
     
     def close_scenario_paused_message(self) -> Tuple[bool, int]:
-        popup_name = "Incoming message"
-        close_popup_result, retries = self.close_popup(popup_name=popup_name, 
+        close_popup_result, retries = self.close_popup(popup_name=self.scenario_paused_popup_name, 
                                 close_popup_action=self.send_key_press_to_game, 
                                 close_popup_action_params=dict(key="{ENTER}"),
                                 wait_for_popup_init_seconds=0.5)
         return close_popup_result, retries
     
     def close_scenario_end_message(self) -> bool:
-        popup_name = "Scenario End"
         wait_seconds = 1
-        close_popup_result, _ = self.close_popup(popup_name=popup_name, 
+        close_popup_result, _ = self.close_popup(popup_name=self.scenario_end_popup_name, 
                          close_popup_action=self.send_key_press_to_game, 
                          close_popup_action_params=dict(key="{ENTER}"),
                          wait_for_popup_init_seconds=wait_seconds)
         return close_popup_result
     
     def close_player_evaluation(self) -> bool:
-        popup_name = "Player Evaluation"
         wait_seconds = 1
-        close_popup_result, _ = self.close_popup(popup_name=popup_name, 
+        close_popup_result, _ = self.close_popup(popup_name=self.player_evaluation_popup_name, 
                                 close_popup_action=send_key_press, 
-                                close_popup_action_params=dict(key="{ESC}", window_name=popup_name),
+                                close_popup_action_params=dict(key="{ESC}", window_name=self.player_evaluation_popup_name),
                                 wait_for_popup_init_seconds=wait_seconds) 
         return close_popup_result   
     
     def close_scenario_end_and_player_eval_messages(self) -> bool:
-        self.close_scenario_end_message()
-        if window_exists(window_name="Incoming message"):
-            _, retries = self.close_scenario_paused_message()
-            if retries > 0: self.pause_scenario() # weird bug where if we have to close more than one "Incoming message" popup the game will resume, so we need to pause it
-        self.close_player_evaluation() 
+        wait_retry_seconds = 2
+        close_scenario_end_messages_retries = 0
+        max_retries = 10
+        while window_exists(window_name=self.scenario_end_popup_name) or window_exists(window_name=self.scenario_paused_popup_name) or window_exists(window_name=self.player_evaluation_popup_name):
+            if close_scenario_end_messages_retries > 0:
+                print(f"Retrying to close 'Scenario End', 'Incoming message', and 'Player Evaluation' popups. (Attempt {close_scenario_end_messages_retries + 1} of {max_retries})")
+
+            try:
+                self.close_scenario_end_message()
+            except TimeoutError:
+                print("Timed out trying to close 'Scenario End' popup. Moving on to close 'Incoming message' popup.")
+
+            try:
+                _, retries = self.close_scenario_paused_message()
+                if retries > 0: self.pause_scenario() # weird bug where if we have to close more than one "Incoming message" popup the game will resume, so we need to pause it
+            except TimeoutError:
+                print("Timed out trying to close 'Incoming message' popup. Moving on to close 'Player Evaluation' popup.")   
+
+            try:
+                self.close_player_evaluation() 
+            except TimeoutError:
+                print("Timed out trying to close 'Player Evaluation' popup. Retrying entire sequence of closing actions.")
+            
+            if close_scenario_end_messages_retries > max_retries:
+                raise TimeoutError("Timed out trying to close 'Scenario End', 'Incoming message', and 'Player Evaluation' popups.")
+            
+            close_scenario_end_messages_retries += 1
+            sleep(wait_retry_seconds)
+
         return True
     
     def restart_scenario(self) -> bool:
