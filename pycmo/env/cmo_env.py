@@ -291,6 +291,11 @@ class CMOEnv():
             raise FileNotFoundError("Cannot find scen_has_ended.txt.")
     
     def step(self, action=None) -> TimeStep:
+        # we should find a way to efficiently when the game is paused or running
+        # if not window_exists(window_name="Incoming message"):
+        #     print("The game is not paused when CMOEnv::step is called. If this is not the first timestep, proceeding might be dangerous.")
+        #     self.client.pause_scenario()
+
         # send the agent's action
         action_written = False
         if action != None:
@@ -298,17 +303,22 @@ class CMOEnv():
 
         # step the environment forwards
         if action_written:
+            # safer check, but much slower
+            # if window_exists(window_name="Incoming message"):
+            #     self.client.close_scenario_paused_message() # try to close "Incoming message" popup and retry in case the close did not work
+            # else:
+            #     self.client.start_scenario()
             self.client.start_scenario() # step the game forwards until the message box appears
             while True:
-                if self.check_game_ended() or window_exists(window_name="Incoming message"):
+                if self.check_game_ended() or window_exists(window_name="Incoming message"): # or window_exists(window_name="Scenario End")
                     break
         else:
-            ...
+            raise ValueError("CMOEnv was not able to send the agent's action to the game.")
         
         new_observation = self.get_obs()
 
         # if the game has ended, then save the timestep information with a different step type
-        if self.check_game_ended():
+        if self.check_game_ended(): # or window_exists(window_name="Scenario End")
             observation = new_observation
             reward = observation.side_.TotalScore
             return TimeStep(self.step_id, StepType(2), reward, observation)
