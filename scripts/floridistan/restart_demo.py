@@ -43,15 +43,17 @@ state = env.reset()
 action = ''
 
 stop_at_step = 25
-iterations = 5
+iteration = 0
+max_iterations = 5
 
 # main loop
-for _ in range(stop_at_step * iterations):
+while iteration < max_iterations:
     print_env_information(state.step_id, parse_utc(int(state.observation.meta.Time)), action, state.reward, state.reward)
 
     if state.step_id > 0 and (state.step_id % stop_at_step) == 0:
-        state = env.end_game()
         print("Ending game...")
+        state = env.end_game()
+        iteration += 1
     else:
         if not env.check_game_ended():
             # perform random actions or choose the action

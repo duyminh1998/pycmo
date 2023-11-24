@@ -291,55 +291,50 @@ class CMOEnv():
             raise FileNotFoundError("Cannot find scen_has_ended.txt.")
     
     def step(self, action=None) -> TimeStep:
-        # we should find a way to efficiently when the game is paused or running
-        # if not window_exists(window_name="Incoming message"):
-        #     print("The game is not paused when CMOEnv::step is called. If this is not the first timestep, proceeding might be dangerous.")
-        #     self.client.pause_scenario()
+        # make sure the game is paused when step is called
+        while self.step_id > 0 and not window_exists(window_name=self.client.scenario_paused_popup_name, fast=True) and not self.check_game_ended(): ...
 
         # send the agent's action
-        action_written = False
-        if action != None:
-            action_written = self.client.send(action)
-
+        if action != None: self.client.send(action)
+            
         # step the environment forwards
-        if action_written:
-            # safer check, but much slower
-            # if window_exists(window_name="Incoming message"):
-            #     self.client.close_scenario_paused_message() # try to close "Incoming message" popup and retry in case the close did not work
-            # else:
-            #     self.client.start_scenario()
-            self.client.start_scenario() # step the game forwards until the message box appears
-            while True: # the calls to window_exists(window_name="Incoming message") are very expensive and slow down the game quite a bit
-                if self.check_game_ended() or window_exists(window_name="Incoming message"): # or window_exists(window_name="Scenario End")
-                    break
-        else:
-            raise ValueError("CMOEnv was not able to send the agent's action to the game.")
+        if not self.check_game_ended(): self.client.start_scenario() # step the game forwards until the message box appears
+        while True:
+            # if the game has ended, then save the timestep information with a different step type
+            if self.check_game_ended():
+                observation = self.get_obs()
+                reward = observation.side_.TotalScore
+                return TimeStep(self.step_id, StepType(2), reward, observation)
+            elif window_exists(window_name=self.client.scenario_paused_popup_name, fast=True):
+                break
         
         new_observation = self.get_obs()
+        if new_observation.meta.Time == self.current_observation.meta.Time:
+            # print(f"Time is not advancing. Old time: {self.current_observation.meta.Time}, New time: {new_observation.meta.Time}. Moving forward with old state.")
+            observation = self.current_observation
+            reward = self.current_observation.side_.TotalScore
+            return TimeStep(self.step_id, StepType(1), reward, observation)            
 
-        # if the game has ended, then save the timestep information with a different step type
-        if self.check_game_ended(): # or window_exists(window_name="Scenario End")
-            observation = new_observation
-            reward = observation.side_.TotalScore
-            return TimeStep(self.step_id, StepType(2), reward, observation)
-        else:
-            if new_observation.meta.Time == self.current_observation.meta.Time:
-                # print(f"Time is not advancing. Old time: {self.current_observation.meta.Time}, New time: {new_observation.meta.Time}. Moving forward with old state.")
-                observation = self.current_observation
-                reward = self.current_observation.side_.TotalScore
-                return TimeStep(self.step_id, StepType(1), reward, observation)            
+        self.step_id += 1
+        observation = new_observation
+        reward = observation.side_.TotalScore
+        new_timestep = TimeStep(self.step_id, StepType(1), reward, observation)
+        
+        self.current_observation = new_observation
 
-            self.step_id += 1
-            observation = new_observation
-            reward = observation.side_.TotalScore
-            new_timestep = TimeStep(self.step_id, StepType(1), reward, observation)
-            
-            self.current_observation = new_observation
-
-            return new_timestep
+        return new_timestep
 
     def get_obs(self) -> FeaturesFromSteam:
-        return FeaturesFromSteam(cmo_steam_observation_file_to_xml(self.observation_path), self.player_side) 
+        get_obs_retries = 0
+        max_get_obs_retries = 10
+        while True:
+            try:
+                obs = FeaturesFromSteam(cmo_steam_observation_file_to_xml(self.observation_path), self.player_side) 
+                return obs
+            except TypeError:
+                get_obs_retries += 1
+                if get_obs_retries > max_get_obs_retries:
+                    raise TimeoutError("CMOEnv unable to get observation.")
     
     def action_spec(self, observation:Features) -> actions.AvailableFunctions:    
         return actions.AvailableFunctions(observation)
@@ -347,7 +342,7 @@ class CMOEnv():
     def check_game_ended(self) -> bool:
         try:
             scenario_ended = cmo_steam_observation_file_to_xml(self.scen_ended)
-            if scenario_ended == "true":
+            if scenario_ended == "true" or window_exists(window_name=self.client.scenario_end_popup_name, fast=True):
                 # self.client.close_scenario_end_message()
                 return True
             return False
@@ -356,6 +351,7 @@ class CMOEnv():
         
     def end_game(self) -> TimeStep:
         pycmo_lua_lib_path = self.pycmo_lua_lib_path.replace('\\', '/')
-        action = f"VP_SetTimeCompression(0)\nScenEdit_RunScript('{pycmo_lua_lib_path}', true)\nScenEdit_ExportScenarioToXML()\nScenarioHasEnded(true)\nScenEdit_EndScenario()"
+        export_observation_event_name = 'Export observation'
+        action = f"ScenEdit_RunScript('{pycmo_lua_lib_path}', true)\nteardown_and_end_scenario('{export_observation_event_name}', true)"
         return self.step(action)
     
