@@ -292,7 +292,7 @@ class CMOEnv():
     
     def step(self, action=None) -> TimeStep:
         # make sure the game is paused when step is called
-        while self.step_id > 0 and not window_exists(window_name=self.client.scenario_paused_popup_name, fast=True) and not self.check_game_ended(): ...
+        while self.step_id > 0 and not window_exists(window_name=self.client.scenario_paused_popup_name) and not self.check_game_ended(): ...
 
         # send the agent's action
         if action != None: self.client.send(action)
@@ -305,7 +305,7 @@ class CMOEnv():
                 observation = self.get_obs()
                 reward = observation.side_.TotalScore
                 return TimeStep(self.step_id, StepType(2), reward, observation)
-            elif window_exists(window_name=self.client.scenario_paused_popup_name, fast=True):
+            elif window_exists(window_name=self.client.scenario_paused_popup_name):
                 break
         
         new_observation = self.get_obs()
@@ -342,7 +342,7 @@ class CMOEnv():
     def check_game_ended(self) -> bool:
         try:
             scenario_ended = cmo_steam_observation_file_to_xml(self.scen_ended)
-            if scenario_ended == "true" or window_exists(window_name=self.client.scenario_end_popup_name, fast=True):
+            if scenario_ended == "true" or window_exists(window_name=self.client.scenario_end_popup_name):
                 # self.client.close_scenario_end_message()
                 return True
             return False
