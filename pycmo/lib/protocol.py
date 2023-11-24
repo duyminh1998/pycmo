@@ -9,9 +9,12 @@ import subprocess
 import os
 from typing import Callable, Tuple
 from time import sleep
+import logging
+import win32com.client
+from dataclasses import dataclass
 
 from pycmo.configs.config import get_config
-from pycmo.lib.tools import process_exists, window_exists, send_key_press
+from pycmo.lib.tools import process_exists, window_exists
 
 # open config and set important files and folder paths
 config = get_config()
@@ -165,136 +168,199 @@ class Client():
         except:
             raise ConnectionError("Failed to close client connection.")
         
+@dataclass
+class SteamClientProps:
+    scenario_name: str
+    agent_action_filename : str = "agent_action.lua"
+    command_version : str = config["command_mo_version"]
+
+    send_key_delay_start_scenario : float = 0.1
+    send_key_delay_pause_scenario : float = 0.1
+    send_key_delay_close_scenario_paused_popup : float = 0.1
+    send_key_delay_close_scenario_end_popup : float = 0.5
+    send_key_delay_close_player_evaluation_popup : float = 0.5
+
+    check_window_delay_scenario_paused_popup : float = 0.05
+    check_window_delay_scenario_end_popup : float = 0.05
+    check_window_delay_slow_scenario_end_popup : float = 1
+    check_window_delay_player_evaluation_popup : float = 1
+    check_window_delay_side_selection_popup : float = 1
+
+    max_retries_enter_scenario : int = 20
+    max_retries_send_action : int = 100
+    max_retries_close_scenario_paused_popup : int = 50
+    max_retries_close_scenario_end_popup : int = 20
+    max_retries_wait_for_side_selection_popup : int = 20
+
+    wait_for_close_scenario_end_messages_completion_seconds : int = 2    
+
 class SteamClient():
     """The Client connects to the Steam edition of the game and sends actions to the game."""
-    def __init__(self, 
-                 scenario_name:str,
-                 agent_action_filename:str="python_agent_action.lua",
-                 command_version:str=config["command_mo_version"],
-                 restart_duration:int=10,
-                 enter_scenario_max_retries:int=10) -> None:
-        self.scenario_name = scenario_name
-        self.agent_action_filename = agent_action_filename
-        self.cmo_window_title = f"{scenario_name} - {command_version}"
-        self.restart_duration = restart_duration
-        self.enter_scenario_max_retries = enter_scenario_max_retries
+    def __init__(self, props:SteamClientProps) -> None:
+        self.props = props
+
+        self.cmo_window_title = f"{self.props.scenario_name} - {self.props.command_version}"
         self.scenario_paused_popup_name = "Incoming message"
         self.scenario_end_popup_name = "Scenario End"
         self.player_evaluation_popup_name = "Player Evaluation"
+        self.side_selection_popup_name = "Side selection and briefing"
+
+        self.shell = win32com.client.Dispatch("WScript.Shell")
+
+        self.logger = logging.getLogger(__name__)
 
     def connect(self, command_process_name:str="Command.exe") -> bool:
         return process_exists(command_process_name)
 
     def send(self, data:str) -> bool:
-        try:
-            with open(self.agent_action_filename, 'w') as f:
-                f.write(data)
-            return True
-        except (PermissionError, FileNotFoundError):
-            return False
+        retries = 0
+        while retries < self.props.max_retries_send_action:
+            try:
+                with open(self.props.agent_action_filename, 'w') as f:
+                    f.write(data)
+                return True
+            except PermissionError:
+                self.logger.debug(f"Failed to send agent action. Retrying... (Attempt {retries + 1} of {self.props.max_retries_send_action})")
+                retries += 1
+            except FileNotFoundError:
+                raise FileNotFoundError(f"Unable to find {self.props.agent_action_filename} to write agent action to.")
+        raise PermissionError(f"Failed to send agent action after {retries} attempts.")
     
-    def send_key_press_to_game(self, key:str) -> bool:
-        return send_key_press(key, self.cmo_window_title)
+    def send_key_press(self, key:str, window_name:str, delay:float=None) -> bool:
+        if delay: 
+            self.logger.debug(f"Sleeping for {delay} seconds before sending {key} key to {window_name}.")
+            sleep(delay)
+        self.shell.AppActivate(window_name)
+        self.shell.SendKeys(key)
+        return True
+    
+    def window_exists(self, window_name:str, delay_override:float=None) -> bool:
+        if window_name == self.scenario_paused_popup_name:
+            return window_exists(window_name=window_name, delay=delay_override if delay_override != None else self.props.check_window_delay_scenario_paused_popup)
+        elif window_name == self.scenario_end_popup_name:
+            return window_exists(window_name=window_name, delay=delay_override if delay_override != None else self.props.check_window_delay_scenario_end_popup)
+        elif window_name == self.player_evaluation_popup_name:
+            return window_exists(window_name=window_name, delay=delay_override if delay_override != None else self.props.check_window_delay_player_evaluation_popup)
+        elif window_name == self.side_selection_popup_name:
+            return window_exists(window_name=window_name, delay=delay_override if delay_override != None else self.props.check_window_delay_side_selection_popup)
+        else:
+            raise ValueError(f"window_name must be one of {', '.join([self.scenario_paused_popup_name, self.scenario_end_popup_name, self.player_evaluation_popup_name, self.side_selection_popup_name])}.")
 
     def close_popup(self, popup_name:str, 
                     close_popup_action: Callable[[], bool], 
                     close_popup_action_params: dict = {}, 
-                    max_retries:int=10, 
-                    wait_for_popup_init_seconds:float | int=-1) -> Tuple[bool, int]:
+                    max_retries:int=20) -> Tuple[bool, int]:
         retries = 0
-
-        if wait_for_popup_init_seconds >= 0:
-            sleep(wait_for_popup_init_seconds)
-        
-        if window_exists(popup_name):
+        if self.window_exists(window_name=popup_name):
             close_popup_action(**close_popup_action_params)
-            while window_exists(popup_name) and retries < max_retries:
-                print(f"Steam client was not able to close '{popup_name}' popup. Retrying... (Attempt {retries + 1} of {max_retries})")
+            while self.window_exists(window_name=popup_name) and retries < max_retries:
+                self.logger.debug(f"Steam client was not able to close '{popup_name}' popup. Retrying... (Attempt {retries + 1} of {max_retries})")
                 close_popup_action(**close_popup_action_params)
                 retries += 1
-            if retries >= max_retries and window_exists(popup_name):
+            if retries >= max_retries and self.window_exists(window_name=popup_name):
                 raise TimeoutError(f"Steam client was not able to close '{popup_name}' popup.")        
         
         return True, retries
         
     def start_scenario(self) -> bool:
-        return self.send_key_press_to_game("{ }")
+        return self.send_key_press(key="{ }", window_name=self.cmo_window_title, delay=self.props.send_key_delay_start_scenario)
     
     def pause_scenario(self) -> bool:
-        return self.send_key_press_to_game("{ }")
+        return self.send_key_press(key="{ }", window_name=self.cmo_window_title, delay=self.props.send_key_delay_pause_scenario)
     
-    def close_scenario_paused_message(self) -> Tuple[bool, int]:
-        close_popup_result, retries = self.close_popup(popup_name=self.scenario_paused_popup_name, 
-                                close_popup_action=self.send_key_press_to_game, 
-                                close_popup_action_params=dict(key="{ENTER}"),
-                                wait_for_popup_init_seconds=0.5)
-        return close_popup_result, retries
+    def close_scenario_paused_message(self) -> bool:
+        try:
+            close_popup_result, _ = self.close_popup(popup_name=self.scenario_paused_popup_name, 
+                                    close_popup_action=self.send_key_press, 
+                                    close_popup_action_params=dict(key="{ENTER}", window_name=self.cmo_window_title, delay=self.props.send_key_delay_close_scenario_paused_popup),
+                                    max_retries=self.props.max_retries_close_scenario_paused_popup)
+            return close_popup_result
+        except TimeoutError:
+            self.logger.debug(f"Timed out trying to close '{self.scenario_paused_popup_name}' popup.")
+            return False
     
     def close_scenario_end_message(self) -> bool:
-        wait_seconds = 1
-        close_popup_result, _ = self.close_popup(popup_name=self.scenario_end_popup_name, 
-                         close_popup_action=self.send_key_press_to_game, 
-                         close_popup_action_params=dict(key="{ENTER}"),
-                         wait_for_popup_init_seconds=wait_seconds)
-        return close_popup_result
+        try:
+            close_popup_result, _ = self.close_popup(popup_name=self.scenario_end_popup_name, 
+                            close_popup_action=self.send_key_press, 
+                            close_popup_action_params=dict(key="{ENTER}", window_name=self.scenario_end_popup_name, delay=self.props.send_key_delay_close_scenario_end_popup))
+            return close_popup_result
+        except TimeoutError:
+            self.logger.debug(f"Timed out trying to close '{self.scenario_end_popup_name}' popup.")
+            return False
     
     def close_player_evaluation(self) -> bool:
-        wait_seconds = 1
-        close_popup_result, _ = self.close_popup(popup_name=self.player_evaluation_popup_name, 
-                                close_popup_action=send_key_press, 
-                                close_popup_action_params=dict(key="{ESC}", window_name=self.player_evaluation_popup_name),
-                                wait_for_popup_init_seconds=wait_seconds) 
-        return close_popup_result   
+        try:
+            close_popup_result, _ = self.close_popup(popup_name=self.player_evaluation_popup_name, 
+                                    close_popup_action=self.send_key_press, 
+                                    close_popup_action_params=dict(key="{ESC}", window_name=self.player_evaluation_popup_name, delay=self.props.send_key_delay_close_player_evaluation_popup)) 
+            return close_popup_result   
+        except TimeoutError:
+            self.logger.debug(f"Timed out trying to close '{self.player_evaluation_popup_name}' popup.")
+            return False
     
     def close_scenario_end_and_player_eval_messages(self) -> bool:
-        wait_retry_seconds = 2
-        close_scenario_end_messages_retries = 0
-        max_retries = 10
-        while window_exists(window_name=self.scenario_end_popup_name) or window_exists(window_name=self.scenario_paused_popup_name) or window_exists(window_name=self.player_evaluation_popup_name):
-            if close_scenario_end_messages_retries > 0:
-                print(f"Retrying to close 'Scenario End', 'Incoming message', and 'Player Evaluation' popups. (Attempt {close_scenario_end_messages_retries + 1} of {max_retries})")
+        retries = 0
 
-            try:
-                self.close_scenario_end_message()
-            except TimeoutError:
-                print("Timed out trying to close 'Scenario End' popup. Moving on to close 'Incoming message' popup.")
+        while not self.window_exists(window_name=self.scenario_end_popup_name): ...
+        
+        self.logger.info(f"Attempting to close '{self.scenario_end_popup_name}', '{self.scenario_paused_popup_name}', and '{self.player_evaluation_popup_name}' popups...")
+        while True:
+            self.close_scenario_end_message()
 
-            try:
-                _, retries = self.close_scenario_paused_message()
-                if retries > 0: self.pause_scenario() # weird bug where if we have to close more than one "Incoming message" popup the game will resume, so we need to pause it
-            except TimeoutError:
-                print("Timed out trying to close 'Incoming message' popup. Moving on to close 'Player Evaluation' popup.")   
+            if self.window_exists(self.scenario_paused_popup_name):
+                if self.close_scenario_paused_message(): 
+                    self.pause_scenario() # weird bug where if we have to close more than one "Incoming message" popup the game will resume, so we need to pause it
 
-            try:
-                self.close_player_evaluation() 
-            except TimeoutError:
-                print("Timed out trying to close 'Player Evaluation' popup. Retrying entire sequence of closing actions.")
+            self.close_player_evaluation()
             
-            if close_scenario_end_messages_retries > max_retries:
-                raise TimeoutError("Timed out trying to close 'Scenario End', 'Incoming message', and 'Player Evaluation' popups.")
-            
-            close_scenario_end_messages_retries += 1
-            sleep(wait_retry_seconds)
+            self.logger.info(f"Waiting {self.props.wait_for_close_scenario_end_messages_completion_seconds} seconds to see if there are still any popups...")
+            sleep(self.props.wait_for_close_scenario_end_messages_completion_seconds)
+            if self.window_exists(window_name=self.scenario_end_popup_name, delay_override=self.props.check_window_delay_slow_scenario_end_popup) or \
+                self.window_exists(window_name=self.scenario_paused_popup_name) or \
+                    self.window_exists(window_name=self.player_evaluation_popup_name):
+                retries += 1
+                if retries >= self.props.max_retries_close_scenario_end_popup:
+                    raise TimeoutError(f"Timed out trying to close '{self.scenario_end_popup_name}', '{self.scenario_paused_popup_name}', and '{self.player_evaluation_popup_name}' popups.")
+                self.logger.debug(f"Re-attempting to close '{self.scenario_end_popup_name}', '{self.scenario_paused_popup_name}', and '{self.player_evaluation_popup_name}' popups... (Attempt {retries + 1} of {self.props.max_retries_close_scenario_end_popup})")
+            else:
+                self.logger.info("No more scenario end popups.")
+                break
 
         return True
     
     def restart_scenario(self) -> bool:
-        try:
-            restart_process = subprocess.run([os.path.join(config['scripts_path'], 'restartScenario.bat'), self.cmo_window_title])
-            popup_name = "Side selection and briefing"
-            wait_restart_seconds = int(self.restart_duration / 2)
-            print(f"Waiting {wait_restart_seconds} seconds for 'Side selection and briefing' popup to show.")
-            close_popup_result, _ = self.close_popup(popup_name=popup_name, 
-                                    close_popup_action=self.click_enter_scenario, 
-                                    max_retries=self.enter_scenario_max_retries,
-                                    wait_for_popup_init_seconds=wait_restart_seconds)
-            return close_popup_result   
-        except FileNotFoundError:
-            raise FileNotFoundError("Cannot find 'restartScenario.bat' script.")
+        self.logger.info("Restarting scenario...")
+        self.shell.AppActivate(self.cmo_window_title)
+        sleep(1)
+        self.shell.SendKeys("%f")
+        sleep(1)
+        self.shell.SendKeys("{DOWN}")
+        sleep(0.5)
+        self.shell.SendKeys("{DOWN}")
+        sleep(0.5)
+        self.shell.SendKeys("{DOWN}") 
+        sleep(0.5)
+        self.shell.SendKeys("{RIGHT}") 
+        sleep(1)
+        self.shell.SendKeys("{ENTER}") 
+
+        self.logger.info(f"Waiting for '{self.side_selection_popup_name}' popup to show.")
+        retries = 0
+        while not self.window_exists(window_name=self.side_selection_popup_name):
+            retries += 1
+            if retries >= self.props.max_retries_wait_for_side_selection_popup: raise TimeoutError(f"Waited too long for '{self.side_selection_popup_name}' to appear but it did not.")
+        
+        self.logger.info("Entering scenario...")
+        close_popup_result, _ = self.close_popup(popup_name=self.side_selection_popup_name, 
+                                close_popup_action=self.click_enter_scenario, 
+                                max_retries=self.props.max_retries_enter_scenario)
+        return close_popup_result   
         
     def click_enter_scenario(self) -> bool:
         try:
-            click_enter_scenario_process = subprocess.run(['PowerShell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', os.path.join(config['scripts_path'], 'MoveMouseEnterScenario.ps1')])
+            enter_scenario_script_name = 'MoveMouseEnterScenario.ps1'
+            _ = subprocess.run(['PowerShell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', os.path.join(config['scripts_path'], enter_scenario_script_name)])
             return True
         except FileNotFoundError:
-            raise FileNotFoundError("Cannot find 'MoveMouseEnterScenario.ps1' script.")
+            raise FileNotFoundError(f"Cannot find {enter_scenario_script_name} script.")

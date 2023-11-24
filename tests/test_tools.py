@@ -68,11 +68,6 @@ def test_cmo_steam_observation_file_to_xml():
     assert isinstance(xml_string, str)
     assert len(xml_string) > 1
 
-# def test_window_exists():
-#     window_name = "Side selection and briefing"
-#     assert window_exists(window_name=window_name) == False
-
-# def test_send_key_press():
-#     key = "{ESC}"
-#     window_name = ""
-#     assert send_key_press(key=key, window_name=window_name) == True
+def test_window_exists():
+    window_name = "Side selection and br"
+    assert window_exists(window_name=window_name, delay=None) == False

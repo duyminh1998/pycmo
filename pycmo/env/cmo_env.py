@@ -4,14 +4,16 @@
 # Purpose: A Command environment.
 
 # imports
-from pycmo.lib import actions
-from pycmo.lib.features import Features, FeaturesFromSteam
-from pycmo.lib.protocol import Client, SteamClient
-from pycmo.configs.config import get_config
-from pycmo.lib.tools import cmo_steam_observation_file_to_xml, window_exists
 import collections, enum
 import os
 from time import sleep
+import logging
+
+from pycmo.lib import actions
+from pycmo.lib.features import Features, FeaturesFromSteam
+from pycmo.lib.protocol import Client, SteamClient, SteamClientProps
+from pycmo.configs.config import get_config
+from pycmo.lib.tools import cmo_steam_observation_file_to_xml
 
 class TimeStep(
     collections.namedtuple(
@@ -145,7 +147,7 @@ class CPEEnv():
         # if the game has ended, then save the timestep information with a different step type
         observation = self.get_obs(step_id)
         reward = observation.side_.TotalScore
-        return TimeStep(step_id, StepType(2), 0, observation)        
+        return TimeStep(step_id, StepType(2), reward, observation)        
 
     def get_obs(self, step_id:int) -> Features:
         """
@@ -226,16 +228,15 @@ class CMOEnv():
     """
     A wrapper that extracts observations from and sends actions to Command: Modern Operations (Steam).
     """
-    def __init__(self, 
-                 scenario_name:str,
+    def __init__(self,
                  player_side: str,
-                 command_version:str,
+                 steam_client_props:SteamClientProps,
                  observation_path: str, 
                  action_path: str,
                  scen_ended_path: str,
-                 pycmo_lua_lib_path: str = None,
-                 max_resets: int = 10):
-        self.client = SteamClient(scenario_name=scenario_name, agent_action_filename=action_path, command_version=command_version) # initialize a client to send data to the game
+                 pycmo_lua_lib_path: str | None = None,
+                 max_resets: int = 20):
+        self.client = SteamClient(props=steam_client_props) # initialize a client to send data to the game
         if not self.client.connect(): # connect the client to the game
             raise FileNotFoundError("No running instance of Command to connect to.")
         
@@ -253,6 +254,8 @@ class CMOEnv():
         self.current_observation = None
         self.step_id = 0
 
+        self.logger = logging.getLogger(__name__)
+
         # per comment (https://github.com/duyminh1998/pycmo/issues/25#issuecomment-1817773399) on issue #25, we need to edit the *_scen_has_ended.inst file when we init the env that the scenario has ended?
         with open(self.scen_ended, 'r') as file:
             data = file.readlines()
@@ -268,7 +271,7 @@ class CMOEnv():
             # check that the scenario loaded event has fired correctly in CMO, and if not, restart the scenario
             retries = 0
             while self.check_game_ended() and retries < self.max_resets:
-                print(f"Scenario not loaded properly. Retrying... (Attempt {retries} of {self.max_resets})")
+                self.logger.info(f"Scenario not loaded properly. Retrying... (Attempt {retries + 1} of {self.max_resets})")
                 if not self.client.restart_scenario():
                     raise ValueError("Client was not able to restart the scenario.")
                 retries += 1
@@ -291,55 +294,56 @@ class CMOEnv():
             raise FileNotFoundError("Cannot find scen_has_ended.txt.")
     
     def step(self, action=None) -> TimeStep:
-        # we should find a way to efficiently when the game is paused or running
-        # if not window_exists(window_name="Incoming message"):
-        #     print("The game is not paused when CMOEnv::step is called. If this is not the first timestep, proceeding might be dangerous.")
-        #     self.client.pause_scenario()
+        # make sure the game is paused when step is called
+        while self.step_id > 0 \
+            and not self.client.window_exists(window_name=self.client.scenario_paused_popup_name) \
+                and not self.check_game_ended(): ...
 
         # send the agent's action
-        action_written = False
-        if action != None:
-            action_written = self.client.send(action)
-
+        if action != None: 
+            try:
+                self.client.send(action)
+            except PermissionError:
+                self.logger.debug("SteamClient was not able to write the agent's action. Stepping forwards with no new action.")
+            
         # step the environment forwards
-        if action_written:
-            # safer check, but much slower
-            # if window_exists(window_name="Incoming message"):
-            #     self.client.close_scenario_paused_message() # try to close "Incoming message" popup and retry in case the close did not work
-            # else:
-            #     self.client.start_scenario()
-            self.client.start_scenario() # step the game forwards until the message box appears
-            while True: # the calls to window_exists(window_name="Incoming message") are very expensive and slow down the game quite a bit
-                if self.check_game_ended() or window_exists(window_name="Incoming message"): # or window_exists(window_name="Scenario End")
-                    break
-        else:
-            raise ValueError("CMOEnv was not able to send the agent's action to the game.")
+        if not self.check_game_ended(): self.client.start_scenario() # step the game forwards until the message box appears
+        while True:
+            # if the game has ended, then save the timestep information with a different step type
+            if self.check_game_ended():
+                observation = self.get_obs()
+                reward = observation.side_.TotalScore
+                return TimeStep(self.step_id, StepType(2), reward, observation)
+            elif self.client.window_exists(window_name=self.client.scenario_paused_popup_name):
+                break
         
         new_observation = self.get_obs()
+        if new_observation.meta.Time == self.current_observation.meta.Time:
+            self.logger.debug(f"Time is not advancing. Old time: {self.current_observation.meta.Time}, New time: {new_observation.meta.Time}. Moving forward with old state.")
+            observation = self.current_observation
+            reward = self.current_observation.side_.TotalScore
+            return TimeStep(self.step_id, StepType(1), reward, observation)            
 
-        # if the game has ended, then save the timestep information with a different step type
-        if self.check_game_ended(): # or window_exists(window_name="Scenario End")
-            observation = new_observation
-            reward = observation.side_.TotalScore
-            return TimeStep(self.step_id, StepType(2), reward, observation)
-        else:
-            if new_observation.meta.Time == self.current_observation.meta.Time:
-                # print(f"Time is not advancing. Old time: {self.current_observation.meta.Time}, New time: {new_observation.meta.Time}. Moving forward with old state.")
-                observation = self.current_observation
-                reward = self.current_observation.side_.TotalScore
-                return TimeStep(self.step_id, StepType(1), reward, observation)            
+        self.step_id += 1
+        observation = new_observation
+        reward = observation.side_.TotalScore
+        new_timestep = TimeStep(self.step_id, StepType(1), reward, observation)
+        
+        self.current_observation = new_observation
 
-            self.step_id += 1
-            observation = new_observation
-            reward = observation.side_.TotalScore
-            new_timestep = TimeStep(self.step_id, StepType(1), reward, observation)
-            
-            self.current_observation = new_observation
-
-            return new_timestep
+        return new_timestep
 
     def get_obs(self) -> FeaturesFromSteam:
-        return FeaturesFromSteam(cmo_steam_observation_file_to_xml(self.observation_path), self.player_side) 
+        get_obs_retries = 0
+        max_get_obs_retries = 10
+        while True:
+            try:
+                obs = FeaturesFromSteam(cmo_steam_observation_file_to_xml(self.observation_path), self.player_side) 
+                return obs
+            except TypeError:
+                get_obs_retries += 1
+                if get_obs_retries > max_get_obs_retries:
+                    raise TimeoutError("CMOEnv unable to get observation.")
     
     def action_spec(self, observation:Features) -> actions.AvailableFunctions:    
         return actions.AvailableFunctions(observation)
@@ -347,8 +351,8 @@ class CMOEnv():
     def check_game_ended(self) -> bool:
         try:
             scenario_ended = cmo_steam_observation_file_to_xml(self.scen_ended)
-            if scenario_ended == "true":
-                # self.client.close_scenario_end_message()
+            if scenario_ended == "true" \
+                or self.client.window_exists(window_name=self.client.scenario_end_popup_name):
                 return True
             return False
         except FileNotFoundError:
@@ -356,6 +360,7 @@ class CMOEnv():
         
     def end_game(self) -> TimeStep:
         pycmo_lua_lib_path = self.pycmo_lua_lib_path.replace('\\', '/')
-        action = f"VP_SetTimeCompression(0)\nScenEdit_RunScript('{pycmo_lua_lib_path}', true)\nScenEdit_ExportScenarioToXML()\nScenarioHasEnded(true)\nScenEdit_EndScenario()"
+        export_observation_event_name = 'Export observation'
+        action = f"ScenEdit_RunScript('{pycmo_lua_lib_path}', true)\nteardown_and_end_scenario('{export_observation_event_name}', true)"
         return self.step(action)
     
