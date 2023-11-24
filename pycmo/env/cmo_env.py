@@ -4,14 +4,16 @@
 # Purpose: A Command environment.
 
 # imports
+import collections, enum
+import os
+from time import sleep
+import logging
+
 from pycmo.lib import actions
 from pycmo.lib.features import Features, FeaturesFromSteam
 from pycmo.lib.protocol import Client, SteamClient, SteamClientProps
 from pycmo.configs.config import get_config
 from pycmo.lib.tools import cmo_steam_observation_file_to_xml, window_exists
-import collections, enum
-import os
-from time import sleep
 
 class TimeStep(
     collections.namedtuple(
@@ -267,7 +269,7 @@ class CMOEnv():
             # check that the scenario loaded event has fired correctly in CMO, and if not, restart the scenario
             retries = 0
             while self.check_game_ended() and retries < self.max_resets:
-                print(f"Scenario not loaded properly. Retrying... (Attempt {retries} of {self.max_resets})")
+                logging.info(f"Scenario not loaded properly. Retrying... (Attempt {retries + 1} of {self.max_resets})")
                 if not self.client.restart_scenario():
                     raise ValueError("Client was not able to restart the scenario.")
                 retries += 1
@@ -309,7 +311,7 @@ class CMOEnv():
         
         new_observation = self.get_obs()
         if new_observation.meta.Time == self.current_observation.meta.Time:
-            # print(f"Time is not advancing. Old time: {self.current_observation.meta.Time}, New time: {new_observation.meta.Time}. Moving forward with old state.")
+            logging.debug(f"Time is not advancing. Old time: {self.current_observation.meta.Time}, New time: {new_observation.meta.Time}. Moving forward with old state.")
             observation = self.current_observation
             reward = self.current_observation.side_.TotalScore
             return TimeStep(self.step_id, StepType(1), reward, observation)            
