@@ -29,25 +29,25 @@ def test_steam_client_send():
         assert f.read() == action
 
 # these tests can only be run when Command is open
-def test_steam_client_connect():
-    assert client.connect() == True # have CMO running for this test to pass 
+# def test_steam_client_connect():
+#     assert client.connect() == True # have CMO running for this test to pass 
 
-def test_steam_client_start_scenario():
-    assert client.connect() == True # have CMO running for this test to pass 
-    assert client.start_scenario() == True
+# def test_steam_client_start_scenario():
+#     assert client.connect() == True # have CMO running for this test to pass 
+#     assert client.start_scenario() == True
 
-def test_steam_client_close_scenario_paused_message():
-    assert client.connect() == True # have CMO running for this test to pass
-    assert client.close_scenario_paused_message() == True
+# def test_steam_client_close_scenario_paused_message():
+#     assert client.connect() == True # have CMO running for this test to pass
+#     assert client.close_scenario_paused_message() == True
 
-def test_steam_client_restart_scenario():
-    assert client.connect() == True # have CMO running for this test to pass 
-    assert client.restart_scenario() == True
+# def test_steam_client_restart_scenario():
+#     assert client.connect() == True # have CMO running for this test to pass 
+#     assert client.restart_scenario() == True
 
-def test_steam_client_close_scenario_end_and_player_eval_messages():
-    assert client.connect() == True # have CMO running for this test to pass 
-    assert client.close_scenario_end_and_player_eval_messages() == True
+# def test_steam_client_close_scenario_end_and_player_eval_messages():
+#     assert client.connect() == True # have CMO running for this test to pass 
+#     assert client.close_scenario_end_and_player_eval_messages() == True
 
-def test_steam_client_click_enter_scenario():
-    assert client.connect() == True # have the "Side selection and briefing" window open for this test to pass
-    assert client.click_enter_scenario() == True
+# def test_steam_client_click_enter_scenario():
+#     assert client.connect() == True # have the "Side selection and briefing" window open for this test to pass
+#     assert client.click_enter_scenario() == True
