@@ -145,7 +145,7 @@ class CPEEnv():
         # if the game has ended, then save the timestep information with a different step type
         observation = self.get_obs(step_id)
         reward = observation.side_.TotalScore
-        return TimeStep(step_id, StepType(2), 0, observation)        
+        return TimeStep(step_id, StepType(2), reward, observation)        
 
     def get_obs(self, step_id:int) -> Features:
         """
