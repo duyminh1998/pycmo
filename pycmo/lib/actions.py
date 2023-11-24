@@ -1,46 +1,42 @@
 # Author: Minh Hua
 # Date: 08/16/2021
-# Last Update: 06/16/2022
+# Last Update: 11/24/2023
 # Purpose: Encodes the action space of the game.
 
 # imports
 import collections
 
+from pycmo.lib.features import Features, FeaturesFromSteam
+
 # canned actions that can be called by an agent to send an action
 def no_op():
-  return "--script \nTool_EmulateNoConsole(true)"
+  return ""
 
-def launch_aircraft(side, aircraft_name, launch_yn):
-  return "--script \nTool_EmulateNoConsole(true) \nScenEdit_SetUnit({{side = '{}', name = '{}', Launch = '{}'}})".format(side, aircraft_name, launch_yn)
+def launch_aircraft(side:str, unit_name:str, launch_yn:str) -> str:
+  return f"ScenEdit_SetUnit({{side = '{side}', name = '{unit_name}', Launch = '{launch_yn}'}})"
 
-def set_unit_course(side, aircraft_name, latitude, longitude):
-  data = "--script \nTool_EmulateNoConsole(true) \nScenEdit_SetUnit({{side = '{}', name = '{}', course = {{".format(side, aircraft_name)
-  data += "{{longitude = '{}', latitude = '{}', TypeOf = 'ManualPlottedCourseWaypoint'}}".format(latitude, longitude)
-  data += "}})"
-  return data
+def set_unit_course(side:str, unit_name:str, latitude:float, longitude:float) -> str:
+  return f"ScenEdit_SetUnit({{side = '{side}', name = '{unit_name}', course = {{{{longitude = '{longitude}', latitude = '{latitude}', TypeOf = 'ManualPlottedCourseWaypoint'}}}})"
 
-def manual_attack_contact(attacker_id, contact_id, weapon_id, qty, mount_id=None):
-  if mount_id == None:
-    return "--script \nTool_EmulateNoConsole(true) \nScenEdit_AttackContact('{}', '{}' ,{{mode='1', weapon='{}', qty='{}'}})".format(attacker_id, contact_id, weapon_id, qty)
-  else:
-    return "--script \nTool_EmulateNoConsole(true) \nScenEdit_AttackContact('{}', '{}' ,{{mode='1', mount='{}', weapon='{}', qty='{}'}})".format(attacker_id, contact_id, mount_id, weapon_id, qty)
+def manual_attack_contact(attacker_id:str, contact_id:str, weapon_id:str, qty:int, mount_id:str=None) -> str:
+  return f"ScenEdit_AttackContact('{attacker_id}', '{contact_id}' , {{mode='1', " + (f"mount='{mount_id}', " if mount_id else "") + f"weapon='{weapon_id}', qty='{qty}'}})"
 
-def auto_attack_contact(attacker_id, contact_id):
-  return "--script \nTool_EmulateNoConsole(true) \nScenEdit_AttackContact('{}', '{}',{{mode='0'}})".format(attacker_id, contact_id)
+def auto_attack_contact(attacker_id:str, contact_id:str) -> str:
+  return f"ScenEdit_AttackContact('{attacker_id}', '{contact_id}', {{mode='0'}})"
 
-def refuel_unit(side, unit_name, tanker_name):
-  return "--script \nTool_EmulateNoConsole(true) \nScenEdit_RefuelUnit({{side='{}', unitname='{}', tanker='{}'}})".format(side, unit_name, tanker_name)
+def refuel_unit(side:str, unit_name:str, tanker_name:str) -> str:
+  return f"ScenEdit_RefuelUnit({{side='{side}', unitname='{unit_name}', tanker='{tanker_name}'}})"
 
-def auto_refuel(side, unit_name):
-  return "--script \nTool_EmulateNoConsole(true) \nScenEdit_RefuelUnit({{side='{}', unitname='{}'}})".format(side, unit_name)
+def auto_refuel_unit(side:str, unit_name:str) -> str:
+  return f"ScenEdit_RefuelUnit({{side='{side}', unitname='{unit_name}'}})"
 
-def rtb(side, aircraft_name):
-  return "--script \nTool_EmulateNoConsole(true) \nScenEdit_SetUnit({{side = '{}', name = '{}', RTB = true}})".format(side, aircraft_name)
+def rtb(side:str, unit_name:str) -> str:
+  return f"ScenEdit_SetUnit({{side = '{side}', name = '{unit_name}', RTB = true}})"
 
 Function = collections.namedtuple("Function", ['id', 'name', 'corresponding_def', 'args', 'arg_types'])
 
 class AvailableFunctions():
-  def __init__(self, features):
+  def __init__(self, features:Features | FeaturesFromSteam):
     sides = [features.player_side]
     units = []
     contacts = []
@@ -62,7 +58,7 @@ class AvailableFunctions():
       'auto_attack_contact': [units, contacts],
       'refuel_unit': [sides, units, units],
       'rtb': [sides, units],
-      'auto_refuel': [sides, units]
+      'auto_refuel_unit': [sides, units]
     }
     ARG_TYPES = {
       'no_op': ['NoneChoice'],
@@ -72,7 +68,7 @@ class AvailableFunctions():
       'auto_attack_contact': ['EnumChoice', 'EnumChoice'],
       'refuel_unit': ['EnumChoice', 'EnumChoice', 'EnumChoice'],
       'rtb': ['EnumChoice', 'EnumChoice'],
-      'auto_refuel': ['EnumChoice', 'EnumChoice']
+      'auto_refuel_unit': ['EnumChoice', 'EnumChoice']
     }
     self.VALID_FUNCTIONS = [
       Function(0, "no_op", no_op, VALID_FUNCTION_ARGS['no_op'], ARG_TYPES['no_op']),
@@ -82,5 +78,5 @@ class AvailableFunctions():
       Function(4, "auto_attack_contact", auto_attack_contact, VALID_FUNCTION_ARGS['auto_attack_contact'], ARG_TYPES['auto_attack_contact']),
       Function(5, 'refuel_unit', refuel_unit, VALID_FUNCTION_ARGS['refuel_unit'], ARG_TYPES['refuel_unit']),
       Function(6, 'rtb', rtb, VALID_FUNCTION_ARGS['rtb'], ARG_TYPES['rtb']),
-      Function(7, 'auto_refuel', auto_refuel, VALID_FUNCTION_ARGS['auto_refuel'], ARG_TYPES['auto_refuel'])
+      Function(7, 'auto_refuel_unit', auto_refuel_unit, VALID_FUNCTION_ARGS['auto_refuel_unit'], ARG_TYPES['auto_refuel_unit'])
     ]
