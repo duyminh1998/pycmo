@@ -9,6 +9,7 @@ import os
 import numpy as np
 import subprocess
 import json
+from time import sleep
 import win32gui
 
 from pycmo.configs.config import get_config
@@ -174,18 +175,9 @@ def win32gui_window_exists(window_name:str):
     if len(ret) > 0: return True
     else: return False
 
-def window_exists(window_name:str, fast:bool=True, script_path:str=None) -> bool:
-    if fast:
-        return win32gui_window_exists(window_name=window_name)
-    else:
-        try:
-            if not script_path: script_path = os.path.join(config['scripts_path'], 'checkWindowExistsByTitle.ps1')
-            window_exists_process = subprocess.run(['PowerShell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', script_path, window_name], capture_output=True, text=True)
-            process_exists = bool(window_exists_process.stdout.strip())
-            if process_exists: return True
-            else: return False
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Cannot find '{script_path}'.")
+def window_exists(window_name:str, delay:float|None=None) -> bool:
+    if delay: sleep(delay)
+    return win32gui_window_exists(window_name=window_name)
     
 def cmo_steam_observation_file_to_xml(file_path:str) -> str or None:
     try:
@@ -201,10 +193,3 @@ def cmo_steam_observation_file_to_xml(file_path:str) -> str or None:
     
     observation_xml = observation_file_json["Comments"]
     return observation_xml
-
-def send_key_press(key:str, window_name:str, script_path:str=os.path.join(config['scripts_path'], 'nonsecureSendKeys.bat')) -> bool:
-    try:
-        send_key_process = subprocess.run([script_path, window_name, key])
-        return True
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Cannot find '{script_path}'.")
