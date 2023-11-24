@@ -180,8 +180,9 @@ class SteamClientProps:
     send_key_delay_close_scenario_end_popup : float = 0.5
     send_key_delay_close_player_evaluation_popup : float = 0.5
 
-    check_window_delay_scenario_paused_popup : float = 0.1
-    check_window_delay_scenario_end_popup : float = 1
+    check_window_delay_scenario_paused_popup : float = 0.05
+    check_window_delay_scenario_end_popup : float = 0.05
+    check_window_delay_slow_scenario_end_popup : float = 1
     check_window_delay_player_evaluation_popup : float = 1
     check_window_delay_side_selection_popup : float = 1
 
@@ -315,7 +316,7 @@ class SteamClient():
             
             self.logger.info(f"Waiting {self.props.wait_for_close_scenario_end_messages_completion_seconds} seconds to see if there are still any popups...")
             sleep(self.props.wait_for_close_scenario_end_messages_completion_seconds)
-            if self.window_exists(window_name=self.scenario_end_popup_name) or \
+            if self.window_exists(window_name=self.scenario_end_popup_name, delay_override=self.props.check_window_delay_slow_scenario_end_popup) or \
                 self.window_exists(window_name=self.scenario_paused_popup_name) or \
                     self.window_exists(window_name=self.player_evaluation_popup_name):
                 retries += 1
