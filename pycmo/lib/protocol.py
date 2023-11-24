@@ -233,15 +233,15 @@ class SteamClient():
         self.shell.SendKeys(key)
         return True
     
-    def window_exists(self, window_name:str, delay:float=None) -> bool:
+    def window_exists(self, window_name:str, delay_override:float=None) -> bool:
         if window_name == self.scenario_paused_popup_name:
-            return window_exists(window_name=window_name, delay=delay if delay else self.props.check_window_delay_scenario_paused_popup)
+            return window_exists(window_name=window_name, delay=delay_override if delay_override != None else self.props.check_window_delay_scenario_paused_popup)
         elif window_name == self.scenario_end_popup_name:
-            return window_exists(window_name=window_name, delay=delay if delay else self.props.check_window_delay_scenario_end_popup)
+            return window_exists(window_name=window_name, delay=delay_override if delay_override != None else self.props.check_window_delay_scenario_end_popup)
         elif window_name == self.player_evaluation_popup_name:
-            return window_exists(window_name=window_name, delay=delay if delay else self.props.check_window_delay_player_evaluation_popup)
+            return window_exists(window_name=window_name, delay=delay_override if delay_override != None else self.props.check_window_delay_player_evaluation_popup)
         elif window_name == self.side_selection_popup_name:
-            return window_exists(window_name=window_name, delay=delay if delay else self.props.check_window_delay_side_selection_popup)
+            return window_exists(window_name=window_name, delay=delay_override if delay_override != None else self.props.check_window_delay_side_selection_popup)
         else:
             raise ValueError(f"window_name must be one of {', '.join([self.scenario_paused_popup_name, self.scenario_end_popup_name, self.player_evaluation_popup_name, self.side_selection_popup_name])}.")
 
