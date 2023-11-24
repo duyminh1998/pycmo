@@ -6,7 +6,7 @@
 # imports
 from pycmo.lib import actions
 from pycmo.lib.features import Features, FeaturesFromSteam
-from pycmo.lib.protocol import Client, SteamClient
+from pycmo.lib.protocol import Client, SteamClient, SteamClientProps
 from pycmo.configs.config import get_config
 from pycmo.lib.tools import cmo_steam_observation_file_to_xml, window_exists
 import collections, enum
@@ -226,16 +226,15 @@ class CMOEnv():
     """
     A wrapper that extracts observations from and sends actions to Command: Modern Operations (Steam).
     """
-    def __init__(self, 
-                 scenario_name:str,
+    def __init__(self,
                  player_side: str,
-                 command_version:str,
+                 steam_client_props:SteamClientProps,
                  observation_path: str, 
                  action_path: str,
                  scen_ended_path: str,
                  pycmo_lua_lib_path: str = None,
-                 max_resets: int = 10):
-        self.client = SteamClient(scenario_name=scenario_name, agent_action_filename=action_path, command_version=command_version) # initialize a client to send data to the game
+                 max_resets: int = 20):
+        self.client = SteamClient(props=steam_client_props) # initialize a client to send data to the game
         if not self.client.connect(): # connect the client to the game
             raise FileNotFoundError("No running instance of Command to connect to.")
         
@@ -343,7 +342,6 @@ class CMOEnv():
         try:
             scenario_ended = cmo_steam_observation_file_to_xml(self.scen_ended)
             if scenario_ended == "true" or window_exists(window_name=self.client.scenario_end_popup_name):
-                # self.client.close_scenario_end_message()
                 return True
             return False
         except FileNotFoundError:
