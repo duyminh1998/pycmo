@@ -173,8 +173,8 @@ class SteamClientProps:
     scenario_name: str
     agent_action_filename : str = "agent_action.lua"
     command_version : str = config["command_mo_version"]
-    start_scenario_send_key_delay : float = 0.05
-    pause_scenario_send_key_delay : float = 0.05
+    start_scenario_send_key_delay : float = 0.1
+    pause_scenario_send_key_delay : float = 0.1
     close_scenario_paused_send_key_delay : float = 0.1
     close_scenario_end_send_key_delay : float = 0.5
     close_player_evaluation_send_key_delay : float = 0.5
@@ -287,7 +287,8 @@ class SteamClient():
         retries = 0
 
         while not window_exists(window_name=self.scenario_end_popup_name, delay=self.props.scenario_end_check_window_delay): ...
-
+        
+        logging.info(f"Attempting to close '{self.scenario_end_popup_name}', '{self.scenario_paused_popup_name}', and '{self.player_evaluation_popup_name}' popups...")
         while True:
             self.close_scenario_end_message()
 
