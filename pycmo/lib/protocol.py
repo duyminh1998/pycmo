@@ -204,7 +204,9 @@ class SteamClient():
         self.player_evaluation_popup_name = "Player Evaluation"
         self.side_selection_popup_name = "Side selection and briefing"
 
-        self.shell = win32com.client.Dispatch("WScript.Shell") 
+        self.shell = win32com.client.Dispatch("WScript.Shell")
+
+        self.logger = logging.getLogger(__name__)
 
     def connect(self, command_process_name:str="Command.exe") -> bool:
         return process_exists(command_process_name)
@@ -217,7 +219,7 @@ class SteamClient():
                     f.write(data)
                 return True
             except PermissionError:
-                logging.debug(f"Failed to send agent action. Retrying... (Attempt {retries + 1} of {self.props.max_retries_send_action})")
+                self.logger.debug(f"Failed to send agent action. Retrying... (Attempt {retries + 1} of {self.props.max_retries_send_action})")
                 retries += 1
             except FileNotFoundError:
                 raise FileNotFoundError(f"Unable to find {self.props.agent_action_filename} to write agent action to.")
@@ -225,7 +227,7 @@ class SteamClient():
     
     def send_key_press(self, key:str, window_name:str, delay:float=None) -> bool:
         if delay: 
-            logging.debug(f"Sleeping for {delay} seconds before sending {key} key to {window_name}.")
+            self.logger.debug(f"Sleeping for {delay} seconds before sending {key} key to {window_name}.")
             sleep(delay)
         self.shell.AppActivate(window_name)
         self.shell.SendKeys(key)
@@ -251,7 +253,7 @@ class SteamClient():
         if self.window_exists(window_name=popup_name):
             close_popup_action(**close_popup_action_params)
             while self.window_exists(window_name=popup_name) and retries < max_retries:
-                logging.debug(f"Steam client was not able to close '{popup_name}' popup. Retrying... (Attempt {retries + 1} of {max_retries})")
+                self.logger.debug(f"Steam client was not able to close '{popup_name}' popup. Retrying... (Attempt {retries + 1} of {max_retries})")
                 close_popup_action(**close_popup_action_params)
                 retries += 1
             if retries >= max_retries and self.window_exists(window_name=popup_name):
@@ -273,7 +275,7 @@ class SteamClient():
                                     max_retries=self.props.max_retries_close_scenario_paused_popup)
             return close_popup_result
         except TimeoutError:
-            logging.debug(f"Timed out trying to close '{self.scenario_paused_popup_name}' popup.")
+            self.logger.debug(f"Timed out trying to close '{self.scenario_paused_popup_name}' popup.")
             return False
     
     def close_scenario_end_message(self) -> bool:
@@ -283,7 +285,7 @@ class SteamClient():
                             close_popup_action_params=dict(key="{ENTER}", window_name=self.scenario_end_popup_name, delay=self.props.send_key_delay_close_scenario_end_popup))
             return close_popup_result
         except TimeoutError:
-            logging.debug(f"Timed out trying to close '{self.scenario_end_popup_name}' popup.")
+            self.logger.debug(f"Timed out trying to close '{self.scenario_end_popup_name}' popup.")
             return False
     
     def close_player_evaluation(self) -> bool:
@@ -293,7 +295,7 @@ class SteamClient():
                                     close_popup_action_params=dict(key="{ESC}", window_name=self.player_evaluation_popup_name, delay=self.props.send_key_delay_close_player_evaluation_popup)) 
             return close_popup_result   
         except TimeoutError:
-            logging.debug(f"Timed out trying to close '{self.player_evaluation_popup_name}' popup.")
+            self.logger.debug(f"Timed out trying to close '{self.player_evaluation_popup_name}' popup.")
             return False
     
     def close_scenario_end_and_player_eval_messages(self) -> bool:
@@ -301,7 +303,7 @@ class SteamClient():
 
         while not self.window_exists(window_name=self.scenario_end_popup_name): ...
         
-        logging.info(f"Attempting to close '{self.scenario_end_popup_name}', '{self.scenario_paused_popup_name}', and '{self.player_evaluation_popup_name}' popups...")
+        self.logger.info(f"Attempting to close '{self.scenario_end_popup_name}', '{self.scenario_paused_popup_name}', and '{self.player_evaluation_popup_name}' popups...")
         while True:
             self.close_scenario_end_message()
 
@@ -311,7 +313,7 @@ class SteamClient():
 
             self.close_player_evaluation()
             
-            logging.info(f"Waiting {self.props.wait_for_close_scenario_end_messages_completion_seconds} seconds to see if there are still any popups...")
+            self.logger.info(f"Waiting {self.props.wait_for_close_scenario_end_messages_completion_seconds} seconds to see if there are still any popups...")
             sleep(self.props.wait_for_close_scenario_end_messages_completion_seconds)
             if self.window_exists(window_name=self.scenario_end_popup_name) or \
                 self.window_exists(window_name=self.scenario_paused_popup_name) or \
@@ -319,15 +321,15 @@ class SteamClient():
                 retries += 1
                 if retries >= self.props.max_retries_close_scenario_end_popup:
                     raise TimeoutError(f"Timed out trying to close '{self.scenario_end_popup_name}', '{self.scenario_paused_popup_name}', and '{self.player_evaluation_popup_name}' popups.")
-                logging.debug(f"Re-attempting to close '{self.scenario_end_popup_name}', '{self.scenario_paused_popup_name}', and '{self.player_evaluation_popup_name}' popups... (Attempt {retries + 1} of {self.props.max_retries_close_scenario_end_popup})")
+                self.logger.debug(f"Re-attempting to close '{self.scenario_end_popup_name}', '{self.scenario_paused_popup_name}', and '{self.player_evaluation_popup_name}' popups... (Attempt {retries + 1} of {self.props.max_retries_close_scenario_end_popup})")
             else:
-                logging.info("No more scenario end popups.")
+                self.logger.info("No more scenario end popups.")
                 break
 
         return True
     
     def restart_scenario(self) -> bool:
-        logging.info("Restarting scenario...")
+        self.logger.info("Restarting scenario...")
         self.shell.AppActivate(self.cmo_window_title)
         sleep(1)
         self.shell.SendKeys("%f")
@@ -342,13 +344,13 @@ class SteamClient():
         sleep(1)
         self.shell.SendKeys("{ENTER}") 
 
-        logging.info(f"Waiting for '{self.side_selection_popup_name}' popup to show.")
+        self.logger.info(f"Waiting for '{self.side_selection_popup_name}' popup to show.")
         retries = 0
         while not self.window_exists(window_name=self.side_selection_popup_name):
             retries += 1
             if retries >= self.props.max_retries_wait_for_side_selection_popup: raise TimeoutError(f"Waited too long for '{self.side_selection_popup_name}' to appear but it did not.")
         
-        logging.info("Entering scenario...")
+        self.logger.info("Entering scenario...")
         close_popup_result, _ = self.close_popup(popup_name=self.side_selection_popup_name, 
                                 close_popup_action=self.click_enter_scenario, 
                                 max_retries=self.props.max_retries_enter_scenario)

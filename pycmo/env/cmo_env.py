@@ -254,6 +254,8 @@ class CMOEnv():
         self.current_observation = None
         self.step_id = 0
 
+        self.logger = logging.getLogger(__name__)
+
         # per comment (https://github.com/duyminh1998/pycmo/issues/25#issuecomment-1817773399) on issue #25, we need to edit the *_scen_has_ended.inst file when we init the env that the scenario has ended?
         with open(self.scen_ended, 'r') as file:
             data = file.readlines()
@@ -269,7 +271,7 @@ class CMOEnv():
             # check that the scenario loaded event has fired correctly in CMO, and if not, restart the scenario
             retries = 0
             while self.check_game_ended() and retries < self.max_resets:
-                logging.info(f"Scenario not loaded properly. Retrying... (Attempt {retries + 1} of {self.max_resets})")
+                self.logger.info(f"Scenario not loaded properly. Retrying... (Attempt {retries + 1} of {self.max_resets})")
                 if not self.client.restart_scenario():
                     raise ValueError("Client was not able to restart the scenario.")
                 retries += 1
@@ -311,7 +313,7 @@ class CMOEnv():
         
         new_observation = self.get_obs()
         if new_observation.meta.Time == self.current_observation.meta.Time:
-            logging.debug(f"Time is not advancing. Old time: {self.current_observation.meta.Time}, New time: {new_observation.meta.Time}. Moving forward with old state.")
+            self.logger.debug(f"Time is not advancing. Old time: {self.current_observation.meta.Time}, New time: {new_observation.meta.Time}. Moving forward with old state.")
             observation = self.current_observation
             reward = self.current_observation.side_.TotalScore
             return TimeStep(self.step_id, StepType(1), reward, observation)            
