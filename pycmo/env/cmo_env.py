@@ -300,7 +300,11 @@ class CMOEnv():
                 and not self.check_game_ended(): ...
 
         # send the agent's action
-        if action != None: self.client.send(action)
+        if action != None: 
+            try:
+                self.client.send(action)
+            except PermissionError:
+                self.logger.debug("SteamClient was not able to write the agent's action. Stepping forwards with no new action.")
             
         # step the environment forwards
         if not self.check_game_ended(): self.client.start_scenario() # step the game forwards until the message box appears
