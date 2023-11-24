@@ -250,6 +250,8 @@ class CMOEnv():
             pycmo_lua_lib_path = os.path.join(config['pycmo_path'], 'lua', 'pycmo_lib.lua')
         self.pycmo_lua_lib_path = pycmo_lua_lib_path # the path to the pycmo_lib.lua file
         self.max_resets = max_resets
+        self.check_window_delay_scenario_paused_popup = 0
+        self.check_window_delay_scenario_end_popup = 0
 
         self.current_observation = None
         self.step_id = 0
@@ -295,7 +297,9 @@ class CMOEnv():
     
     def step(self, action=None) -> TimeStep:
         # make sure the game is paused when step is called
-        while self.step_id > 0 and not self.client.window_exists(window_name=self.client.scenario_paused_popup_name, delay_override=0) and not self.check_game_ended(): ...
+        while self.step_id > 0 \
+            and not self.client.window_exists(window_name=self.client.scenario_paused_popup_name, delay_override=self.check_window_delay_scenario_paused_popup) \
+                and not self.check_game_ended(): ...
 
         # send the agent's action
         if action != None: self.client.send(action)
@@ -308,7 +312,7 @@ class CMOEnv():
                 observation = self.get_obs()
                 reward = observation.side_.TotalScore
                 return TimeStep(self.step_id, StepType(2), reward, observation)
-            elif self.client.window_exists(window_name=self.client.scenario_paused_popup_name, delay_override=0):
+            elif self.client.window_exists(window_name=self.client.scenario_paused_popup_name, delay_override=self.check_window_delay_scenario_paused_popup):
                 break
         
         new_observation = self.get_obs()
@@ -345,7 +349,8 @@ class CMOEnv():
     def check_game_ended(self) -> bool:
         try:
             scenario_ended = cmo_steam_observation_file_to_xml(self.scen_ended)
-            if scenario_ended == "true" or self.client.window_exists(window_name=self.client.scenario_end_popup_name, delay_override=0):
+            if scenario_ended == "true" \
+                or self.client.window_exists(window_name=self.client.scenario_end_popup_name, delay_override=self.check_window_delay_scenario_end_popup):
                 return True
             return False
         except FileNotFoundError:
