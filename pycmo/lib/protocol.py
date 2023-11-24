@@ -173,20 +173,24 @@ class SteamClientProps:
     scenario_name: str
     agent_action_filename : str = "agent_action.lua"
     command_version : str = config["command_mo_version"]
+
     start_scenario_send_key_delay : float = 0.1
     pause_scenario_send_key_delay : float = 0.1
     close_scenario_paused_send_key_delay : float = 0.1
     close_scenario_end_send_key_delay : float = 0.5
     close_player_evaluation_send_key_delay : float = 0.5
-    scenario_paused_check_window_delay : float = 0.5
+
+    scenario_paused_check_window_delay : float = 0.1
     scenario_end_check_window_delay : float = 1
     player_evaluation_check_window_delay : float = 1
-    side_selection_check_window_delay : float = 0.5
+    side_selection_check_window_delay : float = 1
+
     enter_scenario_max_retries : int = 20
     send_max_retries : int = 100
     close_scenario_paused_max_retries : int = 50
     close_scenario_end_messages_max_retries : int = 20
     wait_for_side_selection_max_retries : int = 20
+
     wait_for_close_scenario_end_completion_seconds : int = 2    
 
 class SteamClient():
