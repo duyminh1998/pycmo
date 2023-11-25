@@ -50,6 +50,7 @@ ARG_TYPES = {
 
 class AvailableFunctions():
   def __init__(self, features:Features | FeaturesFromSteam):
+    self.ARG_TYPES = ARG_TYPES
     self.refresh(features=features)
 
   def refresh(self, features:Features|FeaturesFromSteam) -> None:
