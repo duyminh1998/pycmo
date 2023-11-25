@@ -50,6 +50,9 @@ ARG_TYPES = {
 
 class AvailableFunctions():
   def __init__(self, features:Features | FeaturesFromSteam):
+    self.refresh(features=features)
+
+  def refresh(self, features:Features|FeaturesFromSteam) -> None:
     self.sides = [features.player_side]
 
     self.unit_ids, self.unit_names = self.get_unit_ids_and_names(features)
