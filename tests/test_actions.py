@@ -22,8 +22,8 @@ mount_ID = "1256"
 target_name = "Bogey #1"
 target_ID = "0HXVM6-0HMUTDCKTG4A6"
 launch_aircraft_test_parameters = [
-    (side, aircraft_name, "true", f"ScenEdit_SetUnit({{side = '{side}', name = '{aircraft_name}', Launch = 'true'}})"),
-    (side, aircraft_name, "false", f"ScenEdit_SetUnit({{side = '{side}', name = '{aircraft_name}', Launch = 'false'}})"),
+    (side, aircraft_name, "true", f"ScenEdit_SetUnit({{side = '{side}', name = '{aircraft_name}', Launch = true}})"),
+    (side, aircraft_name, "false", f"ScenEdit_SetUnit({{side = '{side}', name = '{aircraft_name}', Launch = false}})"),
 ]
 manual_attack_contact_parameters = [
     (aircraft_ID, target_ID, weapon_ID, weapon_qty, mount_ID, f"ScenEdit_AttackContact('{aircraft_ID}', '{target_ID}' , {{mode='1', mount='{mount_ID}', weapon='{weapon_ID}', qty='{weapon_qty}'}})"),

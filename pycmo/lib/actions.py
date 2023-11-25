@@ -17,7 +17,7 @@ def no_op():
   return ""
 
 def launch_aircraft(side:str, unit_name:str, launch_yn:str) -> str:
-  return f"ScenEdit_SetUnit({{side = '{side}', name = '{unit_name}', Launch = '{launch_yn}'}})"
+  return f"ScenEdit_SetUnit({{side = '{side}', name = '{unit_name}', Launch = {launch_yn}}})"
 
 def set_unit_course(side:str, unit_name:str, latitude:float, longitude:float) -> str:
   return f"ScenEdit_SetUnit({{side = '{side}', name = '{unit_name}', course = {{{{longitude = {longitude}, latitude = {latitude}, TypeOf = 'ManualPlottedCourseWaypoint'}}}}}})"
