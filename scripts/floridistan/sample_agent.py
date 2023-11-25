@@ -3,10 +3,9 @@
 # Purpose: A sample agent to interact with the floridistan scenario, demonstrating our ability to work with the Steam version of CMO.
 # Scripted agent that will process observations and go through a series of states to strike a target.
 
-from pycmo.lib import actions
 from pycmo.agents.base_agent import BaseAgent
 from pycmo.lib.features import FeaturesFromSteam, Unit, Contact
-from pycmo.lib.actions import launch_aircraft, set_unit_course, auto_attack_contact, rtb
+from pycmo.lib.actions import AvailableFunctions, launch_aircraft, set_unit_course, auto_attack_contact, rtb
 
 class ScriptedAgent(BaseAgent):
     def __init__(self, player_side:str, attacker_name:str, target_name:str, strike_weapon_name:str):
@@ -33,7 +32,7 @@ class ScriptedAgent(BaseAgent):
                 return contact
         return None
 
-    def action(self, features: FeaturesFromSteam, VALID_FUNCTIONS:actions.AvailableFunctions) -> str:
+    def action(self, features: FeaturesFromSteam, VALID_FUNCTIONS:AvailableFunctions) -> str:
         action = ""
         attacker = self.get_unit_info_from_observation(features=features, unit_name=self.attacker_name)
         target = self.get_contact_info_from_observation(features=features, contact_name=self.target_name)
