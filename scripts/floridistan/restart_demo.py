@@ -54,7 +54,6 @@ while iteration < max_iterations:
     print_env_information(state.step_id, parse_utc(int(state.observation.meta.Time)), action, state.reward, state.reward)
 
     if state.step_id > 0 and (state.step_id % stop_at_step) == 0:
-        print("Ending game...")
         state = env.end_game()
         iteration += 1
     else:

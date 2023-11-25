@@ -349,7 +349,9 @@ class SteamClient():
         retries = 0
         while not self.window_exists(window_name=self.side_selection_popup_name):
             retries += 1
-            if retries >= self.props.max_retries_wait_for_side_selection_popup: raise TimeoutError(f"Waited too long for '{self.side_selection_popup_name}' to appear but it did not.")
+            if retries >= self.props.max_retries_wait_for_side_selection_popup: 
+                self.logger.debug(f"Waited too long for '{self.side_selection_popup_name}' to appear but it did not.")
+                return False
         
         self.logger.info("Entering scenario...")
         close_popup_result, _ = self.close_popup(popup_name=self.side_selection_popup_name, 

@@ -7,6 +7,7 @@
 import xml.etree.ElementTree as ET
 import xmltodict
 import collections
+from typing import Tuple
 
 # This section can be modified to dictate the type of observations that are returned from the game at each time step
 # Game 
@@ -23,7 +24,7 @@ Loadout = collections.namedtuple("Loadout", ["XML_ID", "ID", "Name", "DBID", "We
 # Weapon
 Weapon = collections.namedtuple("Weapon", ["XML_ID", "ID", "WeaponID", "QuantRemaining", "MaxQuant"])
 # Contacts 
-Contact = collections.namedtuple("ContactInfo", ["XML_ID", "ID", 'Name', 'CS', 'CA', 'Lon', 'Lat'])
+Contact = collections.namedtuple("Contact", ["XML_ID", "ID", 'Name', 'CS', 'CA', 'Lon', 'Lat'])
 
 class Features(object):
     """
@@ -61,7 +62,7 @@ class Features(object):
         self.side_ = self.get_side_properties(player_side_index)
         self.contacts = self.get_contacts(player_side_index)
         
-    def transform_obs_into_arrays(self) -> list:
+    def transform_obs_into_arrays(self) -> Tuple[Game, list[Unit], Side, list[Contact]]:
         """
         Description:
             Render some Command observations into something an agent can handle.
@@ -72,7 +73,7 @@ class Features(object):
         Returns:
             (list) a list of the game's meta data, units, side info, and contact info
         """
-        observation = [self.meta, self.units, self.side_, self.contacts]
+        observation = (self.meta, self.units, self.side_, self.contacts)
         return observation
 
     # ============== XML Data Extraction Methods ================================
@@ -103,7 +104,7 @@ class Features(object):
         except KeyError:
             raise KeyError("Failed to get scenario properties.")
 
-    def get_sides(self) -> list:
+    def get_sides(self) -> list[str]:
         """
         Description:
             Get the number and names of all sides in a scenario.
@@ -137,7 +138,7 @@ class Features(object):
         except KeyError:
             raise KeyError("Failed to get side properties.")
 
-    def get_side_units(self, side_id_str=None) -> list:
+    def get_side_units(self, side_id_str=None) -> list[Unit]:
         """
         Description:
             Get all the units of a side.
@@ -188,7 +189,7 @@ class Features(object):
                     pass                        
         return unit_ids
 
-    def get_mount(self, unit_xml:dict) -> list:
+    def get_mount(self, unit_xml:dict) -> list[Mount]:
         """
         Description:
             Returns the Mounts of a unit. Required to control the weapons on the unit.
@@ -227,7 +228,7 @@ class Features(object):
         dbid = loadout_xml["DBID"]
         return Loadout(0, loadout_id, name, dbid, self.get_weapon('Loadout', loadout_xml))
     
-    def get_weapon(self, mount_or_loadout:str, xml_str:str):
+    def get_weapon(self, mount_or_loadout:str, xml_str:str) -> list[Weapon]:
         """
         Description:
             Returns the weapons on a mount or loadout. Also sets the unit's list of available weapons.
@@ -275,7 +276,7 @@ class Features(object):
         else:
             return weapons
 
-    def get_contacts(self, side_id:int=0) -> list:
+    def get_contacts(self, side_id:int=0) -> list[Contact]:
         """
         Description:
             Return the contacts of a side.

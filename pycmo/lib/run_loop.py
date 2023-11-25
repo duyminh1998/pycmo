@@ -100,7 +100,7 @@ def run_loop_steam(env: CPEEnv | CMOEnv,
         if agent:
             action = agent.action(state.observation, available_actions.VALID_FUNCTIONS)
         else:
-            action = '' # No action if no agent is loaded
+            action = env.action_space.sample() # sample random action if no agent is loaded
 
         # get new state and observation, rewards, discount
         state = env.step(action)
@@ -111,3 +111,5 @@ def run_loop_steam(env: CPEEnv | CMOEnv,
             state = env.reset()
             action = ''
             agent.reset()
+    
+    env.end_game()

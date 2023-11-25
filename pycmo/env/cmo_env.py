@@ -9,7 +9,7 @@ import os
 from time import sleep
 import logging
 
-from pycmo.lib import actions
+from pycmo.lib.actions import AvailableFunctions
 from pycmo.lib.features import Features, FeaturesFromSteam
 from pycmo.lib.protocol import Client, SteamClient, SteamClientProps
 from pycmo.configs.config import get_config
@@ -198,7 +198,7 @@ class CPEEnv():
             return True
         return False
     
-    def action_spec(self, observation:Features) -> actions.AvailableFunctions:
+    def action_spec(self, observation:Features) -> AvailableFunctions:
         """
         Description:
             Returns the available actions given an observation.
@@ -207,9 +207,9 @@ class CPEEnv():
             observation: the current observations in the game.
 
         Returns:
-            (actions.AvailableFunctions) a list of possible actions
+            (AvailableFunctions) a list of possible actions
         """        
-        return actions.AvailableFunctions(observation)
+        return AvailableFunctions(observation)
 
     def close(self) -> bool:
         """
@@ -265,15 +265,13 @@ class CMOEnv():
 
     def reset(self) -> TimeStep:
         try:
-            if not self.client.restart_scenario():
-                raise ValueError("Client was not able to restart the scenario.")
+            restart_result = self.client.restart_scenario()
 
             # check that the scenario loaded event has fired correctly in CMO, and if not, restart the scenario
             retries = 0
-            while self.check_game_ended() and retries < self.max_resets:
+            while (not restart_result or self.check_game_ended()) and retries < self.max_resets:
                 self.logger.info(f"Scenario not loaded properly. Retrying... (Attempt {retries + 1} of {self.max_resets})")
-                if not self.client.restart_scenario():
-                    raise ValueError("Client was not able to restart the scenario.")
+                restart_result = self.client.restart_scenario()
                 retries += 1
             if self.check_game_ended():
                 raise ValueError("Scenario not restarting and loading properly. Please check game files.")
@@ -287,6 +285,7 @@ class CMOEnv():
             self.current_observation = initial_observation
             reward = initial_observation.side_.TotalScore
             self.step_id = 0
+            self.action_space = AvailableFunctions(features=self.current_observation)
 
             return TimeStep(self.step_id, StepType(0), reward, initial_observation) # return initial time step
         
@@ -313,6 +312,7 @@ class CMOEnv():
             if self.check_game_ended():
                 observation = self.get_obs()
                 reward = observation.side_.TotalScore
+                self.action_space.refresh(features=observation)
                 return TimeStep(self.step_id, StepType(2), reward, observation)
             elif self.client.window_exists(window_name=self.client.scenario_paused_popup_name):
                 break
@@ -330,6 +330,7 @@ class CMOEnv():
         new_timestep = TimeStep(self.step_id, StepType(1), reward, observation)
         
         self.current_observation = new_observation
+        self.action_space.refresh(features=self.current_observation)
 
         return new_timestep
 
@@ -345,8 +346,8 @@ class CMOEnv():
                 if get_obs_retries > max_get_obs_retries:
                     raise TimeoutError("CMOEnv unable to get observation.")
     
-    def action_spec(self, observation:Features) -> actions.AvailableFunctions:    
-        return actions.AvailableFunctions(observation)
+    def action_spec(self, observation:Features) -> AvailableFunctions:    
+        return AvailableFunctions(observation)
 
     def check_game_ended(self) -> bool:
         try:
@@ -359,6 +360,7 @@ class CMOEnv():
             raise FileNotFoundError(f"Cannot find {self.scen_ended}")
         
     def end_game(self) -> TimeStep:
+        self.logger.info(f"Ending game after {self.step_id} steps.")
         pycmo_lua_lib_path = self.pycmo_lua_lib_path.replace('\\', '/')
         export_observation_event_name = 'Export observation'
         action = f"ScenEdit_RunScript('{pycmo_lua_lib_path}', true)\nteardown_and_end_scenario('{export_observation_event_name}', true)"
