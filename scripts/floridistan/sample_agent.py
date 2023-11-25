@@ -6,6 +6,7 @@
 from pycmo.lib import actions
 from pycmo.agents.base_agent import BaseAgent
 from pycmo.lib.features import FeaturesFromSteam, Unit, Contact
+from pycmo.lib.actions import launch_aircraft, set_unit_course, auto_attack_contact, rtb
 
 class ScriptedAgent(BaseAgent):
     def __init__(self, player_side:str, attacker_name:str, target_name:str, strike_weapon_name:str):
@@ -36,18 +37,17 @@ class ScriptedAgent(BaseAgent):
         action = ""
         attacker = self.get_unit_info_from_observation(features=features, unit_name=self.attacker_name)
         target = self.get_contact_info_from_observation(features=features, contact_name=self.target_name)
+        rendez_longitude = -76.9041036640427 # immediate point outside of SAM radius
+        rendez_latitude = 28.8515237883916 # immediate point outside of SAM radius
 
         # in the first state, launch the requested aircraft
         if self.state == 0:
-            action = f'ScenEdit_SetUnit({{side = "{self.player_side}", name = "{attacker.Name}", launch = true}})'
+            action = launch_aircraft(side=self.player_side, unit_name=attacker.Name, launch_yn='true')
             self.state += 1
 
         # in the second state, move aircraft to the intermediate point
         elif self.state == 1 and attacker.CA > 10000:
-            base_script = f"local side = '{self.player_side}'\nlocal attacker = ScenEdit_GetUnit({{side = side, name = '{attacker.Name}'}})\n"
-            new_longitude = -76.9041036640427 # immediate point outside of SAM radius
-            new_latitude = 28.8515237883916 # immediate point outside of SAM radius
-            action = base_script + f'move_unit_to(side, attacker.name, {new_latitude}, {new_longitude})'
+            action = set_unit_course(side=self.player_side, unit_name=attacker.Name, latitude=rendez_latitude, longitude=rendez_longitude)
             self.state += 1
 
         # in the third state, make aircraft auto-attack the target
@@ -56,20 +56,17 @@ class ScriptedAgent(BaseAgent):
             # weapon_max_range = 35
             # print(ScenEdit_GetLoadout( { unitname=attacker.name } ).weapons[3])
             # ScenEdit_AttackContact('Thunder #1', con_guid, {mode='1', weapon=2855, qty=10 })
-            action = f"ScenEdit_AttackContact('{attacker.Name}', '{target.ID}', {{ mode='0'}})" # attack contact automatically
+            action = auto_attack_contact(attacker_id=attacker.ID, contact_id=target.ID) # attack contact automatically
             self.state += 1
 
         # in the fourth state, move aircraft back to the intermediate point
         elif self.state == 3 and not target:
-            base_script = f"local side = '{self.player_side}'\nlocal attacker = ScenEdit_GetUnit({{side = side, name = '{attacker.Name}'}})\n"
-            new_longitude = -76.9041036640427 # immediate point outside of SAM radius
-            new_latitude = 28.8515237883916 # immediate point outside of SAM radius
-            action = base_script + f'move_unit_to(side, attacker.name, {new_latitude}, {new_longitude})'
+            action = set_unit_course(side=self.player_side, unit_name=attacker.Name, latitude=rendez_latitude, longitude=rendez_longitude)
             self.state += 1
 
         # in the fifth state, RTB
         elif self.state == 4 and attacker.Lon <= -76:
-            action = f"ScenEdit_SetUnit({{side = '{self.player_side}', name = '{attacker.Name}', RTB = true}})"  
+            action = rtb(side=self.player_side, unit_name=attacker.Name)
             self.state += 1
 
         return action

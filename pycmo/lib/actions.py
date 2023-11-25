@@ -48,11 +48,12 @@ ARG_TYPES = {
   'rtb': ['EnumChoice', 'EnumChoice'],
 }
 
-class AvailableFunctionsSteam():
+class AvailableFunctions():
   def __init__(self, features:Features | FeaturesFromSteam):
     self.sides = [features.player_side]
 
     self.unit_ids = self.get_unit_ids(features)
+    self.unit_names = self.get_unit_names(features)
     self.contact_ids = self.get_contact_ids(features)
     self.mount_ids, self.loadout_ids, self.weapon_ids, self.weapon_qtys = self.get_weapons(features)
 
@@ -60,6 +61,9 @@ class AvailableFunctionsSteam():
 
   def get_unit_ids(self, features:Features|FeaturesFromSteam) -> list[str]:
     return [unit.ID for unit in features.units]
+  
+  def get_unit_names(self, features:Features|FeaturesFromSteam) -> list[str]:
+    return [unit.Name for unit in features.units]  
 
   def get_contact_ids(self, features:Features|FeaturesFromSteam) -> list[str]:
     return [contact.ID for contact in features.contacts]
@@ -105,13 +109,13 @@ class AvailableFunctionsSteam():
   def get_valid_functions(self) -> list[Function]:
     VALID_FUNCTION_ARGS = {
       'no_op': [],
-      'launch_aircraft': [self.sides, self.unit_ids, ["true", "false"]],
-      'set_unit_course': [self.sides, self.unit_ids, [-90, 90], [-180, 180]],
+      'launch_aircraft': [self.sides, self.unit_names, ["true", "false"]],
+      'set_unit_course': [self.sides, self.unit_names, [-90, 90], [-180, 180]],
       'manual_attack_contact': [self.unit_ids, self.contact_ids, self.weapon_ids, self.weapon_qtys, self.mount_ids],
       'auto_attack_contact': [self.unit_ids, self.contact_ids],
-      'refuel_unit': [self.sides, self.unit_ids, self.unit_ids],
-      'auto_refuel_unit': [self.sides, self.unit_ids],
-      'rtb': [self.sides, self.unit_ids]
+      'refuel_unit': [self.sides, self.unit_names, self.unit_names],
+      'auto_refuel_unit': [self.sides, self.unit_names],
+      'rtb': [self.sides, self.unit_names]
     }
     valid_functions = [
       Function(0, "no_op", no_op, VALID_FUNCTION_ARGS['no_op'], ARG_TYPES['no_op']),
@@ -140,48 +144,16 @@ class AvailableFunctionsSteam():
     
     return random_function.corresponding_def(*function_args)
 
-class AvailableFunctions():
-  def __init__(self, features):
-    sides = [features.player_side]
-    units = []
-    contacts = []
-    if features.units != None:
-      units = [unit.ID for unit in features.units]
-    if features.contacts != None:
-      contacts = [contact.ID for contact in features.contacts]
-    weapons = [weap.WeaponID for weap in features.avai_weapons]
-    mounts = []
-    for unit in features.units:
-      if unit.Mounts != None:
-        for mount in unit.Mounts:
-          mounts.append(mount.DBID)
-    VALID_FUNCTION_ARGS = {
-      'no_op': [],
-      'launch_aircraft': [sides, units, ["true", "false"]],
-      'set_unit_course': [sides, units, [-90, 90], [-180, 180]],
-      'manual_attack_contact': [units, contacts, weapons, [1], mounts],
-      'auto_attack_contact': [units, contacts],
-      'refuel_unit': [sides, units, units],
-      'rtb': [sides, units],
-      'auto_refuel_unit': [sides, units]
-    }
-    ARG_TYPES = {
-      'no_op': ['NoneChoice'],
-      'launch_aircraft': ['EnumChoice', 'EnumChoice', 'EnumChoice'],
-      'set_unit_course': ['EnumChoice', 'EnumChoice', 'Range', 'Range'],
-      'manual_attack_contact': ['EnumChoice', 'EnumChoice', 'EnumChoice', 'EnumChoice', 'EnumChoice'],
-      'auto_attack_contact': ['EnumChoice', 'EnumChoice'],
-      'refuel_unit': ['EnumChoice', 'EnumChoice', 'EnumChoice'],
-      'rtb': ['EnumChoice', 'EnumChoice'],
-      'auto_refuel_unit': ['EnumChoice', 'EnumChoice']
-    }
-    self.VALID_FUNCTIONS = [
-      Function(0, "no_op", no_op, VALID_FUNCTION_ARGS['no_op'], ARG_TYPES['no_op']),
-      Function(1, "launch_aircraft", launch_aircraft, VALID_FUNCTION_ARGS['launch_aircraft'], ARG_TYPES['launch_aircraft']),
-      Function(2, 'set_unit_course', set_unit_course, VALID_FUNCTION_ARGS['set_unit_course'], ARG_TYPES['set_unit_course']),
-      Function(3, "manual_attack_contact", manual_attack_contact, VALID_FUNCTION_ARGS['manual_attack_contact'], ARG_TYPES['manual_attack_contact']),
-      Function(4, "auto_attack_contact", auto_attack_contact, VALID_FUNCTION_ARGS['auto_attack_contact'], ARG_TYPES['auto_attack_contact']),
-      Function(5, 'refuel_unit', refuel_unit, VALID_FUNCTION_ARGS['refuel_unit'], ARG_TYPES['refuel_unit']),
-      Function(6, 'rtb', rtb, VALID_FUNCTION_ARGS['rtb'], ARG_TYPES['rtb']),
-      Function(7, 'auto_refuel_unit', auto_refuel_unit, VALID_FUNCTION_ARGS['auto_refuel_unit'], ARG_TYPES['auto_refuel_unit'])
-    ]
+  def validate_function_call(self, function_id:int, function_args:list) -> bool:
+    if function_id < 0 or function_id > len(self.VALID_FUNCTIONS) or (function_id == 0 and len(function_args) > 0):
+      return False
+    else:
+      valid_function_args = self.VALID_FUNCTIONS[function_id].args
+      valid_function_arg_types = self.VALID_FUNCTIONS[function_id].arg_types
+      if len(function_args) != len(valid_function_args): return False
+      for function_arg, valid_args, arg_type in zip(function_args, valid_function_args, valid_function_arg_types):
+        if arg_type == "EnumChoice" and function_arg not in valid_args: 
+          return False
+        elif arg_type == "Range" and (function_arg < valid_args[0] or function_arg > valid_args[1]): 
+          return False
+      return True
