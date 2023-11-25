@@ -312,7 +312,7 @@ class CMOEnv():
             if self.check_game_ended():
                 observation = self.get_obs()
                 reward = observation.side_.TotalScore
-                self.action_space = AvailableFunctions(features=observation)
+                self.action_space.refresh(features=observation)
                 return TimeStep(self.step_id, StepType(2), reward, observation)
             elif self.client.window_exists(window_name=self.client.scenario_paused_popup_name):
                 break
@@ -330,7 +330,7 @@ class CMOEnv():
         new_timestep = TimeStep(self.step_id, StepType(1), reward, observation)
         
         self.current_observation = new_observation
-        self.action_space = AvailableFunctions(features=self.current_observation)
+        self.action_space.refresh(features=observation)
 
         return new_timestep
 
