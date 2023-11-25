@@ -148,7 +148,7 @@ class AvailableFunctions():
     
     return random_function.corresponding_def(*function_args)
 
-  def validate_function_call(self, function_id:int, function_args:list) -> bool:
+  def contains(self, function_id:int, function_args:list) -> bool:
     if function_id < 0 or function_id > len(self.VALID_FUNCTIONS) or (function_id == 0 and len(function_args) > 0):
       return False
     else:

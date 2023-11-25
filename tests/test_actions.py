@@ -23,7 +23,7 @@ target_name = "Bogey #1"
 target_ID = "0HXVM6-0HMUTDCKTG4A6"
 
 features = FeaturesFromSteam(xml=scenario_xml, player_side=side)
-avail_funcs = AvailableFunctions(features=features)
+action_space = AvailableFunctions(features=features)
 unit_id = "05ba3413-d0cd-4a69-8513-2d7e55d28366"
 unit_name = "Nahshon #1"
 mount_id = "286"
@@ -39,11 +39,7 @@ manual_attack_contact_test_parameters = [
     (aircraft_ID, target_ID, weapon_ID, weapon_qty, mount_ID, f"ScenEdit_AttackContact('{aircraft_ID}', '{target_ID}' , {{mode='1', mount='{mount_ID}', weapon='{weapon_ID}', qty='{weapon_qty}'}})"),
     (aircraft_ID, target_ID, weapon_ID, weapon_qty, None, f"ScenEdit_AttackContact('{aircraft_ID}', '{target_ID}' , {{mode='1', weapon='{weapon_ID}', qty='{weapon_qty}'}})"),
 ]
-validate_function_call_test_parameters = [
-    (0, [], True),
-    (0, [1], False),
-]
-validate_function_call_test_parameters = [
+contains_test_parameters = [
     (0, [], True),
     (0, [1], False),
     (1, [side, aircraft_name, "true"], True),
@@ -81,47 +77,47 @@ def test_rtb():
     assert rtb(side, aircraft_name) == f"ScenEdit_SetUnit({{side = '{side}', name = '{aircraft_name}', RTB = true}})"
 
 def test_available_functions():
-    assert isinstance(avail_funcs, AvailableFunctions)
+    assert isinstance(action_space, AvailableFunctions)
 
 def test_available_functions_sides():
-    assert len(avail_funcs.sides) == 1
-    assert avail_funcs.sides[0] == side
+    assert len(action_space.sides) == 1
+    assert action_space.sides[0] == side
 
 def test_available_functions_unit_ids():
-    assert len(avail_funcs.unit_ids) == 9
-    assert isinstance(avail_funcs.unit_ids[0], str)
-    assert avail_funcs.unit_ids[0] == "8e2750c4-6c86-46a4-8dfa-16507c7f71e3"
+    assert len(action_space.unit_ids) == 9
+    assert isinstance(action_space.unit_ids[0], str)
+    assert action_space.unit_ids[0] == "8e2750c4-6c86-46a4-8dfa-16507c7f71e3"
 
 def test_available_functions_unit_names():
-    assert len(avail_funcs.unit_names) == 9
-    assert isinstance(avail_funcs.unit_names[0], str)
-    assert avail_funcs.unit_names[1] == unit_name
+    assert len(action_space.unit_names) == 9
+    assert isinstance(action_space.unit_names[0], str)
+    assert action_space.unit_names[1] == unit_name
 
 def test_available_functions_contact_ids():
-    assert len(avail_funcs.contact_ids) == 8
-    assert isinstance(avail_funcs.contact_ids[0], str)
-    assert avail_funcs.contact_ids[0] == "0HXVM6-0HMUTDCKTG4AA"
+    assert len(action_space.contact_ids) == 8
+    assert isinstance(action_space.contact_ids[0], str)
+    assert action_space.contact_ids[0] == "0HXVM6-0HMUTDCKTG4AA"
 
 def test_available_functions_mount_ids():
-    assert len(avail_funcs.mount_ids) == 12
-    assert avail_funcs.mount_ids[0] == mount_id
+    assert len(action_space.mount_ids) == 12
+    assert action_space.mount_ids[0] == mount_id
 
 def test_available_functions_loadout_ids():
-    assert len(avail_funcs.loadout_ids) == 8
-    assert avail_funcs.loadout_ids[0] == loadout_id
+    assert len(action_space.loadout_ids) == 8
+    assert action_space.loadout_ids[0] == loadout_id
 
 def test_available_functions_weapon_ids():
-    assert len(avail_funcs.weapon_ids) == 45
-    assert avail_funcs.weapon_ids[0] == mount_weapon_id
+    assert len(action_space.weapon_ids) == 45
+    assert action_space.weapon_ids[0] == mount_weapon_id
 
 def test_available_functions_weapon_qtys():
-    assert len(avail_funcs.weapon_qtys) == 45
-    assert avail_funcs.weapon_qtys[0] == 5
+    assert len(action_space.weapon_qtys) == 45
+    assert action_space.weapon_qtys[0] == 5
 
 def test_available_functions_valid_functions():
-    manual_attack_fnc = avail_funcs.VALID_FUNCTIONS[3]
-    assert isinstance(avail_funcs.VALID_FUNCTIONS, list)
-    assert len(avail_funcs.VALID_FUNCTIONS) == 8
+    manual_attack_fnc = action_space.VALID_FUNCTIONS[3]
+    assert isinstance(action_space.VALID_FUNCTIONS, list)
+    assert len(action_space.VALID_FUNCTIONS) == 8
     assert isinstance(manual_attack_fnc, Function)
     assert manual_attack_fnc.id == 3
     assert manual_attack_fnc.name == "manual_attack_contact"
@@ -138,10 +134,10 @@ def test_available_functions_valid_functions():
     assert isinstance(list(mount_id_args)[0], str)
 
 def test_available_functions_sample():
-    action = avail_funcs.sample()
+    action = action_space.sample()
     assert isinstance(action, str)
     # assert action == ""
 
-@pytest.mark.parametrize("function_id, function_args, expected", validate_function_call_test_parameters)
-def test_available_functions_validate_function_call(function_id, function_args, expected):
-    assert avail_funcs.validate_function_call(function_id=function_id, function_args=function_args) == expected
+@pytest.mark.parametrize("function_id, function_args, expected", contains_test_parameters)
+def test_available_functions_contains(function_id, function_args, expected):
+    assert action_space.contains(function_id=function_id, function_args=function_args) == expected
