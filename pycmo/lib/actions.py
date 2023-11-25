@@ -111,8 +111,8 @@ class AvailableFunctions():
         weapon_qtys.append(weapon.QuantRemaining)
     return loadout_id, weapon_ids, weapon_qtys
   
-  def get_valid_functions(self) -> list[Function]:
-    VALID_FUNCTION_ARGS = {
+  def get_valid_function_args(self) -> dict[str, list]:
+    return {
       'no_op': [],
       'launch_aircraft': [self.sides, self.unit_names, ["true", "false"]],
       'set_unit_course': [self.sides, self.unit_names, [-90, 90], [-180, 180]],
@@ -122,6 +122,9 @@ class AvailableFunctions():
       'auto_refuel_unit': [self.sides, self.unit_names],
       'rtb': [self.sides, self.unit_names]
     }
+  
+  def get_valid_functions(self) -> list[Function]:
+    VALID_FUNCTION_ARGS = self.get_valid_function_args()
     valid_functions = [
       Function(0, "no_op", no_op, VALID_FUNCTION_ARGS['no_op'], ARG_TYPES['no_op']),
       Function(1, "launch_aircraft", launch_aircraft, VALID_FUNCTION_ARGS['launch_aircraft'], ARG_TYPES['launch_aircraft']),
