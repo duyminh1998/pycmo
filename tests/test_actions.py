@@ -14,6 +14,8 @@ side = "Israel"
 tanker_name = "Chevron #6"
 aircraft_name = "Sufa #1"
 aircraft_ID = "6352f8eb-db07-4916-8da7-33ef013878a0"
+course_latitude = -90
+course_longitude = 100
 weapon_ID = "4369"
 weapon_qty = 4
 mount_ID = "1256"
@@ -35,6 +37,9 @@ def test_no_op():
 def test_launch_aircraft(side, aircraft_name, launch_yn, expected):
     assert launch_aircraft(side, aircraft_name, launch_yn) == expected
 
+def test_set_unit_course():
+    assert set_unit_course(side, aircraft_ID, course_latitude, course_longitude) == f"ScenEdit_SetUnit({{side = '{side}', name = '{aircraft_ID}', course = {{{{longitude = {course_longitude}, latitude = {course_latitude}, TypeOf = 'ManualPlottedCourseWaypoint'}}}}}})"
+
 @pytest.mark.parametrize("attacker_id, contact_id, weapon_id, qty, mount_id, expected", manual_attack_contact_parameters)
 def test_manual_attack_contact(attacker_id, contact_id, weapon_id, qty, mount_id, expected):
     assert manual_attack_contact(attacker_id, contact_id, weapon_id, qty, mount_id) == expected
@@ -55,7 +60,7 @@ features = FeaturesFromSteam(xml=scenario_xml, player_side=side)
 avail_funcs = AvailableFunctionsSteam(features=features)
 unit_id = "05ba3413-d0cd-4a69-8513-2d7e55d28366"
 mount_id = "286"
-loadout_id = "18127"
+loadout_id = "3"
 mount_weapon_id = "1918"
 loadout_weapon_id = "516"
 def test_available_functions():
@@ -76,38 +81,20 @@ def test_available_functions_contact_ids():
     assert avail_funcs.contact_ids[0] == "0HXVM6-0HMUTDCKTG4AA"
 
 def test_available_functions_mount_ids():
-    assert len(avail_funcs.mount_ids[unit_id]) == 2
-    assert isinstance(avail_funcs.mount_ids[unit_id], list)
-    assert avail_funcs.mount_ids[unit_id][0] == mount_id
+    assert len(avail_funcs.mount_ids) == 12
+    assert avail_funcs.mount_ids[0] == mount_id
 
 def test_available_functions_loadout_ids():
-    assert len(avail_funcs.loadout_ids[unit_id]) == 1
-    assert isinstance(avail_funcs.loadout_ids[unit_id], list)
-    assert avail_funcs.loadout_ids[unit_id][0] == loadout_id
+    assert len(avail_funcs.loadout_ids) == 8
+    assert avail_funcs.loadout_ids[0] == loadout_id
 
-def test_available_functions_mount_weapon_ids():
-    key = f"{unit_id},{mount_id}"
-    assert len(avail_funcs.weapon_ids) == 20
-    assert isinstance(avail_funcs.weapon_ids[key], list)
-    assert avail_funcs.weapon_ids[key][0] == mount_weapon_id
+def test_available_functions_weapon_ids():
+    assert len(avail_funcs.weapon_ids) == 45
+    assert avail_funcs.weapon_ids[0] == mount_weapon_id
 
-def test_available_functions_loadout_weapon_ids():
-    key = f"{unit_id},{loadout_id}"
-    assert len(avail_funcs.weapon_ids) == 20
-    assert isinstance(avail_funcs.weapon_ids[key], list)
-    assert avail_funcs.weapon_ids[key][0] == loadout_weapon_id
-
-def test_available_functions_mount_weapon_qtys():
-    key = f"{unit_id},{mount_id},{mount_weapon_id}"
+def test_available_functions_weapon_qtys():
     assert len(avail_funcs.weapon_qtys) == 45
-    assert isinstance(avail_funcs.weapon_qtys[key], int)
-    assert avail_funcs.weapon_qtys[key] == 5
-
-def test_available_functions_loadout_weapon_qtys():
-    key = f"{unit_id},{loadout_id},{loadout_weapon_id}"
-    assert len(avail_funcs.weapon_qtys) == 45
-    assert isinstance(avail_funcs.weapon_qtys[key], int)
-    assert avail_funcs.weapon_qtys[key] == 4
+    assert avail_funcs.weapon_qtys[0] == 5
 
 def test_available_functions_valid_functions():
     manual_attack_fnc = avail_funcs.VALID_FUNCTIONS[3]
@@ -119,11 +106,16 @@ def test_available_functions_valid_functions():
     assert manual_attack_fnc.corresponding_def == manual_attack_contact
     assert isinstance(manual_attack_fnc.args, list)
     weapon_id_args = manual_attack_fnc.args[2]
-    assert isinstance(weapon_id_args, set)
+    assert isinstance(weapon_id_args, list)
     assert isinstance(list(weapon_id_args)[0], str)
     weapon_qty_args = manual_attack_fnc.args[3]
-    assert isinstance(weapon_qty_args, set)
+    assert isinstance(weapon_qty_args, list)
     assert isinstance(list(weapon_qty_args)[0], int)
     mount_id_args = manual_attack_fnc.args[4]
-    assert isinstance(mount_id_args, set)
+    assert isinstance(mount_id_args, list)
     assert isinstance(list(mount_id_args)[0], str)
+
+def test_available_functions_sample():
+    action = avail_funcs.sample()
+    assert isinstance(action, str)
+    # assert action == ""
