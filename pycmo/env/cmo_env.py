@@ -330,7 +330,7 @@ class CMOEnv():
         new_timestep = TimeStep(self.step_id, StepType(1), reward, observation)
         
         self.current_observation = new_observation
-        self.action_space.refresh(features=observation)
+        self.action_space.refresh(features=self.current_observation)
 
         return new_timestep
 
