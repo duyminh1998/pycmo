@@ -52,18 +52,19 @@ class AvailableFunctions():
   def __init__(self, features:Features | FeaturesFromSteam):
     self.sides = [features.player_side]
 
-    self.unit_ids = self.get_unit_ids(features)
-    self.unit_names = self.get_unit_names(features)
+    self.unit_ids, self.unit_names = self.get_unit_ids_and_names(features)
     self.contact_ids = self.get_contact_ids(features)
     self.mount_ids, self.loadout_ids, self.weapon_ids, self.weapon_qtys = self.get_weapons(features)
 
     self.VALID_FUNCTIONS = self.get_valid_functions()
 
-  def get_unit_ids(self, features:Features|FeaturesFromSteam) -> list[str]:
-    return [unit.ID for unit in features.units]
-  
-  def get_unit_names(self, features:Features|FeaturesFromSteam) -> list[str]:
-    return [unit.Name for unit in features.units]  
+  def get_unit_ids_and_names(self, features:Features|FeaturesFromSteam) -> Tuple[list[str], list[str]]:
+    unit_ids = []
+    unit_names = []
+    for unit in features.units:
+      unit_ids.append(unit.ID)
+      unit_names.append(unit.Name)
+    return unit_ids, unit_names
 
   def get_contact_ids(self, features:Features|FeaturesFromSteam) -> list[str]:
     return [contact.ID for contact in features.contacts]
