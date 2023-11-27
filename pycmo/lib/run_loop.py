@@ -10,7 +10,7 @@ from pycmo.env.cmo_env import CPEEnv, CMOEnv, StepType # CPE environment, functi
 from pycmo.agents.base_agent import BaseAgent
 # auxiliary functions
 import threading, time
-from pycmo.lib.tools import print_env_information, clean_up_steps, ticks_to_unix, parse_datetime
+from pycmo.lib.tools import print_env_information, clean_up_steps, ticks_to_unix, parse_datetime, parse_utc
 
 def run_loop(player_side:str, config:dict, step_size:list=['0', '0', '1'], agent=None, max_steps=None, server=False, scen_file=None) -> None:
     """
@@ -93,20 +93,23 @@ def run_loop_steam(env: CPEEnv | CMOEnv,
 
     # main loop
     while (not max_steps) or (total_steps < max_steps):
-        print_env_information(state.step_id, parse_datetime(int(state.observation.meta.Time)), action, state.reward, state.reward)
+        print_env_information(state.step_id, parse_utc(int(state.observation.meta.Time)), action, state.reward, state.reward)
 
         # perform random actions or choose the action
         available_actions = env.action_spec(state.observation)
         if agent:
             action = agent.action(state.observation, available_actions.VALID_FUNCTIONS)
         else:
-            action = '' # No action if no agent is loaded
+            action = env.action_space.sample() # sample random action if no agent is loaded
 
         # get new state and observation, rewards, discount
         state = env.step(action)
         total_steps += 1
 
         if state.step_type == StepType(2) or env.check_game_ended():
-            env.client.close_scenario_end_message()
+            env.client.close_scenario_end_and_player_eval_messages()
             state = env.reset()
+            action = ''
             agent.reset()
+    
+    env.end_game()

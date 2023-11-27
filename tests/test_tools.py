@@ -13,6 +13,12 @@ parse_datetime_test_parameters = [
     (626325877650000000, datetime(1985, 10, 1, 5, 2, 45)),
 ]
 
+parse_utc_test_parameters = [
+    (1519552961, datetime(2018, 2, 25, 4, 2, 41)),
+    (86400, datetime(1970, 1, 1, 18, 0)),
+    (1700682579, datetime(2023, 11, 22, 13, 49, 39)),
+]
+
 ticks_to_unix_test_parameters = [
     (626325877650000000, 496990965),
 ]
@@ -20,6 +26,10 @@ ticks_to_unix_test_parameters = [
 @pytest.mark.parametrize("time_int, expected", parse_datetime_test_parameters)
 def test_parse_datetime(time_int, expected):
     assert parse_datetime(time_int) == expected
+
+@pytest.mark.parametrize("utc, expected", parse_utc_test_parameters)
+def test_parse_utc(utc, expected):
+    assert parse_utc(utc) == expected
 
 @pytest.mark.parametrize("ticks, expected", ticks_to_unix_test_parameters)
 def test_ticks_to_unix(ticks, expected):
@@ -57,3 +67,7 @@ def test_cmo_steam_observation_file_to_xml():
     xml_string = cmo_steam_observation_file_to_xml(observation_file_path)
     assert isinstance(xml_string, str)
     assert len(xml_string) > 1
+
+def test_window_exists():
+    window_name = "Side selection and br"
+    assert window_exists(window_name=window_name, delay=None) == False

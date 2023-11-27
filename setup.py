@@ -4,7 +4,7 @@ description = """PyCMO"""
 
 setup(
     name='PyCMO',
-    version='1.2.0',
+    version='1.3.0',
     description='Command Modern Operations Reinforcement Learning Environment.',
     long_description=description,
     author='Minh Hua',
@@ -22,6 +22,7 @@ setup(
     ],
     install_requires=[
         'numpy>=1.10',
-        'xmltodict==0.12.0'
+        'xmltodict==0.12.0',
+        'pywin32==306'
     ],
 )

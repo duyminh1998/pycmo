@@ -88,4 +88,3 @@ Add-Type -TypeDefinition $cSource -ReferencedAssemblies System.Windows.Forms,Sys
 # Send a click at a specified point
 $wshell.SendKeys('{ESC}')
 [Clicker]::LeftClickAtPoint($POSITION.x, $POSITION.y)
-Start-Sleep -s 1

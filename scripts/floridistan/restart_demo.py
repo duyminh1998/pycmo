@@ -3,12 +3,15 @@
 # Purpose: A sample agent to interact with the floridistan scenario, but the scenario restarts every 25 steps.
 
 import os
+import logging
+logging.basicConfig(level=logging.INFO)
 
 from sample_agent import ScriptedAgent
 
 from pycmo.configs.config import get_config
 from pycmo.env.cmo_env import CMOEnv, StepType
-from pycmo.lib.tools import print_env_information, parse_datetime
+from pycmo.lib.protocol import SteamClientProps
+from pycmo.lib.tools import print_env_information, parse_utc
 
 # open config and set important files and folder paths
 config = get_config()
@@ -22,11 +25,11 @@ command_version = config["command_mo_version"]
 observation_path = os.path.join(config['steam_observation_folder_path'], f'{scenario_name}.inst')
 action_path = os.path.join(config["scripts_path"], scenario_script_folder_name, "agent_action.lua")
 scen_ended_path = os.path.join(config['steam_observation_folder_path'], f'{scenario_name}_scen_has_ended.inst')
+steam_client_props = SteamClientProps(scenario_name=scenario_name, agent_action_filename=action_path, command_version=command_version)
 
 env = CMOEnv(
-        scenario_name=scenario_name,
         player_side=player_side,
-        command_version=command_version,
+        steam_client_props=steam_client_props,
         observation_path=observation_path,
         action_path=action_path,
         scen_ended_path=scen_ended_path,
@@ -43,15 +46,16 @@ state = env.reset()
 action = ''
 
 stop_at_step = 25
-iterations = 5
+iteration = 0
+max_iterations = 5
 
 # main loop
-for _ in range(stop_at_step * iterations):
-    print_env_information(state.step_id, parse_datetime(int(state.observation.meta.Time)), action, state.reward, state.reward)
+while iteration < max_iterations:
+    print_env_information(state.step_id, parse_utc(int(state.observation.meta.Time)), action, state.reward, state.reward)
 
     if state.step_id > 0 and (state.step_id % stop_at_step) == 0:
         state = env.end_game()
-        print("Ending game...")
+        iteration += 1
     else:
         if not env.check_game_ended():
             # perform random actions or choose the action
@@ -65,7 +69,7 @@ for _ in range(stop_at_step * iterations):
             state = env.step(action)
 
     if state.step_type == StepType(2) or env.check_game_ended():
-        env.client.close_scenario_end_message()
+        env.client.close_scenario_end_and_player_eval_messages()
         state = env.reset()
         action = ''
         agent.reset()

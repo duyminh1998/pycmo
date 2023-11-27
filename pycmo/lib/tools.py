@@ -9,6 +9,12 @@ import os
 import numpy as np
 import subprocess
 import json
+from time import sleep
+import win32gui
+
+from pycmo.configs.config import get_config
+
+config = get_config()
 
 def parse_datetime(time_int:int) -> datetime:
     """
@@ -27,6 +33,9 @@ def parse_datetime(time_int:int) -> datetime:
     d1 = datetime(1, 1, 1)
     t1 = timedelta(seconds = secs)
     return d1 + t1
+
+def parse_utc(utc:int) -> datetime:
+    return datetime.fromtimestamp(utc)
 
 def ticks_to_unix(ticks:int) -> int:
     """
@@ -155,6 +164,21 @@ def process_exists(process_name):
     # because Fail message could be translated
     return last_line.lower().startswith(process_name.lower())
 
+def win32gui_window_exists(window_name:str):
+    ret = []
+    def win_enum_handler(hwnd, ctx):
+        if win32gui.IsWindowVisible(hwnd):
+            txt = win32gui.GetWindowText(hwnd)
+            if txt == window_name:
+                ret.append((hwnd,txt))
+    win32gui.EnumWindows(win_enum_handler, None)
+    if len(ret) > 0: return True
+    else: return False
+
+def window_exists(window_name:str, delay:float|None=None) -> bool:
+    if delay: sleep(delay)
+    return win32gui_window_exists(window_name=window_name)
+    
 def cmo_steam_observation_file_to_xml(file_path:str) -> str or None:
     try:
         with open(file_path, 'r') as f:

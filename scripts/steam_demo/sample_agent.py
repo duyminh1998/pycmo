@@ -5,7 +5,7 @@
 
 import random
 
-from pycmo.lib import actions
+from pycmo.lib.actions import AvailableFunctions, set_unit_course
 from pycmo.agents.base_agent import BaseAgent
 from pycmo.lib.features import FeaturesFromSteam, Unit
 
@@ -21,15 +21,13 @@ class RandomAgent(BaseAgent):
                 return unit
         return None
 
-    def action(self, features: FeaturesFromSteam, VALID_FUNCTIONS:actions.AvailableFunctions) -> str:
+    def action(self, features: FeaturesFromSteam, VALID_FUNCTIONS:AvailableFunctions) -> str:
         action = ""
         ac = self.get_unit_info_from_observation(features=features, unit_name=self.ac_name)
-
-        base_script = f"local side = '{self.player_side}'\nlocal sufa = ScenEdit_GetUnit({{side = side, name = '{self.ac_name}'}})\n"
         delta_longitude = (random.random() * 1) - 0.5
         delta_latitude = (random.random() * 1) - 0.5
         new_longitude = float(ac.Lon) + delta_longitude
         new_latitude = float(ac.Lat) + delta_latitude
-        action = base_script + f'move_unit_to(side, sufa.name, {new_latitude}, {new_longitude})'
+        action = set_unit_course(side = self.player_side, unit_name = self.ac_name, latitude = new_latitude, longitude = new_longitude)
 
         return action

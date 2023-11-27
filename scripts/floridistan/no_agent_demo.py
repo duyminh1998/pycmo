@@ -1,6 +1,6 @@
 # Author: Minh Hua
-# Date: 11/19/2023
-# Purpose: A sample agent to interact with the floridistan scenario, demonstrating our ability to work with the Steam version of CMO.
+# Date: 11/25/2023
+# Purpose: A demo with no agent so the environment will just randomly sample actions.
 
 import os
 import logging
@@ -34,10 +34,4 @@ cmo_env = CMOEnv(
         scen_ended_path=scen_ended_path,
 )
 
-attacker_name = "Thunder #1"
-target_name = "BTR-82V"
-strike_weapon_name = "GBU-53/B StormBreaker"
-
-agent = ScriptedAgent(player_side=player_side, attacker_name=attacker_name, target_name=target_name, strike_weapon_name=strike_weapon_name)
-
-run_loop_steam(env=cmo_env, agent=agent, max_steps=None)
+run_loop_steam(env=cmo_env, agent=None, max_steps=50)
