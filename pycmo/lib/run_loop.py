@@ -107,6 +107,7 @@ def run_loop_steam(env: CPEEnv | CMOEnv,
         total_steps += 1
 
         if state.step_type == StepType(2) or env.check_game_ended():
+            print_env_information(state.step_id, parse_utc(int(state.observation.meta.Time)), action, state.reward, state.reward)
             env.client.close_scenario_end_and_player_eval_messages()
             state = env.reset()
             action = ''
