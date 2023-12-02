@@ -4,7 +4,7 @@ description = """PyCMO"""
 
 setup(
     name='PyCMO',
-    version='1.4.0-develop',
+    version='1.4.0',
     description='Command Modern Operations Reinforcement Learning Environment.',
     long_description=description,
     author='Minh Hua',
