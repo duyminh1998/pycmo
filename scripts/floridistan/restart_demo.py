@@ -45,7 +45,7 @@ agent = ScriptedAgent(player_side=player_side, attacker_name=attacker_name, targ
 state = env.reset()
 action = ''
 
-stop_at_step = 25
+stop_at_step = 200
 iteration = 0
 max_iterations = 5
 
@@ -69,6 +69,7 @@ while iteration < max_iterations:
             state = env.step(action)
 
     if state.step_type == StepType(2) or env.check_game_ended():
+        print_env_information(state.step_id, parse_utc(int(state.observation.meta.Time)), action, state.reward, state.reward)
         env.client.close_scenario_end_and_player_eval_messages()
         state = env.reset()
         action = ''
