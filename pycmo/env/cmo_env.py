@@ -8,6 +8,8 @@ import collections, enum
 import os
 from time import sleep
 import logging
+from typing import Tuple
+import gymnasium as gym
 
 from pycmo.lib.actions import AvailableFunctions
 from pycmo.lib.features import Features, FeaturesFromSteam
@@ -366,3 +368,58 @@ class CMOEnv():
         action = f"ScenEdit_RunScript('{pycmo_lua_lib_path}', true)\nteardown_and_end_scenario('{export_observation_event_name}', true)"
         return self.step(action)
     
+class CMOGymEnv(gym.Env):
+    metadata = {"render_modes": [None]}
+
+    def __init__(
+            self,
+            player_side: str,
+            steam_client_props:SteamClientProps,
+            observation_path: str, 
+            action_path: str,
+            scen_ended_path: str,
+            pycmo_lua_lib_path: str | None = None,
+            max_resets: int = 20,
+            render_mode=None,
+    ):
+        self.cmo_env = CMOEnv(
+            player_side=player_side,
+            steam_client_props=steam_client_props,
+            observation_path=observation_path,
+            action_path=action_path,
+            scen_ended_path=scen_ended_path,
+            pycmo_lua_lib_path=pycmo_lua_lib_path,
+            max_resets=max_resets
+        )
+
+        self.observation_space = None
+        
+        self.action_space = None
+
+        assert render_mode is None or render_mode in self.metadata["render_modes"]
+        self.render_mode = render_mode
+        
+    def _get_obs(self) -> FeaturesFromSteam:
+        return self.cmo_env.get_obs()
+    
+    def _get_info(self) -> None:
+        ...
+    
+    def reset(self, seed=None, options=None) -> Tuple[FeaturesFromSteam]:
+        state = self.cmo_env.reset()
+        observation = state.observation
+        info = self._get_info()
+        return observation, info
+
+    def step(self, action) -> Tuple[FeaturesFromSteam, int, bool, bool, None]:
+        state = self.cmo_env.step(action)
+        terminated = self.cmo_env.check_game_ended() or state.step_type == StepType(2)
+        truncated = False
+        reward = state.reward
+        observation = state.observation
+        info = self._get_info()
+
+        return observation, reward, terminated, truncated, info
+
+    def close(self):
+        ...
