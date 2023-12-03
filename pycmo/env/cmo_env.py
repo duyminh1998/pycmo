@@ -10,8 +10,9 @@ from time import sleep
 import logging
 from typing import Tuple
 import gymnasium as gym
+from gymnasium import spaces
 
-from pycmo.lib.actions import AvailableFunctions
+from pycmo.lib.actions import AvailableFunctions, Function
 from pycmo.lib.features import Features, FeaturesFromSteam
 from pycmo.lib.protocol import Client, SteamClient, SteamClientProps
 from pycmo.configs.config import get_config
@@ -348,7 +349,7 @@ class CMOEnv():
                 if get_obs_retries > max_get_obs_retries:
                     raise TimeoutError("CMOEnv unable to get observation.")
     
-    def action_spec(self, observation:Features) -> AvailableFunctions:    
+    def action_spec(self, observation:Features | FeaturesFromSteam) -> AvailableFunctions:    
         return AvailableFunctions(observation)
 
     def check_game_ended(self) -> bool:
@@ -392,9 +393,10 @@ class CMOGymEnv(gym.Env):
             max_resets=max_resets
         )
 
-        self.observation_space = None
+        self.observation_space = spaces.Discrete(1)
         
-        self.action_space = None
+        self.action_space = spaces.Discrete(1)
+        self.valid_cmo_actions = []
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
@@ -402,16 +404,24 @@ class CMOGymEnv(gym.Env):
     def _get_obs(self) -> FeaturesFromSteam:
         return self.cmo_env.get_obs()
     
-    def _get_info(self) -> None:
-        ...
+    def _get_info(self) -> dict:
+        return {}
+
+    def _make_action_space(self, cmo_env_action_space:AvailableFunctions) -> Tuple[spaces.Discrete, list[Function]]:
+        action_space = spaces.Discrete(len(cmo_env_action_space.VALID_FUNCTIONS))
+        valid_functions = cmo_env_action_space.VALID_FUNCTIONS
+        return action_space, valid_functions
     
-    def reset(self, seed=None, options=None) -> Tuple[FeaturesFromSteam]:
+    def reset(self, seed=None, options=None) -> Tuple[FeaturesFromSteam, dict]:
         state = self.cmo_env.reset()
         observation = state.observation
         info = self._get_info()
+        
+        self.action_space, self.valid_cmo_actions = self._make_action_space(cmo_env_action_space=self.cmo_env.action_spec(observation=observation))
+        
         return observation, info
 
-    def step(self, action) -> Tuple[FeaturesFromSteam, int, bool, bool, None]:
+    def step(self, action) -> Tuple[FeaturesFromSteam, int, bool, bool, dict]:
         state = self.cmo_env.step(action)
         terminated = self.cmo_env.check_game_ended() or state.step_type == StepType(2)
         truncated = False
@@ -419,7 +429,9 @@ class CMOGymEnv(gym.Env):
         observation = state.observation
         info = self._get_info()
 
+        self.action_space, self.valid_cmo_actions = self._make_action_space(cmo_env_action_space=self.cmo_env.action_spec(observation=observation))
+
         return observation, reward, terminated, truncated, info
 
     def close(self):
-        ...
+        self.cmo_env.end_game()
