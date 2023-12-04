@@ -266,8 +266,11 @@ class CMOEnv():
         with open(self.scen_ended, 'w') as file:
             file.writelines(data)
 
-    def reset(self) -> TimeStep:
+    def reset(self, close_scenario_end_and_player_eval_messages:bool=False) -> TimeStep:
         try:
+            if close_scenario_end_and_player_eval_messages:
+                self.client.close_scenario_end_and_player_eval_messages()
+
             restart_result = self.client.restart_scenario()
 
             # check that the scenario loaded event has fired correctly in CMO, and if not, restart the scenario
@@ -412,8 +415,8 @@ class CMOGymEnv(gym.Env):
         valid_functions = cmo_env_action_space.VALID_FUNCTIONS
         return action_space, valid_functions
     
-    def reset(self, seed=None, options=None) -> Tuple[FeaturesFromSteam, dict]:
-        state = self.cmo_env.reset()
+    def reset(self, close_scenario_end_and_player_eval_messages: bool = False, seed=None, options=None) -> Tuple[FeaturesFromSteam, dict]:
+        state = self.cmo_env.reset(close_scenario_end_and_player_eval_messages=close_scenario_end_and_player_eval_messages)
         observation = state.observation
         info = self._get_info()
         

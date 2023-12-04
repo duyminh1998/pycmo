@@ -33,14 +33,13 @@ strike_weapon_name = "GBU-53/B StormBreaker"
 
 agent = ScriptedAgent(player_side=player_side, attacker_name=attacker_name, target_name=target_name, strike_weapon_name=strike_weapon_name)
 
-observation, info = env.reset(seed=42)
+observation, info = env.reset(close_scenario_end_and_player_eval_messages=False, seed=42)
 for _ in range(282):
     action = agent.action(observation, env.unwrapped.valid_cmo_actions)
     observation, reward, terminated, truncated, info = env.step(action=action)
 
     if terminated or truncated:
-        env.unwrapped.cmo_env.client.close_scenario_end_and_player_eval_messages()
-        observation, info = env.reset()
+        observation, info = env.reset(close_scenario_end_and_player_eval_messages=True)
         action = ''
         agent.reset()
 
