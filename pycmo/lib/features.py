@@ -6,25 +6,77 @@
 # imports
 import xml.etree.ElementTree as ET
 import xmltodict
-import collections
-from typing import Tuple
+from typing import Tuple, NamedTuple
+import logging
 
 # This section can be modified to dictate the type of observations that are returned from the game at each time step
-# Game 
-Game = collections.namedtuple("Game", ["TimelineID", "Time", "ScenarioName", "ZeroHour", "StartTime", "Duration", "Sides"])
+# Game
+class Game(NamedTuple):
+    TimelineID: str | None
+    Time: int
+    ScenarioName: str
+    ZeroHour: int
+    StartTime: int
+    Duration: int
+    Sides: list[str]
+
 # Side 
-Side = collections.namedtuple("Side", ['ID', 'Name', 'TotalScore'])
-# Unit 
-Unit = collections.namedtuple("Unit", ['XML_ID', 'ID', 'Name', 'Side', 'DBID', 'Type',
-                                        'CH', 'CS', 'CA', 'Lon', 'Lat', 'CurrentFuel', 'MaxFuel', 'Mounts', 'Loadout'])
-# Mount 
-Mount = collections.namedtuple("Mount", ["XML_ID", "ID", "Name", "DBID", "Weapons"])
-# Loadout
-Loadout = collections.namedtuple("Loadout", ["XML_ID", "ID", "Name", "DBID", "Weapons"])
+class Side(NamedTuple):
+    ID: str
+    Name: str
+    TotalScore: int
+
 # Weapon
-Weapon = collections.namedtuple("Weapon", ["XML_ID", "ID", "WeaponID", "QuantRemaining", "MaxQuant"])
+class Weapon(NamedTuple):
+    XML_ID: int
+    ID: str
+    WeaponID: int
+    QuantRemaining: int | None
+    MaxQuant: int | None
+
 # Contacts 
-Contact = collections.namedtuple("Contact", ["XML_ID", "ID", 'Name', 'CS', 'CA', 'Lon', 'Lat'])
+class Contact(NamedTuple):
+    XML_ID: int
+    ID: str
+    Name: str | None
+    CS: float | None 
+    CA: float | None 
+    Lon: float | None 
+    Lat: float | None
+
+# Mount 
+class Mount(NamedTuple):
+    XML_ID: int
+    ID: str
+    Name: str
+    DBID: int
+    Weapons: list[Weapon]
+
+# Loadout
+class Loadout(NamedTuple):
+    XML_ID: int
+    ID: int
+    Name: str
+    DBID: int
+    Weapons: list[Weapon]
+
+# Unit 
+class Unit(NamedTuple):
+    XML_ID: int
+    ID: str
+    Name: str
+    Side: str
+    DBID: int
+    Type: str
+    CH: float | None
+    CS: float | None
+    CA: float | None
+    Lon: float
+    Lat: float
+    CurrentFuel: float | None
+    MaxFuel: float | None
+    Mounts: list[Mount] | None
+    Loadout: Loadout | None
 
 class Features(object):
     """
@@ -47,8 +99,10 @@ class Features(object):
             root = tree.getroot() # This is the root of the XML tree
             xmlstr = ET.tostring(root)            
             self.scen_dic = xmltodict.parse(xmlstr) # our scenario xml is now in 'dic'
-        except FileNotFoundError as error:
-            raise ValueError("Unable to parse scenario xml.")
+        except FileNotFoundError:
+            raise FileNotFoundError("Unable to parse scenario xml.")
+        
+        self.logger = logging.getLogger(__name__)
         
         # get features
         self.player_side = player_side
@@ -57,10 +111,10 @@ class Features(object):
         self.units = self.get_side_units(player_side)
         try:
             player_side_index = self.get_sides().index(player_side)
-        except:
+        except ValueError:
             raise ValueError('Cannot find player side.')
         self.side_ = self.get_side_properties(player_side_index)
-        self.contacts = self.get_contacts(player_side_index)
+        self.contacts = self.get_side_contacts(player_side_index)
         
     def transform_obs_into_arrays(self) -> Tuple[Game, list[Unit], Side, list[Contact]]:
         """
@@ -95,12 +149,12 @@ class Features(object):
             
         try:
             return Game(timeline_id,
-                            self.scen_dic['Scenario']["Time"],
-                            self.scen_dic['Scenario']["Title"],
-                            self.scen_dic['Scenario']["ZeroHour"],
-                            self.scen_dic['Scenario']["StartTime"],
-                            self.scen_dic['Scenario']["Duration"],
-                            self.get_sides())
+                        int(self.scen_dic['Scenario']["Time"]),
+                        self.scen_dic['Scenario']["Title"],
+                        int(self.scen_dic['Scenario']["ZeroHour"]),
+                        int(self.scen_dic['Scenario']["StartTime"]),
+                        int(self.scen_dic['Scenario']["Duration"]),
+                        self.get_sides())
         except KeyError:
             raise KeyError("Failed to get scenario properties.")
 
@@ -116,119 +170,124 @@ class Features(object):
             (list) a list of side names
         """        
         try:
-            return [self.scen_dic['Scenario']['Sides']['Side'][i]['Name'] for i in range(len(self.scen_dic['Scenario']['Sides']['Side']))]
+            return [side['Name'] for side in self.scen_dic['Scenario']['Sides']['Side']]
         except KeyError:
             raise KeyError("Failed to get list of side names in scenario.")
 
-    def get_side_properties(self, side_id:int=0) -> Side:
+    def get_side_properties(self, side_index:int=0) -> Side:
         """
         Description:
             Get the properties (score, name, etc.) of a side.
 
         Keyword Arguments:
-            side_id: index to choose the side for information.
+            side_index: index to choose the side for information.
         
         Returns:
             (Side) a named tuple containing Side information.
         """
         try:
-            return Side(self.scen_dic['Scenario']['Sides']['Side'][side_id]['ID'],
-                        self.scen_dic['Scenario']['Sides']['Side'][side_id]['Name'],
-                        int(self.scen_dic['Scenario']['Sides']['Side'][side_id]['TotalScore']))
+            side = self.scen_dic['Scenario']['Sides']['Side'][side_index]
+            return Side(side['ID'], side['Name'], int(side['TotalScore']))
         except KeyError:
             raise KeyError("Failed to get side properties.")
 
-    def get_side_units(self, side_id_str=None) -> list[Unit]:
+    def get_side_units(self, side_name=None) -> list[Unit]:
         """
         Description:
             Get all the units of a side.
 
         Keyword Arguments:
-            side_id_str: the name of the side to get units for.
+            side_name: the name of the side to get units for.
         
         Returns:
             (list) a list of the units of the side.
         """
         unit_ids = []
-        if side_id_str == None or 'ActiveUnits' not in self.scen_dic["Scenario"].keys():
+        if side_name == None or 'ActiveUnits' not in self.scen_dic["Scenario"].keys():
             return unit_ids
-        for key in self.scen_dic["Scenario"]["ActiveUnits"].keys():
-            active_units = self.scen_dic["Scenario"]["ActiveUnits"][key]
-            if not isinstance(self.scen_dic["Scenario"]["ActiveUnits"][key], list):
-                active_units = [self.scen_dic["Scenario"]["ActiveUnits"][key]]
-            for i in range(len(active_units)):
+        for unit_type in self.scen_dic["Scenario"]["ActiveUnits"].keys():
+            active_units = self.scen_dic["Scenario"]["ActiveUnits"][unit_type]
+            if not isinstance(self.scen_dic["Scenario"]["ActiveUnits"][unit_type], list):
+                active_units = [self.scen_dic["Scenario"]["ActiveUnits"][unit_type]]
+            for unit_idx, unit in enumerate(active_units):
                 try:
-                    if active_units[i]["Side"] == side_id_str:
-                        unit_id = active_units[i]['ID']
-                        name = active_units[i]['Name']
-                        dbid = active_units[i]['DBID']
-                        lon = float(active_units[i]['Lon'])
-                        lat = float(active_units[i]['Lat'])
-                        ch = None
-                        cs = None
-                        ca = None
-                        loadout = None
-                        mount = None
-                        cf = None
-                        mf = None
-                        if 'Loadout' in active_units[i].keys() and active_units[i]['Loadout'] != None:
-                            loadout = self.get_loadout(active_units[i])
-                        if 'Mounts' in active_units[i].keys() and active_units[i]['Mounts'] != None:
-                            mount = self.get_mount(active_units[i])
-                        if 'CH' in active_units[i].keys() and active_units[i]['CH'] != None:
-                            ch = active_units[i]['CH']
-                        if 'CS' in active_units[i].keys() and active_units[i]['CS'] != None:
-                            cs = float(active_units[i]['CS'])
-                        if 'CA' in active_units[i].keys() and active_units[i]['CA'] != None:
-                            ca = float(active_units[i]['CA'])
-                        if 'Fuel' in active_units[i].keys():
-                            cf = float(active_units[i]['Fuel']['FuelRec']['CQ'])
-                            mf = float(active_units[i]['Fuel']['FuelRec']['MQ'])
-                        unit_ids.append(Unit(i, unit_id, name, self.player_side, dbid, key, ch, cs, ca, lon, lat, cf, mf, mount, loadout))
+                    if unit["Side"] == side_name:
+                        unit_ids.append(self.get_unit(unit=unit, unit_idx=unit_idx, unit_type=unit_type, side_name=side_name))
                 except KeyError:
-                    pass                        
+                    self.logger.warn("Failed to parse one unit xml.")                 
         return unit_ids
+    
+    def get_unit(self, unit:dict, unit_idx:int, unit_type:str, side_name:str) -> Unit:
+        try:
+            unit_id = unit['ID']
+            name = unit['Name']
+            dbid = int(unit['DBID'])
+            lon = float(unit['Lon'])
+            lat = float(unit['Lat'])
+            ch = None
+            cs = None
+            ca = None
+            loadout = None
+            mount = None
+            cf = None
+            mf = None
+            if 'Loadout' in unit.keys() and unit['Loadout'] != None:
+                loadout = self.get_loadout(unit)
+            if 'Mounts' in unit.keys() and unit['Mounts'] != None:
+                mount = self.get_mount(unit)
+            if 'CH' in unit.keys() and unit['CH'] != None:
+                ch = float(unit['CH'])
+            if 'CS' in unit.keys() and unit['CS'] != None:
+                cs = float(unit['CS'])
+            if 'CA' in unit.keys() and unit['CA'] != None:
+                ca = float(unit['CA'])
+            if 'Fuel' in unit.keys():
+                cf = float(unit['Fuel']['FuelRec']['CQ'])
+                mf = float(unit['Fuel']['FuelRec']['MQ'])
+            return Unit(unit_idx, unit_id, name, side_name, dbid, unit_type, ch, cs, ca, lon, lat, cf, mf, mount, loadout)
+        except KeyError:
+            raise KeyError("Error parsing xml for unit.")
 
-    def get_mount(self, unit_xml:dict) -> list[Mount]:
+    def get_mount(self, unit:dict) -> list[Mount]:
         """
         Description:
             Returns the Mounts of a unit. Required to control the weapons on the unit.
 
         Keyword Arguments:
-            unit_xml: the xml string of the unit. Preferably in dictionary format.
+            unit: the xml string of the unit. Preferably in dictionary format.
         
         Returns:
             (list) a list of the unit's mounts.
         """        
-        mounts = []
-        mount_xml = unit_xml["Mounts"]["Mount"]
-        if not isinstance(mount_xml, list):
-            mount_xml = [unit_xml["Mounts"]["Mount"]]
-        for i in range(len(mount_xml)):
-            mount_id = mount_xml[i]["ID"]
-            name = mount_xml[i]["Name"]
-            dbid = mount_xml[i]["DBID"]
-            mounts.append(Mount(i, mount_id, name, dbid, self.get_weapon('Mount', mount_xml[i])))
-        return mounts      
+        parsed_mounts = []
+        mounts = unit["Mounts"]["Mount"]
+        if not isinstance(mounts, list):
+            mounts = [unit["Mounts"]["Mount"]]
+        for mount_idx, mount in enumerate(mounts):
+            mount_id = mount["ID"]
+            name = mount["Name"]
+            dbid = int(mount["DBID"])
+            parsed_mounts.append(Mount(mount_idx, mount_id, name, dbid, self.get_loadout_or_mount_weapons('Mount', mount)))
+        return parsed_mounts      
 
-    def get_loadout(self, unit_xml:dict) -> Loadout:
+    def get_loadout(self, unit:dict) -> Loadout:
         """
         Description:
             Returns the Loadout of a unit.
 
         Keyword Arguments:
-            unit_xml: the xml string of the unit. Preferably in dictionary format.
+            unit: the xml string of the unit. Preferably in dictionary format.
         
         Returns:
             (Loadout) the unit's current loadout.
         """                
-        loadout_xml = unit_xml["Loadout"]["Loadout"]
-        loadout_id = loadout_xml["ID"]
-        name = loadout_xml["Name"]
-        dbid = loadout_xml["DBID"]
-        return Loadout(0, loadout_id, name, dbid, self.get_weapon('Loadout', loadout_xml))
+        loadout = unit["Loadout"]["Loadout"]
+        loadout_id = int(loadout["ID"])
+        name = loadout["Name"]
+        dbid = int(loadout["DBID"])
+        return Loadout(0, loadout_id, name, dbid, self.get_loadout_or_mount_weapons('Loadout', loadout))
     
-    def get_weapon(self, mount_or_loadout:str, xml_str:str) -> list[Weapon]:
+    def get_loadout_or_mount_weapons(self, mount_or_loadout:str, xml_str:dict, add_weapons_to_available_weapons_list:bool=True) -> list[Weapon]:
         """
         Description:
             Returns the weapons on a mount or loadout. Also sets the unit's list of available weapons.
@@ -241,84 +300,84 @@ class Features(object):
             (list) the unit's weapons.
         """
         weapons = []
+
         if mount_or_loadout == "Loadout":
             if 'Weaps' not in xml_str.keys() or xml_str['Weaps'] == None:
                 return weapons
             wrec = xml_str['Weaps']['WRec']
-            if not isinstance(wrec, list):
-                wrec = [xml_str['Weaps']['WRec']]
-            for i in range(len(wrec)):
-                cl = None
-                ml = None
-                if "CL" in wrec[i].keys():
-                    cl = int(wrec[i]["CL"])
-                if "ML" in wrec[i].keys():
-                    ml = int(wrec[i]["ML"])            
-                weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl, ml))
-                self.avai_weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl, ml))
-            return weapons
         elif mount_or_loadout == "Mount":
             if 'MW' not in xml_str.keys() or xml_str['MW'] == None:
                 return weapons
             wrec = xml_str['MW']['WRec']
-            if not isinstance(wrec, list):
-                wrec = [xml_str['MW']['WRec']]
-            for i in range(len(wrec)):
-                cl = None
-                ml = None
-                if "CL" in wrec[i].keys():
-                    cl = int(wrec[i]["CL"])
-                if "ML" in wrec[i].keys():
-                    ml = int(wrec[i]["ML"])                    
-                weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl, ml))
-                self.avai_weapons.append(Weapon(i, wrec[i]["ID"], wrec[i]['WeapID'], cl, ml))
-            return weapons
         else:
             return weapons
+        
+        return self.get_weapon_records(weapon_records=wrec, add_weapons_to_available_weapons_list=add_weapons_to_available_weapons_list)
+    
+    def get_weapon_records(self, weapon_records:dict, add_weapons_to_available_weapons_list:bool=True) -> list[Weapon]:
+        weapons = []
 
-    def get_contacts(self, side_id:int=0) -> list[Contact]:
+        if not isinstance(weapon_records, list):
+            weapon_records = [weapon_records]
+        
+        for weapon_record_idx, weapon_record in enumerate(weapon_records):
+            cl = None
+            ml = None
+            if "CL" in weapon_record.keys():
+                cl = int(weapon_record["CL"])
+            if "ML" in weapon_record.keys():
+                ml = int(weapon_record["ML"])
+            weapon = Weapon(weapon_record_idx, weapon_record["ID"], int(weapon_record['WeapID']), cl, ml)     
+            weapons.append(weapon)
+            if add_weapons_to_available_weapons_list:
+                self.avai_weapons.append(weapon)     
+
+        return weapons   
+
+    def get_side_contacts(self, side_index:int=0) -> list[Contact]:
         """
         Description:
             Return the contacts of a side.
 
         Keyword Arguments:
-            side_id: index to choose the side for information.
+            side_index: index to choose the side for information.
         
         Returns:
             (list) a list of contacts.
         """
+        contact_id = []
+        if "Contacts" in self.scen_dic["Scenario"]["Sides"]["Side"][side_index].keys():
+            contacts = self.scen_dic["Scenario"]["Sides"]["Side"][side_index]["Contacts"]["Contact"]
+            if not isinstance(contacts, list):
+                contacts = [self.scen_dic["Scenario"]["Sides"]["Side"][side_index]["Contacts"]["Contact"]]
+            for contact_idx, contact in enumerate(contacts):
+                try:
+                    contact_id.append(self.get_contact(contact=contact, contact_idx=contact_idx))
+                except KeyError:
+                    self.logger.warn("Failed to parse one contact xml.")
+            return contact_id
+        return contact_id
+    
+    def get_contact(self, contact:dict, contact_idx:int) -> Contact:
         try:
-            contact_id = []
-            if "Contacts" in self.scen_dic["Scenario"]["Sides"]["Side"][side_id].keys():
-                contacts = self.scen_dic["Scenario"]["Sides"]["Side"][side_id]["Contacts"]["Contact"]
-                if not isinstance(contacts, list):
-                    contacts = [self.scen_dic["Scenario"]["Sides"]["Side"][side_id]["Contacts"]["Contact"]]
-                for i in range(len(contacts)):
-                    cs = None
-                    ca = None
-                    lon = None
-                    lat = None
-                    cont_name = None
-                    if 'CS' in contacts[i].keys() and contacts[i]['CS'] != None:
-                        cs = float(contacts[i]['CS'])
-                    if 'CA' in contacts[i].keys() and contacts[i]['CA'] != None:
-                        ca = float(contacts[i]['CA'])
-                    if 'Lon' in contacts[i].keys() and contacts[i]['Lon'] != None:
-                        lon = float(contacts[i]['Lon'])
-                    if 'Lat' in contacts[i].keys() and contacts[i]['Lat'] != None:
-                        lat = float(contacts[i]['Lat'])
-                    if 'Name' in contacts[i].keys() and contacts[i]['Name'] != None:
-                        cont_name = contacts[i]['Name']
-                    contact_id.append(Contact(i, contacts[i]["ID"], cont_name, cs, ca, lon, lat))
-                return contact_id
-            else:
-                return contact_id
+            cs = None
+            ca = None
+            lon = None
+            lat = None
+            contact_name = None
+            if 'CS' in contact.keys() and contact['CS'] != None:
+                cs = float(contact['CS'])
+            if 'CA' in contact.keys() and contact['CA'] != None:
+                ca = float(contact['CA'])
+            if 'Lon' in contact.keys() and contact['Lon'] != None:
+                lon = float(contact['Lon'])
+            if 'Lat' in contact.keys() and contact['Lat'] != None:
+                lat = float(contact['Lat'])
+            if 'Name' in contact.keys() and contact['Name'] != None:
+                contact_name = contact['Name']
+            return Contact(contact_idx, contact["ID"], contact_name, cs, ca, lon, lat)
         except KeyError:
-            print("KeyError: failed to get side contacts.")
-            return contact_id
-        except:
-            print("ERROR: failed to get side contacts.")
-            return contact_id
+            raise KeyError("Error parsing xml for contact.")
 
 class FeaturesFromSteam(Features):
     """
@@ -338,8 +397,8 @@ class FeaturesFromSteam(Features):
         """
         try:         
             self.scen_dic = xmltodict.parse(xml) # our scenario xml is now in 'dic'
-        except FileNotFoundError as error:
-            raise ValueError("Unable to parse scenario xml.")
+        except FileNotFoundError:
+            raise FileNotFoundError("Unable to parse scenario xml.")
         
         # get features
         self.player_side = player_side
@@ -348,7 +407,7 @@ class FeaturesFromSteam(Features):
         self.units = self.get_side_units(player_side)
         try:
             player_side_index = self.get_sides().index(player_side)
-        except:
+        except ValueError:
             raise ValueError('Cannot find player side.')
         self.side_ = self.get_side_properties(player_side_index)
-        self.contacts = self.get_contacts(player_side_index)
+        self.contacts = self.get_side_contacts(player_side_index)
