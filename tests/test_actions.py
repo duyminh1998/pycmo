@@ -39,6 +39,10 @@ manual_attack_contact_test_parameters = [
     (aircraft_ID, target_ID, weapon_ID, weapon_qty, mount_ID, f"ScenEdit_AttackContact('{aircraft_ID}', '{target_ID}' , {{mode='1', mount='{mount_ID}', weapon='{weapon_ID}', qty='{weapon_qty}'}})"),
     (aircraft_ID, target_ID, weapon_ID, weapon_qty, None, f"ScenEdit_AttackContact('{aircraft_ID}', '{target_ID}' , {{mode='1', weapon='{weapon_ID}', qty='{weapon_qty}'}})"),
 ]
+rtb_test_parameters = [
+    (side, aircraft_name, True, f"ScenEdit_SetUnit({{side = '{side}', name = '{aircraft_name}', RTB = true}})"),
+    (side, aircraft_name, False, f"ScenEdit_SetUnit({{side = '{side}', name = '{aircraft_name}', RTB = false}})"),
+]
 contains_test_parameters = [
     (0, [], True),
     (0, [1], False),
@@ -73,8 +77,9 @@ def test_refuel_unit():
 def test_auto_refuel_unit():
     assert auto_refuel_unit(side, aircraft_name) == f"ScenEdit_RefuelUnit({{side='{side}', unitname='{aircraft_name}'}})"
 
-def test_rtb():
-    assert rtb(side, aircraft_name) == f"ScenEdit_SetUnit({{side = '{side}', name = '{aircraft_name}', RTB = true}})"
+@pytest.mark.parametrize("side, aircraft_name, return_to_base, expected", rtb_test_parameters)
+def test_rtb(side, aircraft_name, return_to_base, expected):
+    assert rtb(side, aircraft_name, return_to_base) == expected
 
 def test_action_space():
     assert isinstance(action_space, AvailableFunctions)

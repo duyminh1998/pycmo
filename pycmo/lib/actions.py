@@ -16,7 +16,7 @@ Function = collections.namedtuple("Function", ['id', 'name', 'corresponding_def'
 def no_op():
   return ""
 
-def launch_aircraft(side:str, unit_name:str, launch:bool) -> str:
+def launch_aircraft(side:str, unit_name:str, launch:bool=True) -> str:
   return f"ScenEdit_SetUnit({{side = '{side}', name = '{unit_name}', Launch = {'true' if launch else 'false'}}})"
 
 def set_unit_course(side:str, unit_name:str, latitude:float, longitude:float) -> str:
@@ -34,8 +34,8 @@ def refuel_unit(side:str, unit_name:str, tanker_name:str) -> str:
 def auto_refuel_unit(side:str, unit_name:str) -> str:
   return f"ScenEdit_RefuelUnit({{side='{side}', unitname='{unit_name}'}})"
 
-def rtb(side:str, unit_name:str) -> str:
-  return f"ScenEdit_SetUnit({{side = '{side}', name = '{unit_name}', RTB = true}})"
+def rtb(side:str, unit_name:str, return_to_base:bool=True) -> str:
+  return f"ScenEdit_SetUnit({{side = '{side}', name = '{unit_name}', RTB = {'true' if return_to_base else 'false'}}})"
 
 ARG_TYPES = {
   'no_op': ['NoneChoice'],
@@ -45,7 +45,7 @@ ARG_TYPES = {
   'auto_attack_contact': ['EnumChoice', 'EnumChoice'],
   'refuel_unit': ['EnumChoice', 'EnumChoice', 'EnumChoice'],
   'auto_refuel_unit': ['EnumChoice', 'EnumChoice'],
-  'rtb': ['EnumChoice', 'EnumChoice'],
+  'rtb': ['EnumChoice', 'EnumChoice', 'EnumChoice'],
 }
 
 class AvailableFunctions():
@@ -112,15 +112,18 @@ class AvailableFunctions():
     return loadout_id, weapon_ids, weapon_qtys
   
   def get_valid_function_args(self) -> dict[str, list]:
+    boolean_list = [True, False]
+    latitude_ranges = [-90.0, 90.0]
+    longitude_ranges = [-180.0, 180.0]
     return {
       'no_op': [],
-      'launch_aircraft': [self.sides, self.unit_names, [True, False]],
-      'set_unit_course': [self.sides, self.unit_names, [-90, 90], [-180, 180]],
+      'launch_aircraft': [self.sides, self.unit_names, boolean_list],
+      'set_unit_course': [self.sides, self.unit_names, latitude_ranges, longitude_ranges],
       'manual_attack_contact': [self.unit_ids, self.contact_ids, self.weapon_ids, self.weapon_qtys, self.mount_ids],
       'auto_attack_contact': [self.unit_ids, self.contact_ids],
       'refuel_unit': [self.sides, self.unit_names, self.unit_names],
       'auto_refuel_unit': [self.sides, self.unit_names],
-      'rtb': [self.sides, self.unit_names]
+      'rtb': [self.sides, self.unit_names, boolean_list]
     }
   
   def get_valid_functions(self) -> list[Function]:
