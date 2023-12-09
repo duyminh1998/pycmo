@@ -41,7 +41,7 @@ class ScriptedAgent(BaseAgent):
 
         # in the first state, launch the requested aircraft
         if self.state == 0:
-            action = launch_aircraft(side=self.player_side, unit_name=attacker.Name, launch_yn='true')
+            action = launch_aircraft(side=self.player_side, unit_name=attacker.Name, launch=True)
             self.state += 1
 
         # in the second state, move aircraft to the intermediate point

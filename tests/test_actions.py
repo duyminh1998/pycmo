@@ -16,9 +16,9 @@ aircraft_name = "Sufa #1"
 aircraft_ID = "6352f8eb-db07-4916-8da7-33ef013878a0"
 course_latitude = -90
 course_longitude = 100
-weapon_ID = "4369"
+weapon_ID = 4369
 weapon_qty = 4
-mount_ID = "1256"
+mount_ID = 1256
 target_name = "Bogey #1"
 target_ID = "0HXVM6-0HMUTDCKTG4A6"
 
@@ -26,14 +26,14 @@ features = FeaturesFromSteam(xml=scenario_xml, player_side=side)
 action_space = AvailableFunctions(features=features)
 unit_id = "05ba3413-d0cd-4a69-8513-2d7e55d28366"
 unit_name = "Nahshon #1"
-mount_id = "286"
-loadout_id = "3"
-mount_weapon_id = "1918"
-loadout_weapon_id = "516"
+mount_id = 286
+loadout_id = 3
+mount_weapon_id = 1918
+loadout_weapon_id = 516
 
 launch_aircraft_test_parameters = [
-    (side, aircraft_name, "true", f"ScenEdit_SetUnit({{side = '{side}', name = '{aircraft_name}', Launch = true}})"),
-    (side, aircraft_name, "false", f"ScenEdit_SetUnit({{side = '{side}', name = '{aircraft_name}', Launch = false}})"),
+    (side, aircraft_name, True, f"ScenEdit_SetUnit({{side = '{side}', name = '{aircraft_name}', Launch = true}})"),
+    (side, aircraft_name, False, f"ScenEdit_SetUnit({{side = '{side}', name = '{aircraft_name}', Launch = false}})"),
 ]
 manual_attack_contact_test_parameters = [
     (aircraft_ID, target_ID, weapon_ID, weapon_qty, mount_ID, f"ScenEdit_AttackContact('{aircraft_ID}', '{target_ID}' , {{mode='1', mount='{mount_ID}', weapon='{weapon_ID}', qty='{weapon_qty}'}})"),
@@ -42,9 +42,9 @@ manual_attack_contact_test_parameters = [
 contains_test_parameters = [
     (0, [], True),
     (0, [1], False),
-    (1, [side, aircraft_name, "true"], True),
+    (1, [side, aircraft_name, True], True),
     (1, [side, aircraft_name], False),
-    (1, [side, aircraft_ID, "true"], False),
+    (1, [side, aircraft_ID, True], False),
     (2, [side, aircraft_ID, course_latitude, course_longitude], False),
     (2, [side, aircraft_name, course_latitude, course_longitude], True),
     (2, [side, aircraft_name, 200, 200], False),
@@ -53,9 +53,9 @@ contains_test_parameters = [
 def test_no_op():
     assert no_op() == ""
 
-@pytest.mark.parametrize("side, aircraft_name, launch_yn, expected", launch_aircraft_test_parameters)
-def test_launch_aircraft(side, aircraft_name, launch_yn, expected):
-    assert launch_aircraft(side, aircraft_name, launch_yn) == expected
+@pytest.mark.parametrize("side, aircraft_name, launch, expected", launch_aircraft_test_parameters)
+def test_launch_aircraft(side, aircraft_name, launch, expected):
+    assert launch_aircraft(side, aircraft_name, launch) == expected
 
 def test_set_unit_course():
     assert set_unit_course(side, aircraft_ID, course_latitude, course_longitude) == f"ScenEdit_SetUnit({{side = '{side}', name = '{aircraft_ID}', course = {{{{longitude = {course_longitude}, latitude = {course_latitude}, TypeOf = 'ManualPlottedCourseWaypoint'}}}}}})"
@@ -132,13 +132,13 @@ def test_action_space_valid_functions():
     assert isinstance(manual_attack_fnc.args, list)
     weapon_id_args = manual_attack_fnc.args[2]
     assert isinstance(weapon_id_args, list)
-    assert isinstance(list(weapon_id_args)[0], str)
+    assert isinstance(list(weapon_id_args)[0], int)
     weapon_qty_args = manual_attack_fnc.args[3]
     assert isinstance(weapon_qty_args, list)
     assert isinstance(list(weapon_qty_args)[0], int)
     mount_id_args = manual_attack_fnc.args[4]
     assert isinstance(mount_id_args, list)
-    assert isinstance(list(mount_id_args)[0], str)
+    assert isinstance(list(mount_id_args)[0], int)
 
 def test_action_space_sample():
     action = action_space.sample()

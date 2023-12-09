@@ -16,13 +16,13 @@ Function = collections.namedtuple("Function", ['id', 'name', 'corresponding_def'
 def no_op():
   return ""
 
-def launch_aircraft(side:str, unit_name:str, launch_yn:str) -> str:
-  return f"ScenEdit_SetUnit({{side = '{side}', name = '{unit_name}', Launch = {launch_yn}}})"
+def launch_aircraft(side:str, unit_name:str, launch:bool) -> str:
+  return f"ScenEdit_SetUnit({{side = '{side}', name = '{unit_name}', Launch = {'true' if launch else 'false'}}})"
 
 def set_unit_course(side:str, unit_name:str, latitude:float, longitude:float) -> str:
   return f"ScenEdit_SetUnit({{side = '{side}', name = '{unit_name}', course = {{{{longitude = {longitude}, latitude = {latitude}, TypeOf = 'ManualPlottedCourseWaypoint'}}}}}})"
 
-def manual_attack_contact(attacker_id:str, contact_id:str, weapon_id:str, qty:int, mount_id:str=None) -> str:
+def manual_attack_contact(attacker_id:str, contact_id:str, weapon_id:int, qty:int, mount_id:int=None) -> str:
   return f"ScenEdit_AttackContact('{attacker_id}', '{contact_id}' , {{mode='1', " + (f"mount='{mount_id}', " if mount_id else "") + f"weapon='{weapon_id}', qty='{qty}'}})"
 
 def auto_attack_contact(attacker_id:str, contact_id:str) -> str:
@@ -73,7 +73,7 @@ class AvailableFunctions():
   def get_contact_ids(self, features:Features|FeaturesFromSteam) -> list[str]:
     return [contact.ID for contact in features.contacts]
   
-  def get_weapons(self, features:Features|FeaturesFromSteam) -> Tuple[list[str], list[str], list[str], list[int]]:
+  def get_weapons(self, features:Features|FeaturesFromSteam) -> Tuple[list[int], list[int], list[int], list[int]]:
     mount_ids = []
     loadout_ids = []
     weapon_ids = []
@@ -87,7 +87,7 @@ class AvailableFunctions():
       weapon_qtys += unit_mount_weapon_qtys + unit_loadout_weapon_qtys
     return mount_ids, loadout_ids, weapon_ids, weapon_qtys
   
-  def get_mount_ids_weapon_ids_and_qtys(self, unit:Unit) -> Tuple[list[str], list[str], list[int]]:
+  def get_mount_ids_weapon_ids_and_qtys(self, unit:Unit) -> Tuple[list[int], list[int], list[int]]:
     mount_ids = []
     weapon_ids = []
     weapon_qtys = []
@@ -99,7 +99,7 @@ class AvailableFunctions():
           weapon_qtys.append(weapon.QuantRemaining)
     return mount_ids, weapon_ids, weapon_qtys
 
-  def get_loadout_id_weapon_ids_and_qtys(self, unit:Unit) -> Tuple[str | None, list[str], list[int]]:
+  def get_loadout_id_weapon_ids_and_qtys(self, unit:Unit) -> Tuple[int | None, list[int], list[int]]:
     loadout_id = None
     weapon_ids = []
     weapon_qtys = []
@@ -114,7 +114,7 @@ class AvailableFunctions():
   def get_valid_function_args(self) -> dict[str, list]:
     return {
       'no_op': [],
-      'launch_aircraft': [self.sides, self.unit_names, ["true", "false"]],
+      'launch_aircraft': [self.sides, self.unit_names, [True, False]],
       'set_unit_course': [self.sides, self.unit_names, [-90, 90], [-180, 180]],
       'manual_attack_contact': [self.unit_ids, self.contact_ids, self.weapon_ids, self.weapon_qtys, self.mount_ids],
       'auto_attack_contact': [self.unit_ids, self.contact_ids],
