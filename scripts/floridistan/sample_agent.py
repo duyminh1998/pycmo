@@ -41,7 +41,7 @@ class ScriptedAgent(BaseAgent):
 
         # in the first state, launch the requested aircraft
         if self.state == 0:
-            action = launch_aircraft(side=self.player_side, unit_name=attacker.Name, launch_yn='true')
+            action = launch_aircraft(side=self.player_side, unit_name=attacker.Name, launch=True)
             self.state += 1
 
         # in the second state, move aircraft to the intermediate point
@@ -65,7 +65,7 @@ class ScriptedAgent(BaseAgent):
 
         # in the fifth state, RTB
         elif self.state == 4 and attacker.Lon <= -76:
-            action = rtb(side=self.player_side, unit_name=attacker.Name)
+            action = rtb(side=self.player_side, unit_name=attacker.Name, return_to_base=True)
             self.state += 1
 
         return action
