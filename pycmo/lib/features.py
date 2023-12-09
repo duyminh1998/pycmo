@@ -287,7 +287,7 @@ class Features(object):
         dbid = int(loadout["DBID"])
         return Loadout(0, loadout_id, name, dbid, self.get_loadout_or_mount_weapons('Loadout', loadout))
     
-    def get_loadout_or_mount_weapons(self, mount_or_loadout:str, xml_str:dict, add_weapons_to_available_weapons_list:bool=True) -> list[Weapon]:
+    def get_loadout_or_mount_weapons(self, mount_or_loadout:str, xml_str:dict) -> list[Weapon]:
         """
         Description:
             Returns the weapons on a mount or loadout. Also sets the unit's list of available weapons.
@@ -312,9 +312,9 @@ class Features(object):
         else:
             return weapons
         
-        return self.get_weapon_records(weapon_records=wrec, add_weapons_to_available_weapons_list=add_weapons_to_available_weapons_list)
+        return self.get_weapon_records(weapon_records=wrec)
     
-    def get_weapon_records(self, weapon_records:dict, add_weapons_to_available_weapons_list:bool=True) -> list[Weapon]:
+    def get_weapon_records(self, weapon_records:dict) -> list[Weapon]:
         weapons = []
 
         if not isinstance(weapon_records, list):
@@ -328,9 +328,7 @@ class Features(object):
             if "ML" in weapon_record.keys():
                 ml = int(weapon_record["ML"])
             weapon = Weapon(weapon_record_idx, weapon_record["ID"], int(weapon_record['WeapID']), cl, ml)     
-            weapons.append(weapon)
-            if add_weapons_to_available_weapons_list:
-                self.avai_weapons.append(weapon)     
+            weapons.append(weapon)   
 
         return weapons   
 
