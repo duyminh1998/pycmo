@@ -107,7 +107,6 @@ class Features(object):
         # get features
         self.player_side = player_side
         self.meta = self.get_meta() # Return the scenario-level rmation of the scenario
-        self.avai_weapons = []
         self.units = self.get_side_units(player_side)
         try:
             player_side_index = self.get_sides().index(player_side)
@@ -401,7 +400,6 @@ class FeaturesFromSteam(Features):
         # get features
         self.player_side = player_side
         self.meta = self.get_meta() # Return the scenario-level rmation of the scenario
-        self.avai_weapons = []
         self.units = self.get_side_units(player_side)
         try:
             player_side_index = self.get_sides().index(player_side)
