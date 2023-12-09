@@ -4,6 +4,7 @@ import os
 from pycmo.configs.config import get_config
 from pycmo.env.cmo_env import CMOEnv
 from pycmo.lib.features import FeaturesFromSteam
+from pycmo.lib.protocol import SteamClientProps
 
 config = get_config()
 
@@ -14,12 +15,12 @@ command_version = config["command_mo_version"]
 observation_path = os.path.join(config['pycmo_path'], 'tests', "fixtures", "test_steam_observation.inst")
 action_path = os.path.join(config['pycmo_path'], 'tests', "fixtures", "test_cmo_env.lua")
 scen_ended_path = os.path.join(config['pycmo_path'], 'tests', "fixtures", "Steam demo_scen_has_ended.inst")
+steam_client_props = SteamClientProps(scenario_name = scenario_name, agent_action_filename=action_path, command_version=command_version)
 
 def init_cmo_env():
     return CMOEnv(
-        scenario_name=scenario_name,
         player_side=player_side,
-        command_version=command_version,
+        steam_client_props=steam_client_props,
         observation_path=observation_path,
         action_path=action_path,
         scen_ended_path=scen_ended_path,
