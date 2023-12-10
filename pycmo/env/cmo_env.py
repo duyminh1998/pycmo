@@ -8,11 +8,8 @@ import collections, enum
 import os
 from time import sleep
 import logging
-from typing import Tuple
-import gymnasium as gym
-from gymnasium import spaces
 
-from pycmo.lib.actions import AvailableFunctions, Function
+from pycmo.lib.actions import AvailableFunctions
 from pycmo.lib.features import Features, FeaturesFromSteam
 from pycmo.lib.protocol import Client, SteamClient, SteamClientProps
 from pycmo.configs.config import get_config
@@ -371,70 +368,3 @@ class CMOEnv():
         export_observation_event_name = 'Export observation'
         action = f"ScenEdit_RunScript('{pycmo_lua_lib_path}', true)\nteardown_and_end_scenario('{export_observation_event_name}', true)"
         return self.step(action)
-    
-class CMOGymEnv(gym.Env):
-    metadata = {"render_modes": [None]}
-
-    def __init__(
-            self,
-            player_side: str,
-            steam_client_props:SteamClientProps,
-            observation_path: str, 
-            action_path: str,
-            scen_ended_path: str,
-            pycmo_lua_lib_path: str | None = None,
-            max_resets: int = 20,
-            render_mode=None,
-    ):
-        self.cmo_env = CMOEnv(
-            player_side=player_side,
-            steam_client_props=steam_client_props,
-            observation_path=observation_path,
-            action_path=action_path,
-            scen_ended_path=scen_ended_path,
-            pycmo_lua_lib_path=pycmo_lua_lib_path,
-            max_resets=max_resets
-        )
-
-        self.observation_space = spaces.Discrete(1)
-        
-        self.action_space = spaces.Discrete(1)
-        self.valid_cmo_actions = []
-
-        assert render_mode is None or render_mode in self.metadata["render_modes"]
-        self.render_mode = render_mode
-        
-    def _get_obs(self) -> FeaturesFromSteam:
-        return self.cmo_env.get_obs()
-    
-    def _get_info(self) -> dict:
-        return {}
-
-    def _make_action_space(self, cmo_env_action_space:AvailableFunctions) -> Tuple[spaces.Discrete, list[Function]]:
-        action_space = spaces.Discrete(len(cmo_env_action_space.VALID_FUNCTIONS))
-        valid_functions = cmo_env_action_space.VALID_FUNCTIONS
-        return action_space, valid_functions
-    
-    def reset(self, close_scenario_end_and_player_eval_messages: bool = False, seed=None, options=None) -> Tuple[FeaturesFromSteam, dict]:
-        state = self.cmo_env.reset(close_scenario_end_and_player_eval_messages=close_scenario_end_and_player_eval_messages)
-        observation = state.observation
-        info = self._get_info()
-        
-        self.action_space, self.valid_cmo_actions = self._make_action_space(cmo_env_action_space=self.cmo_env.action_spec(observation=observation))
-        
-        return observation, info
-
-    def step(self, action) -> Tuple[FeaturesFromSteam, int, bool, bool, dict]:
-        state = self.cmo_env.step(action)
-        terminated = self.cmo_env.check_game_ended() or state.step_type == StepType(2)
-        truncated = False
-        reward = state.reward
-        observation = state.observation
-        info = self._get_info()
-
-        self.action_space, self.valid_cmo_actions = self._make_action_space(cmo_env_action_space=self.cmo_env.action_spec(observation=observation))
-
-        return observation, reward, terminated, truncated, info
-
-    def close(self):
-        self.cmo_env.end_game()

@@ -1,6 +1,6 @@
 from gymnasium.envs.registration import register
 
 register(
-     id="CMOGymEnv-v0",
-     entry_point="pycmo.env.cmo_env:CMOGymEnv",
+     id="FloridistanPycmoGymEnv-v0",
+     entry_point="pycmo.env.cmo_gym_env:FloridistanPycmoGymEnv",
 )
