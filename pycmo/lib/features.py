@@ -12,10 +12,10 @@ from gymnasium import spaces
 import numpy as np
 
 # CONSTANTS
-pycmo_text_max_length = 1000
+pycmo_text_max_length = 2000
 pycmo_max_int = 2 ** 62
 pycmo_max_float = float(2 ** 62)
-text_charset = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz- #"
+text_charset = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ~`!@#$%^&*()-_=+[]{{}}\\|;:'\",./<>?"
 
 # This section can be modified to dictate the type of observations that are returned from the game at each time step
 # Game

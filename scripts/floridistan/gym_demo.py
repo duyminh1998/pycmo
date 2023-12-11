@@ -8,7 +8,7 @@ from sample_agent import ScriptedGymAgent
 
 from pycmo.configs.config import get_config
 from pycmo.lib.protocol import SteamClientProps
-from pycmo.lib.features import get_unit_space, get_contact_space
+from pycmo.lib.features import get_unit_space, get_contact_space, pycmo_text_max_length, text_charset
 
 # open config and set important files and folder paths
 config = get_config()
@@ -29,7 +29,7 @@ observation_space = spaces.Dict(
         "BTR-82V" : get_contact_space()
     }
 )
-action_space = spaces.Text(max_length = 2000, charset = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz- #()={{}}.!@#$%^&*-/\\'\";:<>")
+action_space = spaces.Text(max_length = pycmo_text_max_length, charset = text_charset)
 
 env = gymnasium.make('FloridistanPycmoGymEnv-v0',
     observation_space=observation_space,
