@@ -106,7 +106,7 @@ class FloridistanPycmoGymEnv(BasePycmoGymEnv):
 
         contact_name = "BTR-82V"
         for contact in observation.contacts:
-            if contact.Name == contact:
+            if contact.Name == contact_name:
                 break
         _observation[contact_name] = {}
 
