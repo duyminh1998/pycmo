@@ -26,7 +26,7 @@ EncodingMode = 8
 ```python
 pycmo_path = os.path.join("path/to", "pycmo")
 cmo_path = os.path.join("path/to/steam/installation/of", "Command - Modern Operations")
-command_mo_version = "Command v1.06 - Build 1328.11"
+command_mo_version = "Command v1.06 - Build 1328.12"
 ```
 5. Navigate to the folder than contains `setup.py` and install the repository using `pip install .` Anytime you make changes to the files in the project folder, you need to reinstall the package using `pip install .`. Alternatively, use `pip install -e .` to install the package in editable mode. After doing this you can change the code without needing to continue to install it.
 

@@ -7,7 +7,7 @@ import os
 def get_config():
     pycmo_path = os.path.join("path/to", "pycmo")
     cmo_path = os.path.join("path/to/steam/installation/of", "Command - Modern Operations")
-    command_mo_version = "Command v1.06 - Build 1328.11"
+    command_mo_version = "Command v1.06 - Build 1328.12"
 
     return {
     "command_path": cmo_path,
