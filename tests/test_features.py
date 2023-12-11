@@ -1,9 +1,11 @@
 import pytest
 import os
 import math
+from gymnasium import spaces
 
 from pycmo.configs.config import get_config
 from pycmo.lib.features import FeaturesFromSteam, Game, Side, Weapon, Loadout, Mount, Unit, Contact
+from pycmo.lib.features import get_contact_space, get_weapon_space, get_loadout_space, get_mount_space, get_unit_space, add_loadout_space_to_unit_space, add_mount_space_to_unit_space
 from pycmo.lib.tools import cmo_steam_observation_file_to_xml
 
 config = get_config()
@@ -187,3 +189,35 @@ def test_features_from_steam_get_contact():
     assert math.isclose(contact.CA, 6.0)
     assert math.isclose(contact.Lon, -82.516819017376)
     assert math.isclose(contact.Lat, 27.852581555226)
+
+def test_get_weapon_space():
+    weapon_space = get_weapon_space()
+    assert isinstance(weapon_space, spaces.Dict)
+    for k in weapon_space.keys():
+        assert k in Weapon._fields
+
+def test_get_unit_space():
+    unit_space = get_unit_space()
+    assert isinstance(unit_space, spaces.Dict)
+    for k in unit_space.keys():
+        assert k in Unit._fields
+
+def test_add_mount_space_to_unit_space():
+    features = FeaturesFromSteam(xml=scenario_xml, player_side=side)
+    sufa = [unit for unit in features.units if unit.Name == sufa_aircraft_name][0]
+    test_space = spaces.Dict({"KEY1": spaces.Discrete(1)})
+    test_space = add_mount_space_to_unit_space(unit_space = test_space, mounts = sufa.Mounts)
+    assert "Mounts" in test_space.keys()
+    assert isinstance(test_space["Mounts"], spaces.Dict)
+    assert len(test_space["Mounts"].keys()) == 2
+
+def test_add_loadout_space_to_unit_space():
+    features = FeaturesFromSteam(xml=scenario_xml, player_side=side)
+    sufa = [unit for unit in features.units if unit.Name == sufa_aircraft_name][0]
+    test_space = spaces.Dict({"KEY1": spaces.Discrete(1)})
+    test_space = add_loadout_space_to_unit_space(unit_space = test_space, loadout = sufa.Loadout)
+    assert "Loadout" in test_space.keys()
+    assert isinstance(test_space["Loadout"], spaces.Dict)
+    assert len(test_space["Loadout"].keys()) == 4
+    assert "Weapons" in test_space["Loadout"].keys()
+    assert len(test_space["Loadout"]["Weapons"]) == 3

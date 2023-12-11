@@ -45,7 +45,7 @@ class Weapon(NamedTuple):
 def get_weapon_space() -> spaces.Dict:
     weapon_space = spaces.Dict(
         {
-            "ID": spaces.Text(max_length=pycmo_text_max_length),
+            "ID": spaces.Text(max_length=pycmo_text_max_length, charset=text_charset),
             "WeaponID": spaces.Box(-pycmo_max_int, pycmo_max_int, dtype=int),
             "QuantRemaining": spaces.Box(0, pycmo_max_int, dtype=int),
             "MaxQuant": spaces.Box(0, pycmo_max_int, dtype=int),
@@ -66,8 +66,8 @@ class Contact(NamedTuple):
 def get_contact_space() -> spaces.Dict:
     contact_space = spaces.Dict(
         {
-            "ID": spaces.Text(max_length=pycmo_text_max_length),
-            "Name": spaces.Text(max_length=pycmo_text_max_length),
+            "ID": spaces.Text(max_length=pycmo_text_max_length, charset=text_charset),
+            "Name": spaces.Text(max_length=pycmo_text_max_length, charset=text_charset),
             "CS": spaces.Box(0.0, pycmo_max_float, dtype=np.float64),
             "CA": spaces.Box(-pycmo_max_float, pycmo_max_float, dtype=np.float64),
             "Lon": spaces.Box(-180.0, 180.0, dtype=np.float64),
@@ -84,10 +84,10 @@ class Mount(NamedTuple):
     DBID: int
     Weapons: list[Weapon]
 
-def get_mount_space(num_weapons:int) -> spaces.Dict:
+def get_mount_space(num_weapons:int=0) -> spaces.Dict:
     mount_dict =  {
-        "ID": spaces.Text(max_length=pycmo_text_max_length),
-        "Name": spaces.Text(max_length=pycmo_text_max_length),
+        "ID": spaces.Text(max_length=pycmo_text_max_length, charset=text_charset),
+        "Name": spaces.Text(max_length=pycmo_text_max_length, charset=text_charset),
         "DBID": spaces.Box(-pycmo_max_int, pycmo_max_int, dtype=int),
     }
     if num_weapons > 0:
@@ -103,10 +103,10 @@ class Loadout(NamedTuple):
     DBID: int
     Weapons: list[Weapon]
 
-def get_loadout_space(num_weapons:int) -> spaces.Dict:
+def get_loadout_space(num_weapons:int=0) -> spaces.Dict:
     loadout_dict =  {
-        "ID": spaces.Text(max_length=pycmo_text_max_length),
-        "Name": spaces.Text(max_length=pycmo_text_max_length),
+        "ID": spaces.Text(max_length=pycmo_text_max_length, charset=text_charset),
+        "Name": spaces.Text(max_length=pycmo_text_max_length, charset=text_charset),
         "DBID": spaces.Box(-pycmo_max_int, pycmo_max_int, dtype=int),
     }
     if num_weapons > 0:
@@ -133,7 +133,7 @@ class Unit(NamedTuple):
     Loadout: Loadout | None
 
 def get_unit_space() -> spaces.Dict:
-    unit_space = spaces.Dict(
+    unit_dict = spaces.Dict(
         {
             "ID": spaces.Text(max_length=pycmo_text_max_length, charset=text_charset),
             "Name": spaces.Text(max_length=pycmo_text_max_length, charset=text_charset),
@@ -148,6 +148,19 @@ def get_unit_space() -> spaces.Dict:
             "MaxFuel": spaces.Box(0.0, pycmo_max_float, dtype=np.float64),
         }
     )
+    unit_space = spaces.Dict(unit_dict)
+    return unit_space
+
+def add_mount_space_to_unit_space(unit_space:spaces.Dict, mounts:list[Mount]) -> spaces.Dict:
+    if len(mounts) > 0:
+        mounts_dict = {}
+        for mount in mounts:
+            mounts_dict[str(mount.ID)] = get_mount_space(num_weapons=len(mount.Weapons))
+        unit_space["Mounts"] = spaces.Dict(mounts_dict)
+    return unit_space
+
+def add_loadout_space_to_unit_space(unit_space:spaces.Dict, loadout:Loadout) -> spaces.Dict:
+    unit_space["Loadout"] = get_loadout_space(num_weapons=len(loadout.Weapons))
     return unit_space
 
 class Features(object):
