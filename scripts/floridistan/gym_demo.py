@@ -1,10 +1,14 @@
 import os
 import gymnasium
+from gymnasium import spaces
+import logging
+logging.basicConfig(level=logging.INFO)
 
-from sample_agent import ScriptedAgent
+from sample_agent import ScriptedGymAgent
 
 from pycmo.configs.config import get_config
 from pycmo.lib.protocol import SteamClientProps
+from pycmo.lib.features import get_unit_space, get_contact_space
 
 # open config and set important files and folder paths
 config = get_config()
@@ -19,7 +23,17 @@ action_path = os.path.join(config["scripts_path"], scenario_script_folder_name, 
 scen_ended_path = os.path.join(config['steam_observation_folder_path'], f'{scenario_name}_scen_has_ended.inst')
 steam_client_props = SteamClientProps(scenario_name=scenario_name, agent_action_filename=action_path, command_version=command_version)
 
-env = gymnasium.make('CMOGymEnv-v0',
+observation_space = spaces.Dict(
+    {
+        "Thunder #1" : get_unit_space(),
+        "BTR-82V" : get_contact_space()
+    }
+)
+action_space = spaces.Text(max_length = 2000, charset = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz- #()={{}}.!@#$%^&*-/\\'\";:<>")
+
+env = gymnasium.make('FloridistanPycmoGymEnv-v0',
+    observation_space=observation_space,
+    action_space=action_space,
     player_side=player_side,
     steam_client_props=steam_client_props,
     observation_path=observation_path,
@@ -31,15 +45,15 @@ attacker_name = "Thunder #1"
 target_name = "BTR-82V"
 strike_weapon_name = "GBU-53/B StormBreaker"
 
-agent = ScriptedAgent(player_side=player_side, attacker_name=attacker_name, target_name=target_name, strike_weapon_name=strike_weapon_name)
+agent = ScriptedGymAgent(player_side=player_side, attacker_name=attacker_name, target_name=target_name, strike_weapon_name=strike_weapon_name)
 
-observation, info = env.reset(close_scenario_end_and_player_eval_messages=False, seed=42)
+observation, info = env.reset(seed=42, options={'close_scenario_end_and_player_eval_messages': False})
 for _ in range(282):
-    action = agent.action(observation, env.unwrapped.valid_cmo_actions)
+    action = agent.action(observation)
     observation, reward, terminated, truncated, info = env.step(action=action)
 
     if terminated or truncated:
-        observation, info = env.reset(close_scenario_end_and_player_eval_messages=True)
+        observation, info = env.reset(options={'close_scenario_end_and_player_eval_messages': True})
         action = ''
         agent.reset()
 

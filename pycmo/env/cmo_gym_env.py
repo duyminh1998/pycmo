@@ -89,18 +89,35 @@ class FloridistanPycmoGymEnv(BasePycmoGymEnv):
         self.action_space = action_space
 
     def _get_obs(self, observation:FeaturesFromSteam) -> dict:
+        _observation = {}
+
         unit_name = "Thunder #1"
         for unit in observation.units:
             if unit.Name == unit_name:
                 break
-        observation = {}
-        for key in self.observation_space.keys():
+        _observation[unit_name] = {}
+
+        for key in self.observation_space[unit_name].keys():
             obs_value = getattr(unit, key)
             if isinstance(obs_value, float):
-                observation[key] = np.array((obs_value,), dtype=np.float64)
+                _observation[unit_name][key] = np.array((obs_value,), dtype=np.float64)
             else:
-                observation[key] = obs_value
-        return observation        
+                _observation[unit_name][key] = obs_value        
+
+        contact_name = "BTR-82V"
+        for contact in observation.contacts:
+            if contact.Name == contact:
+                break
+        _observation[contact_name] = {}
+
+        for key in self.observation_space[contact_name].keys():
+            obs_value = getattr(contact, key)
+            if isinstance(obs_value, float):
+                _observation[contact_name][key] = np.array((obs_value,), dtype=np.float64)
+            else:
+                _observation[contact_name][key] = obs_value
+        
+        return _observation        
     
     def _get_info(self) -> dict:
         return {}
