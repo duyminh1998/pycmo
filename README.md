@@ -12,7 +12,7 @@ Read about the project in detail [here](https://minhhua.com/pycmo/).
 
 # Quick Start Guide
 ## Get PyCMO
-1. Make sure the following settings are enabled in your Command Modern Operations' configurations (in `CPE.ini`):  
+1. (Premium edition only) Make sure the following settings are enabled in your Command Modern Operations' configurations (in `CPE.ini`):  
 ```
 [Lua]
 EnableSocket = 1
