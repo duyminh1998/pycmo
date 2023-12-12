@@ -12,7 +12,7 @@ Read about the project in detail [here](https://minhhua.com/pycmo/).
 
 # Quick Start Guide
 ## Get PyCMO
-1. (Premium edition only) Make sure the following settings are enabled in your Command Modern Operations' configurations (in `CPE.ini`):  
+1. (Non-Steam, Premium edition only) Make sure the following settings are enabled in your Command Modern Operations' configurations (in `CPE.ini`):  
 ```
 [Lua]
 EnableSocket = 1
@@ -22,7 +22,7 @@ EncodingMode = 8
 ```
 2. Click on "Clone or download", and then "Download Zip". 
 3. Unzip the repo anywhere.
-4. Edit the project's `pycmo/configs/config_template.py` file to fit your system's paths, then rename it as `pycmo/configs/config.py` (IMPORTANT). You only need to edit the lines 8 - 10:
+4. Edit the project's `pycmo/configs/config_template.py` file to fit your system's paths, then rename it as `pycmo/configs/config.py` (IMPORTANT). You only need to edit the lines 8 - 11:
 ```python
 pycmo_path = os.path.join("path/to", "pycmo")
 cmo_path = os.path.join("path/to/steam/installation/of", "Command - Modern Operations")
