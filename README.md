@@ -28,7 +28,7 @@ pycmo_path = os.path.join("path/to", "pycmo")
 cmo_path = os.path.join("path/to/steam/installation/of", "Command - Modern Operations")
 command_mo_version = "Command v1.06 - Build 1328.12"
 ```
-5. Navigate to the folder than contains `setup.py` and install the repository using `pip install .` Anytime you make changes to the files in the project folder, you need to reinstall the package using `pip install .`. Alternatively, use `pip install -e .` to install the package in editable mode. After doing this you can change the code without needing to continue to install it.
+5. Navigate to the folder than contains `setup.py` and install the repository using `pip install .` Anytime you make changes to the files in the project folder, you need to reinstall the package using `pip install .`. Alternatively, use `pip install -e .` to install the package in editable mode. After doing this you can change the code without needing to continue to install it. From PyCMO v1.4.0, [gymnasium](https://gymnasium.farama.org/) became an optional dependency if users want to use PyCMO as a Gym environment. In this case, use `pip install .[gym]` or `pip install -e .[gym]` for setup.
 
 ## Run an agent (Steam edition only)
 1. Load the provided demo scenario `scen/steam_demo.scen` in the game.
