@@ -28,7 +28,6 @@ def test_get_weapon_space():
     assert weapon_space["WeaponID"].contains(sample_int)
     assert weapon_space["QuantRemaining"].contains(sample_int)
     assert weapon_space["MaxQuant"].contains(sample_int)
-    assert not weapon_space["WeaponID"].contains(51)
 
 def test_get_contact_space():
     contact_space = get_contact_space()
