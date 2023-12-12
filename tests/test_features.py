@@ -1,7 +1,6 @@
 import pytest
 import os
 import math
-import numpy as np
 
 from pycmo.configs.config import get_config
 from pycmo.lib.features import FeaturesFromSteam, Game, Side, Weapon, Loadout, Mount, Unit, Contact
@@ -15,9 +14,6 @@ sufa_aircraft_name = "Sufa #3"
 sufa_aircraft_ID = "05ba3413-d0cd-4a69-8513-2d7e55d28366"
 observation_file_path = os.path.join(config['pycmo_path'], 'tests', "fixtures", 'test_steam_observation.inst')
 scenario_xml = cmo_steam_observation_file_to_xml(observation_file_path)
-
-sample_int = np.array((51,), dtype=np.int64)
-sample_float = np.array((51.,), dtype=np.float64)
 
 def test_features_from_steam_init():
     features = FeaturesFromSteam(xml=scenario_xml, player_side=side)
