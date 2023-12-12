@@ -263,8 +263,11 @@ class CMOEnv():
         with open(self.scen_ended, 'w') as file:
             file.writelines(data)
 
-    def reset(self) -> TimeStep:
+    def reset(self, close_scenario_end_and_player_eval_messages:bool=False) -> TimeStep:
         try:
+            if close_scenario_end_and_player_eval_messages:
+                self.client.close_scenario_end_and_player_eval_messages()
+
             restart_result = self.client.restart_scenario()
 
             # check that the scenario loaded event has fired correctly in CMO, and if not, restart the scenario
@@ -346,7 +349,7 @@ class CMOEnv():
                 if get_obs_retries > max_get_obs_retries:
                     raise TimeoutError("CMOEnv unable to get observation.")
     
-    def action_spec(self, observation:Features) -> AvailableFunctions:    
+    def action_spec(self, observation:Features | FeaturesFromSteam) -> AvailableFunctions:    
         return AvailableFunctions(observation)
 
     def check_game_ended(self) -> bool:
@@ -365,4 +368,3 @@ class CMOEnv():
         export_observation_event_name = 'Export observation'
         action = f"ScenEdit_RunScript('{pycmo_lua_lib_path}', true)\nteardown_and_end_scenario('{export_observation_event_name}', true)"
         return self.step(action)
-    

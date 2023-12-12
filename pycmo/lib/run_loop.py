@@ -85,7 +85,7 @@ def run_loop_steam(env: CPEEnv | CMOEnv,
                    agent:BaseAgent=None, 
                    max_steps=None) -> None:       
     # start the game
-    state = env.reset()
+    state = env.reset(close_scenario_end_and_player_eval_messages=False)
     action = ""
 
     # Configure a limit for the maximum number of steps
@@ -107,8 +107,8 @@ def run_loop_steam(env: CPEEnv | CMOEnv,
         total_steps += 1
 
         if state.step_type == StepType(2) or env.check_game_ended():
-            env.client.close_scenario_end_and_player_eval_messages()
-            state = env.reset()
+            print_env_information(state.step_id, parse_utc(int(state.observation.meta.Time)), action, state.reward, state.reward)
+            state = env.reset(close_scenario_end_and_player_eval_messages=True)
             action = ''
             agent.reset()
     

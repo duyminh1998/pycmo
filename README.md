@@ -12,7 +12,7 @@ Read about the project in detail [here](https://minhhua.com/pycmo/).
 
 # Quick Start Guide
 ## Get PyCMO
-1. Make sure the following settings are enabled in your Command Modern Operations' configurations (in `CPE.ini`):  
+1. (Non-Steam, Premium edition only) Make sure the following settings are enabled in your Command Modern Operations' configurations (in `CPE.ini`):  
 ```
 [Lua]
 EnableSocket = 1
@@ -22,13 +22,15 @@ EncodingMode = 8
 ```
 2. Click on "Clone or download", and then "Download Zip". 
 3. Unzip the repo anywhere.
-4. Edit the project's `pycmo/configs/config_template.py` file to fit your system's paths, then rename it as `pycmo/configs/config.py` (IMPORTANT). You only need to edit the lines 8 - 10:
+4. Edit the project's `pycmo/configs/config_template.py` file to fit your system's paths, then rename it as `pycmo/configs/config.py` (IMPORTANT). You only need to edit the lines 8 - 11:
 ```python
 pycmo_path = os.path.join("path/to", "pycmo")
 cmo_path = os.path.join("path/to/steam/installation/of", "Command - Modern Operations")
-command_mo_version = "Command v1.06 - Build 1328.11"
+command_mo_version = "Command v1.06 - Build 1328.12"
+use_gymnasium = False
 ```
-5. Navigate to the folder than contains `setup.py` and install the repository using `pip install .` Anytime you make changes to the files in the project folder, you need to reinstall the package using `pip install .`. Alternatively, use `pip install -e .` to install the package in editable mode. After doing this you can change the code without needing to continue to install it.
+5. Navigate to the folder than contains `setup.py` and install the repository using `pip install .` Anytime you make changes to the files in the project folder, you need to reinstall the package using `pip install .`. Alternatively, use `pip install -e .` to install the package in editable mode. After doing this you can change the code without needing to continue to install it. 
+6. From PyCMO v1.4.0, [gymnasium](https://gymnasium.farama.org/) became an optional dependency for users who want to use PyCMO as a Gym environment. In this case, use `pip install .[gym]` or `pip install -e .[gym]` for setup. Remember to set `use_gymnasium = True` in the `pycmo/configs/config.py` file.
 
 ## Run an agent (Steam edition only)
 1. Load the provided demo scenario `scen/steam_demo.scen` in the game.
