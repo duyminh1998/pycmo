@@ -8,7 +8,7 @@ from sample_agent import ScriptedGymAgent
 
 from pycmo.configs.config import get_config
 from pycmo.lib.protocol import SteamClientProps
-from pycmo.lib.features import get_unit_space, get_contact_space, pycmo_text_max_length, text_charset
+from pycmo.lib.spaces import get_unit_space, get_contact_space, pycmo_text_max_length, text_charset
 
 # open config and set important files and folder paths
 config = get_config()
