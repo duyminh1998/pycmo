@@ -121,3 +121,44 @@ class FloridistanPycmoGymEnv(BasePycmoGymEnv):
     
     def _get_info(self) -> dict:
         return {}
+
+class FloridistanSimplePycmoGymEnv(BasePycmoGymEnv):
+    def __init__(
+            self,
+            observation_space:spaces.Space,
+            action_space:spaces.Space,
+            player_side: str,
+            steam_client_props:SteamClientProps,
+            observation_path: str, 
+            action_path: str,
+            scen_ended_path: str,
+            pycmo_lua_lib_path: str | None = None,
+            max_resets: int = 20,
+            render_mode=None,
+    ):
+        super().__init__(
+            player_side=player_side,
+            steam_client_props=steam_client_props,
+            observation_path=observation_path,
+            action_path=action_path,
+            scen_ended_path=scen_ended_path,
+            pycmo_lua_lib_path=pycmo_lua_lib_path,
+            max_resets=max_resets,
+            render_mode=render_mode
+        )
+
+        self.observation_space = observation_space
+        self.action_space = action_space
+
+    def _get_obs(self, observation:FeaturesFromSteam) -> dict:
+        unit_name = "Thunder #1"
+        for unit in observation.units:
+            if unit.Name == unit_name:
+                break
+        
+        _observation = {}
+        _observation[unit_name] = np.array([unit.Lat, unit.Lon], dtype=np.float64)
+        return _observation
+    
+    def _get_info(self) -> dict:
+        return {}
