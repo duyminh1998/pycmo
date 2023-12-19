@@ -114,3 +114,17 @@ class ScriptedGymAgent(BaseAgent):
             self.state += 1
 
         return action
+
+class RLGymAgent(BaseAgent):
+    def __init__(self, player_side:str, attacker_name:str, target_name:str):
+        super().__init__(player_side)
+        self.attacker_name = attacker_name
+        self.target_name = target_name
+
+    def action(self, observation: dict) -> str:
+        action = ""
+        attacker = observation[self.attacker_name]
+        attacker_lat = attacker[0]
+        attacker_lon = attacker[1]
+        action = set_unit_course(side = self.player_side, unit_name = self.attacker_name, latitude = attacker_lat, longitude = attacker_lon + 0.1)
+        return action
