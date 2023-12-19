@@ -5,11 +5,10 @@ import numpy as np
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from sample_agent import ScriptedGymAgent
+from sample_agent import RLGymAgent
 
 from pycmo.configs.config import get_config
 from pycmo.lib.protocol import SteamClientProps
-from pycmo.lib.spaces import get_unit_space, get_contact_space, pycmo_text_max_length, text_charset
 
 # open config and set important files and folder paths
 config = get_config()
@@ -31,7 +30,7 @@ observation_space = spaces.Dict(
 )
 action_space = spaces.Box(low=np.array([-90.0, -180.0]), high=np.array([90, 180]), dtype=np.float64)
 
-env = gymnasium.make('FloridistanPycmoGymEnv-v0',
+env = gymnasium.make('FloridistanSimplePycmoGymEnv-v0',
     observation_space=observation_space,
     action_space=action_space,
     player_side=player_side,
@@ -43,13 +42,13 @@ env = gymnasium.make('FloridistanPycmoGymEnv-v0',
 
 attacker_name = "Thunder #1"
 target_name = "BTR-82V"
-strike_weapon_name = "GBU-53/B StormBreaker"
 
-agent = ScriptedGymAgent(player_side=player_side, attacker_name=attacker_name, target_name=target_name, strike_weapon_name=strike_weapon_name)
+agent = RLGymAgent(player_side=player_side, attacker_name=attacker_name, target_name=target_name)
 
 observation, info = env.reset(seed=42, options={'close_scenario_end_and_player_eval_messages': False})
 for _ in range(282):
     action = agent.action(observation)
+    print(action)
     observation, reward, terminated, truncated, info = env.step(action=action)
 
     if terminated or truncated:

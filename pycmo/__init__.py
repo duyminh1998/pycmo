@@ -10,3 +10,8 @@ if config["gymnasium"]:
           id="FloridistanPycmoGymEnv-v0",
           entry_point="pycmo.env.cmo_gym_env:FloridistanPycmoGymEnv",
      )
+
+     register(
+          id="FloridistanSimplePycmoGymEnv-v0",
+          entry_point="pycmo.env.cmo_gym_env:FloridistanSimplePycmoGymEnv",
+     )     
