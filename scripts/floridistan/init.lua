@@ -3,7 +3,7 @@
 -- Save after running script and you will not have to run this script again
 
 -- Edit these variables as needed
-local pycmo_path = 'E:/MyProjects/pycmo/'
+local pycmo_path = 'C:/Users/minhh/Documents/MyProjects/pycmo/'
 local lua_script_foldername = pycmo_path .. 'scripts/floridistan/'
 local pycmo_lib_lua_filename = pycmo_path .. 'lua/pycmo_lib.lua'
 local agent_action_lua_filename = 'agent_action.lua'

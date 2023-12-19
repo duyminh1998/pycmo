@@ -75,8 +75,8 @@ $wshell.SendKeys("%{ }");
 $wshell.SendKeys("m");
 Start-Sleep -s 1
 
-$MOVEMENTSIZEY = 770
-$MOVEMENTSIZEX = 600
+$MOVEMENTSIZEY = 600
+$MOVEMENTSIZEX = 500
 
 Add-Type -AssemblyName System.Windows.Forms
 $POSITION = [Windows.Forms.Cursor]::Position
